@@ -33,7 +33,37 @@ def data_hora_br(valor: datetime | None) -> str:
     return valor.astimezone(FUSO_EXIBICAO).strftime("%d/%m/%Y %H:%M")
 
 
+NOMES_METODOS = {
+    "zscore": "Z-score",
+    "iqr": "IQR",
+    "isolation_forest": "Isolation Forest",
+    "contextual": "Contextual",
+}
+NOMES_STATUS = {
+    "pendente": "Pendente",
+    "aprovado": "Aprovado",
+    "irregular": "Irregular",
+    "necessita_justificativa": "Necessita justificativa",
+}
+
+
+def nome_metodo(metodo: str) -> str:
+    return NOMES_METODOS.get(metodo, metodo)
+
+
+def nome_status(status: str) -> str:
+    return NOMES_STATUS.get(status, status)
+
+
+def score(valor: float | None) -> str:
+    """4.2371 → "4,24"."""
+    return "—" if valor is None else f"{valor:.2f}".replace(".", ",")
+
+
 def registrar_filtros(app: Flask) -> None:
     app.add_template_filter(moeda)
     app.add_template_filter(data_br)
     app.add_template_filter(data_hora_br)
+    app.add_template_filter(nome_metodo)
+    app.add_template_filter(nome_status)
+    app.add_template_filter(score)

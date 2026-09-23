@@ -8,9 +8,12 @@ from flask_login import current_user, login_required
 from sqlalchemy import text
 
 from app.extensoes import csrf, db
-from app.models.dominio import PERFIL_AUDITOR
+from app.models import ExecucaoAnalise
+from app.models.dominio import METODOS, PERFIL_AUDITOR, STATUS_REVISAO
+from app.repositorios import alertas as repo_alertas
 from app.repositorios.despesas import POR_PAGINA_PADRAO, paginar_despesas
 from app.rotas.autorizacao import perfil_requerido
+from app.servicos.analise import MetodoDesconhecidoError, executar_analise
 from app.servicos.importacao import ArquivoInvalidoError, importar_arquivo
 
 bp = Blueprint("api", __name__)
@@ -93,10 +96,113 @@ def listar_despesas():
         por_pagina=request.args.get("por_pagina", POR_PAGINA_PADRAO, type=int),
         lote_id=request.args.get("lote_id", type=int),
     )
+    return jsonify(_pagina_json(pagina, _despesa_json))
+
+
+def _pagina_json(pagina, serializar) -> dict:
+    return {
+        "itens": [serializar(item) for item in pagina.items],
+        "pagina": pagina.page,
+        "por_pagina": pagina.per_page,
+        "total": pagina.total,
+        "paginas": pagina.pages,
+    }
+
+
+def _execucao_json(execucao) -> dict:
+    return {
+        "id": execucao.id,
+        "iniciada_em": execucao.iniciada_em.isoformat(),
+        "duracao_s": execucao.duracao_s,
+        "parametros": execucao.parametros,
+        "seed": execucao.seed,
+        "total_despesas": execucao.total_despesas,
+        "total_alertas": execucao.total_alertas,
+        "executada_por": execucao.executada_por,
+        "alertas_por_metodo": repo_alertas.alertas_por_metodo(execucao.id),
+    }
+
+
+def _alerta_json(alerta) -> dict:
+    return {
+        "id": alerta.id,
+        "despesa_id": alerta.despesa_id,
+        "execucao_id": alerta.execucao_id,
+        "metodo": alerta.metodo,
+        "score": alerta.score,
+        "motivo": alerta.motivo,
+        "status_revisao": alerta.status_revisao,
+        "criado_em": alerta.criado_em.isoformat(),
+    }
+
+
+def _parecer_json(parecer) -> dict:
+    return {
+        "id": parecer.id,
+        "usuario_id": parecer.usuario_id,
+        "status": parecer.status,
+        "observacao": parecer.observacao,
+        "criado_em": parecer.criado_em.isoformat(),
+    }
+
+
+@bp.route("/analises", methods=["POST"])
+@perfil_requerido(PERFIL_AUDITOR)
+def criar_analise():
+    """Executa a análise sobre todas as despesas. Corpo opcional: ``{"metodos": ["zscore"]}``."""
+    corpo = request.get_json(silent=True) or {}
+    metodos = corpo.get("metodos")
+    if metodos is not None and (
+        not isinstance(metodos, list) or not all(isinstance(m, str) for m in metodos)
+    ):
+        return jsonify(erro="'metodos' deve ser uma lista de nomes de métodos."), 400
+    try:
+        execucao = executar_analise(current_user, metodos)
+    except MetodoDesconhecidoError as erro:
+        db.session.rollback()
+        return jsonify(erro=str(erro)), 400
+    db.session.commit()
+    return jsonify(_execucao_json(execucao)), 201
+
+
+@bp.route("/analises/<int:execucao_id>")
+@perfil_requerido(PERFIL_AUDITOR)
+def obter_analise(execucao_id: int):
+    return jsonify(_execucao_json(db.get_or_404(ExecucaoAnalise, execucao_id)))
+
+
+@bp.route("/alertas")
+@perfil_requerido(PERFIL_AUDITOR)
+def listar_alertas():
+    """Lista paginada: ``?status=pendente&metodo=zscore&execucao_id=3&pagina=1&por_pagina=50``."""
+    status = request.args.get("status") or None
+    metodo = request.args.get("metodo") or None
+    if status is not None and status not in STATUS_REVISAO:
+        return jsonify(erro=f"status inválido. Use um de: {', '.join(STATUS_REVISAO)}."), 400
+    if metodo is not None and metodo not in METODOS:
+        return jsonify(erro=f"método inválido. Use um de: {', '.join(METODOS)}."), 400
+    pagina = repo_alertas.paginar_alertas(
+        request.args.get("pagina", 1, type=int),
+        request.args.get("por_pagina", repo_alertas.POR_PAGINA_PADRAO, type=int),
+        status=status,
+        metodo=metodo,
+        execucao_id=request.args.get("execucao_id", type=int),
+    )
     return jsonify(
-        itens=[_despesa_json(d) for d in pagina.items],
-        pagina=pagina.page,
-        por_pagina=pagina.per_page,
-        total=pagina.total,
-        paginas=pagina.pages,
+        _pagina_json(pagina, lambda a: {**_alerta_json(a), "despesa": _despesa_json(a.despesa)})
+    )
+
+
+@bp.route("/alertas/<int:alerta_id>")
+@perfil_requerido(PERFIL_AUDITOR)
+def obter_alerta(alerta_id: int):
+    alerta = repo_alertas.obter_alerta(alerta_id)
+    if alerta is None:
+        return jsonify(erro="Alerta não encontrado."), 404
+    return jsonify(
+        {
+            **_alerta_json(alerta),
+            "despesa": _despesa_json(alerta.despesa),
+            "pareceres": [_parecer_json(p) for p in alerta.pareceres],
+        }
     )

@@ -136,8 +136,9 @@ Passos:
 4. **Não repete alerta:** descarta as linhas cuja despesa já tem alerta do mesmo
    método, de qualquer execução anterior (decisão D3).
 5. Grava a `ExecucaoAnalise`:
-   - `parametros`: uma cópia do dicionário usado, mais os métodos executados
-     (RNF06);
+   - `parametros`: os métodos executados, os parâmetros de cada um e as
+     constantes do motor (RNF06). Exemplo:
+     `{"metodos": ["zscore", "iqr", "contextual"], "zscore": {"limiar": 3.0}, "iqr": {"fator": 1.5}, "contextual": {"frequencia_minima": 0.01}, "dimensao_valor": "categoria", "n_minimo_grupo": 10}`;
    - `seed`: o `random_state` do Isolation Forest (42 por padrão);
    - `total_despesas`: quantas foram analisadas;
    - `total_alertas`: quantos alertas **novos** foram criados;
@@ -198,6 +199,9 @@ def registrar_parecer(
 | `GET /api/alertas?status=&metodo=&execucao_id=&pagina=` | S2 | auditor | lista paginada |
 | `GET /api/alertas/{id}` | S2 | auditor | alerta + despesa + pareceres |
 | `POST /api/alertas/{id}/parecer` | S3 | auditor | 201 com o parecer · 400 com a mensagem de validação |
+
+Linha de comando: `flask executar-analise [--metodo zscore] [--email usuario]`. Sem
+`--email`, a execução fica sem autor, como a do job agendado.
 
 Na web: botão **Executar análise** (formulário POST com CSRF), com uma tela de
 resultado que leva à lista de alertas (S2); tela **Alertas** com score, método e

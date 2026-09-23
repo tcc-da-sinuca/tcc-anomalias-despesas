@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block titulo %}Alerta #{{ alerta.id }} · {{ super() }}{% endblock %}
+{% block conteudo %}
+{% set despesa = alerta.despesa %}
+<p class="small mb-1"><a href="{{ url_for('web.alertas') }}">← Alertas</a></p>
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+  <h1 class="h4 m-0">Alerta #{{ alerta.id }}</h1>
+  <span class="badge status-{{ alerta.status_revisao }}">{{ alerta.status_revisao | nome_status }}</span>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="small text-muted mb-1">
+      {{ alerta.metodo | nome_metodo }} · score {{ alerta.score | score }} ·
+      <a href="{{ url_for('web.analise', execucao_id=alerta.execucao_id) }}">análise #{{ alerta.execucao_id }}</a>
+      em {{ alerta.criado_em | data_hora_br }}
+    </div>
+    <p class="fs-6 mb-0">{{ alerta.motivo }}</p>
+  </div>
+</div>
+
+<h2 class="h6">Despesa</h2>
+<dl class="row small">
+  <dt class="col-sm-3">Valor</dt><dd class="col-sm-9">{{ despesa.valor | moeda }}</dd>
+  <dt class="col-sm-3">Data</dt><dd class="col-sm-9">{{ despesa.data | data_br }}</dd>
+  <dt class="col-sm-3">Categoria</dt><dd class="col-sm-9">{{ despesa.categoria }}</dd>
+  <dt class="col-sm-3">Conta contábil</dt><dd class="col-sm-9">{{ despesa.conta_contabil }}</dd>
+  <dt class="col-sm-3">Centro de custo</dt><dd class="col-sm-9">{{ despesa.centro_custo }}</dd>
+  <dt class="col-sm-3">Funcionário</dt><dd class="col-sm-9">{{ despesa.funcionario }}</dd>
+  <dt class="col-sm-3">Descrição</dt><dd class="col-sm-9">{{ despesa.descricao or '—' }}</dd>
+  <dt class="col-sm-3">Origem</dt>
+  <dd class="col-sm-9">
+    {% if despesa.lote_id %}<a href="{{ url_for('web.lote', lote_id=despesa.lote_id) }}">lote {{ despesa.lote_id }}</a>{% else %}cadastro manual{% endif %}
+  </dd>
+</dl>
+
+{% if outros %}
+<h2 class="h6 mt-4">Outros alertas desta despesa</h2>
+<ul class="small">
+  {% for outro in outros %}
+  <li>
+    <a href="{{ url_for('web.alerta', alerta_id=outro.id) }}">{{ outro.metodo | nome_metodo }}</a>
+    ({{ outro.status_revisao | nome_status | lower }}): {{ outro.motivo }}
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+<h2 class="h6 mt-4">Histórico de pareceres</h2>
+{% if alerta.pareceres %}
+<ul class="list-group list-group-flush small">
+  {% for parecer in alerta.pareceres %}
+  <li class="list-group-item px-0">
+    <strong>{{ parecer.status | nome_status }}</strong> por {{ parecer.usuario.nome }}
+    em {{ parecer.criado_em | data_hora_br }}
+    {% if parecer.observacao %}<div class="text-muted">{{ parecer.observacao }}</div>{% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="text-muted small">Nenhum parecer registrado. O alerta aguarda revisão humana.</p>
+{% endif %}
+{% endblock %}

@@ -10,6 +10,12 @@ import pandas as pd
 DIMENSOES_PADRAO = ("categoria", "conta_contabil", "centro_custo")
 COLUNAS_RESULTADO = ("dimensao", "chave", "media", "desvio", "q1", "q3", "n")
 
+# Grupo usado pelo Z-score e pelo IQR (decisão D1 de docs/FLUXO_ANALISE.md): as
+# categorias têm escalas de valor muito diferentes, por isso não se misturam.
+DIMENSAO_DETECCAO = "categoria"
+# Grupos menores que isso não são avaliados pelo Z-score e pelo IQR (decisão D4).
+N_MINIMO_GRUPO = 10
+
 
 def calcular_estatisticas(
     despesas: pd.DataFrame, dimensoes: tuple[str, ...] = DIMENSOES_PADRAO
@@ -45,3 +51,23 @@ def calcular_estatisticas(
     estatisticas["desvio"] = estatisticas["desvio"].astype(object)
     estatisticas.loc[estatisticas["desvio"].isna(), "desvio"] = None
     return estatisticas[list(COLUNAS_RESULTADO)]
+
+
+def estatisticas_por_despesa(despesas: pd.DataFrame, dimensao: str) -> pd.DataFrame:
+    """Estatísticas do grupo de cada despesa, alinhadas ao índice de ``despesas``.
+
+    Devolve as colunas ``media``, ``desvio``, ``q1``, ``q3`` e ``n`` com as
+    mesmas regras de ``calcular_estatisticas``. O desvio fica ``NaN`` quando o
+    grupo tem uma única despesa.
+    """
+    grupos = despesas["valor"].astype(float).groupby(despesas[dimensao])
+    return pd.DataFrame(
+        {
+            "media": grupos.transform("mean"),
+            "desvio": grupos.transform("std"),
+            "q1": grupos.transform(lambda valores: valores.quantile(0.25)),
+            "q3": grupos.transform(lambda valores: valores.quantile(0.75)),
+            "n": grupos.transform("size"),
+        },
+        index=despesas.index,
+    )

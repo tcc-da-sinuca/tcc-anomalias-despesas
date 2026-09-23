@@ -67,9 +67,20 @@ descrição é opcional. Linhas com erro não entram e aparecem listadas por nú
 linha; as demais são importadas. Após cada importação, as estatísticas de referência
 (tela **Estatísticas**) são recalculadas.
 
+### Executar a análise e ver os alertas
+
+Na tela **Análises**, o botão **Executar análise** aplica Z-score, IQR e a regra
+contextual a todas as despesas e grava os alertas. A tela **Alertas** lista cada
+alerta com score, método e motivo; o detalhe mostra a despesa e o histórico de
+pareceres. Uma despesa que já tem alerta de um método não recebe outro do mesmo
+método, então a análise pode ser repetida após cada importação. Pela API:
+`POST /api/analises`, `GET /api/alertas`. Detalhes em
+[`docs/FLUXO_ANALISE.md`](docs/FLUXO_ANALISE.md).
+
 ### Comandos úteis
 
 ```bash
+docker compose exec app flask executar-analise                # executa a análise de anomalias
 docker compose exec app flask recalcular-estatisticas          # recalcula as estatísticas de referência
 docker compose exec app flask criar-usuario --perfil auditor   # cria um auditor
 docker compose exec app flask db migrate -m "Descreve a mudança"   # nova migration após alterar modelos

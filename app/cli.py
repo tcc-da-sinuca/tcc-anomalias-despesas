@@ -114,3 +114,30 @@ def registrar_comandos(app: Flask) -> None:
         grupos = recalcular_estatisticas()
         db.session.commit()
         click.echo(f"Estatísticas recalculadas: {grupos} grupos.")
+
+    @app.cli.command("executar-analise")
+    @click.option(
+        "--metodo", "metodos", multiple=True, help="Método a executar (repetível). Padrão: todos."
+    )
+    @click.option(
+        "--email", help="Usuário registrado como autor. Sem ele, conta como execução automática."
+    )
+    def executar_analise_cmd(metodos, email):
+        """Executa a análise de anomalias sobre todas as despesas."""
+        from app.servicos.analise import MetodoDesconhecidoError, executar_analise
+        from app.servicos.usuarios import buscar_por_email
+
+        usuario = None
+        if email:
+            usuario = buscar_por_email(email)
+            if usuario is None:
+                raise click.ClickException(f"Usuário {email} não encontrado.")
+        try:
+            execucao = executar_analise(usuario, metodos or None)
+        except MetodoDesconhecidoError as erro:
+            raise click.ClickException(str(erro)) from erro
+        db.session.commit()
+        click.echo(
+            f"Análise {execucao.id}: {execucao.total_despesas} despesas, "
+            f"{execucao.total_alertas} alertas novos em {execucao.duracao_s} s."
+        )

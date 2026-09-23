@@ -16,6 +16,10 @@ entregue continuam indo para [`MUDANCAS_PARA_DOCUMENTACAO.md`](MUDANCAS_PARA_DOC
 (US02), base do sistema e base sintética prontas. A subida completa com `docker compose up`
 foi testada no Codespace (é preciso um contorno de firewall, descrito no README).
 
+**Sprint 2 (28/09–11/10): adiantada e concluída em 23/09.** Fluxo de análise definido
+([`FLUXO_ANALISE.md`](FLUXO_ANALISE.md)); Z-score, IQR e regra contextual implementados;
+análise pela tela, pela API e por comando; lista e detalhe de alertas (US06).
+
 | Área | Situação |
 |---|---|
 | Modelo de dados e migrations | ✅ Pronto, com imutabilidade do parecer (eventos + trigger) |
@@ -23,12 +27,12 @@ foi testada no Codespace (é preciso um contorno de firewall, descrito no README
 | Infraestrutura | ✅ `docker compose up` testado no Codespace: migrations, admin, login, `seed-base` e testes no container |
 | Base sintética | ✅ Gerador, carga no banco (`flask seed-base`) e calendário de feriados |
 | Importação e estatísticas (US01, US02) | ✅ CSV/XLSX com erros por linha, cadastro manual, API, telas e estatísticas recalculadas a cada importação |
-| Motor de detecção | ⬜ Contrato, calendário e estatísticas por grupo (base para Z-score e IQR) |
-| Telas de alertas, revisão e dashboard | ⬜ Existem as telas de despesas, importação e estatísticas; alertas ainda não |
+| Motor de detecção | ✅ Z-score, IQR, contextual e consolidador · ⬜ Isolation Forest (S3) |
+| Telas de alertas, revisão e dashboard | ✅ Análises, lista e detalhe de alertas · ⬜ parecer (S3), dashboard e filtros da US10 (S4) |
 | Experimento | ⬜ Não iniciado |
-| Testes | 157 passando (SQLite + PostgreSQL) |
+| Testes | 226 passando (SQLite + PostgreSQL) |
 
-**Próximo passo:** definir o fluxo de análise até 01/10 (prazo da documentação) e começar Z-score e IQR (S2).
+**Próximo passo:** S3 adiantada: revisão e parecer (US07/US08), Isolation Forest (US04) e o experimento (prazo 18/10).
 
 ---
 
@@ -38,8 +42,8 @@ foi testada no Codespace (é preciso um contorno de firewall, descrito no README
 |---|---|---|---|
 | 25/09 | Modelo de dados estável, refletido em `classes.puml` | Documentação: diagrama de classes (27/09) | ✅ |
 | 27/09 | **Fim da S1:** US01, US02 e subida com Docker Compose | — | ✅ (23/09) |
-| 01/10 | Fluxo "executar análise → gerar alertas → registrar parecer" implementado ou, no mínimo, definido | Documentação: diagramas de sequência e arquitetura (03/10) | ✅ definido (23/09) |
-| 11/10 | **Fim da S2:** Z-score, IQR, contextual e lista de alertas com motivo | — | ⬜ |
+| 01/10 | Fluxo "executar análise → gerar alertas → registrar parecer" implementado ou, no mínimo, definido | Documentação: diagramas de sequência e arquitetura (03/10) | ✅ definido; análise e alertas implementados (23/09) |
+| 11/10 | **Fim da S2:** Z-score, IQR, contextual e lista de alertas com motivo | — | ✅ (23/09) |
 | 18/10 | `experimentos/resultados/metricas.csv` gerado por script, com seed e parâmetros | Artigo: resultados (25/10) | ⬜ |
 | 25/10 | **Fim da S3:** Isolation Forest, experimento, revisão e parecer | — | ⬜ |
 | 02/11 | **Entrega final:** software funcionando, com código e base de dados | Orientador | ⬜ |
@@ -82,14 +86,14 @@ foi testada no Codespace (é preciso um contorno de firewall, descrito no README
 
 - [x] **Até 01/10: definir o fluxo de análise** para a equipe de documentação: feito em 23/09
   em [`FLUXO_ANALISE.md`](FLUXO_ANALISE.md), registrado nos itens 11 e 12 de `MUDANCAS_PARA_DOCUMENTACAO.md`
-- [ ] **US03: Z-score por categoria** (`motor/zscore.py`): score = |z|, sinaliza acima do limiar (padrão 3), motivo do tipo "valor 4,2x acima da média da categoria Viagens"
-- [ ] **US03: IQR por categoria** (`motor/iqr.py`): fator 1,5, motivo com os limites do grupo
-- [ ] **US05: regra contextual** (`motor/contextual.py`): combinação categoria × conta × centro de custo inexistente ou com frequência < 1% dentro da categoria
-- [ ] **Consolidador** (`motor/consolidador.py`): junta os detectores e gera os dados dos alertas
-- [ ] **Serviço de análise** (`servicos/analise.py`): carrega despesas → roda o motor → grava `ExecucaoAnalise` (parâmetros e seed) e os `AlertaAnomalia` (RF12, RNF06)
-- [ ] `POST /api/analises`, `GET /api/analises/{id}` e botão "Executar análise" na tela
-- [ ] **US06: lista de alertas** (tela e `GET /api/alertas`, `GET /api/alertas/{id}`) com score, método e motivo. Adiantada da S4 (decisão de 23/09)
-- [ ] Testes do motor com dados pequenos e controlados, mais um teste com a base sintética
+- [x] **US03: Z-score por categoria** (`motor/zscore.py`): score = |z|, sinaliza acima do limiar (padrão 3), motivo do tipo "valor 4,2x acima da média da categoria Viagens"
+- [x] **US03: IQR por categoria** (`motor/iqr.py`): fator 1,5, score em IQRs além do quartil, motivo com os limites do grupo
+- [x] **US05: regra contextual** (`motor/contextual.py`): combinação categoria × conta × centro de custo inexistente ou com frequência < 1% dentro da categoria
+- [x] **Consolidador** (`motor/consolidador.py`): `executar_detectores` (resultado completo, para o experimento) e `consolidar` (só os sinalizados)
+- [x] **Serviço de análise** (`servicos/analise.py`): carrega despesas → roda o motor → grava `ExecucaoAnalise` (parâmetros e seed) e os `AlertaAnomalia` (RF12, RNF06), sem repetir alerta de despesa + método
+- [x] `POST /api/analises`, `GET /api/analises/{id}`, botão "Executar análise" na tela e `flask executar-analise`
+- [x] **US06: lista de alertas** (tela e `GET /api/alertas`, `GET /api/alertas/{id}`) com score, método e motivo, filtro por status e método, e tela de detalhe. Adiantada da S4 (decisão de 23/09)
+- [x] Testes do motor com dados pequenos e controlados, mais um teste com a base sintética
 
 ## Sprint 3 — 12/10 a 25/10
 
@@ -145,3 +149,4 @@ foi testada no Codespace (é preciso um contorno de firewall, descrito no README
 | 23/09/2026 | US01 e US02 concluídas (importação CSV/XLSX, cadastro manual, API, telas, estatísticas). Base sintética passou para 01/09/2025–31/08/2026, porque a importação recusa datas futuras. 157 testes. |
 | 23/09/2026 | `docker compose up` testado no Codespace; S1 concluída. Documentado no README o contorno do firewall (`iptables-legacy`) que bloqueava o tráfego entre os containers. |
 | 23/09/2026 | Fluxo de análise definido e aprovado (`FLUXO_ANALISE.md`): Z-score e IQR por categoria, frequência contextual dentro da categoria, sem alerta repetido por despesa + método, grupo mínimo de 10. Item de 01/10 concluído. |
+| 23/09/2026 | S2 concluída antes do início: Z-score, IQR, contextual, consolidador, serviço de análise, API, comando e telas de análises e alertas (US03, US05, US06). Validado no Docker com a base sintética. 226 testes. |

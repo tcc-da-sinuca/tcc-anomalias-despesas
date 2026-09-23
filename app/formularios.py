@@ -19,6 +19,10 @@ class ImportacaoForm(FlaskForm):
     )
 
 
+class ExecutarAnaliseForm(FlaskForm):
+    """Só o botão "Executar análise"; o formulário existe pela proteção CSRF."""
+
+
 class DespesaForm(FlaskForm):
     valor = StringField("Valor (R$)", render_kw={"inputmode": "decimal", "placeholder": "0,00"})
     data = StringField("Data", render_kw={"type": "date"})

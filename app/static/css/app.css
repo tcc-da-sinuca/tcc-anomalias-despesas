@@ -4,3 +4,9 @@
   border-left: 0;
   border-right: 0;
 }
+
+/* Status de revisão dos alertas. */
+.status-pendente { background-color: var(--bs-secondary); }
+.status-aprovado { background-color: var(--bs-success); }
+.status-irregular { background-color: var(--bs-danger); }
+.status-necessita_justificativa { background-color: var(--bs-warning); color: var(--bs-dark); }

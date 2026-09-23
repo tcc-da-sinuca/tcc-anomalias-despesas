@@ -1,15 +1,17 @@
 """Blueprint das páginas web (Jinja2)."""
 
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 from sqlalchemy import func, select
 
 from app.extensoes import db
-from app.formularios import DespesaForm, ImportacaoForm
-from app.models import AlertaAnomalia, Despesa, LoteImportacao
-from app.models.dominio import PERFIL_AUDITOR
+from app.formularios import DespesaForm, ExecutarAnaliseForm, ImportacaoForm
+from app.models import AlertaAnomalia, Despesa, ExecucaoAnalise, LoteImportacao
+from app.models.dominio import METODOS, PERFIL_AUDITOR, STATUS_REVISAO
+from app.repositorios import alertas as repo_alertas
 from app.repositorios.despesas import paginar_despesas, paginar_lotes, valores_distintos
 from app.rotas.autorizacao import perfil_requerido
+from app.servicos.analise import executar_analise
 from app.servicos.estatisticas import listar_estatisticas
 from app.servicos.importacao import (
     CAMPOS,
@@ -103,4 +105,67 @@ def estatisticas():
         "web/estatisticas.html",
         por_dimensao=listar_estatisticas(),
         nomes_dimensoes=NOMES_DIMENSOES,
+    )
+
+
+@bp.route("/analises")
+@perfil_requerido(PERFIL_AUDITOR)
+def analises():
+    pagina = repo_alertas.paginar_execucoes(request.args.get("pagina", 1, type=int))
+    return render_template("web/analises.html", pagina=pagina, form=ExecutarAnaliseForm())
+
+
+@bp.route("/analises", methods=["POST"])
+@perfil_requerido(PERFIL_AUDITOR)
+def executar():
+    # O token CSRF do formulário é verificado pelo CSRFProtect antes de chegar aqui.
+    execucao = executar_analise(current_user)
+    db.session.commit()
+    flash(
+        f"Análise concluída: {execucao.total_despesas} despesa(s) analisada(s), "
+        f"{execucao.total_alertas} alerta(s) novo(s).",
+        "success",
+    )
+    return redirect(url_for("web.analise", execucao_id=execucao.id))
+
+
+@bp.route("/analises/<int:execucao_id>")
+@perfil_requerido(PERFIL_AUDITOR)
+def analise(execucao_id: int):
+    execucao = db.get_or_404(ExecucaoAnalise, execucao_id)
+    return render_template(
+        "web/analise.html",
+        execucao=execucao,
+        por_metodo=repo_alertas.alertas_por_metodo(execucao.id),
+    )
+
+
+@bp.route("/alertas")
+@perfil_requerido(PERFIL_AUDITOR)
+def alertas():
+    filtros = {
+        "status": request.args.get("status")
+        if request.args.get("status") in STATUS_REVISAO
+        else None,
+        "metodo": request.args.get("metodo") if request.args.get("metodo") in METODOS else None,
+        "execucao_id": request.args.get("execucao_id", type=int),
+    }
+    pagina = repo_alertas.paginar_alertas(request.args.get("pagina", 1, type=int), **filtros)
+    return render_template(
+        "web/alertas.html",
+        pagina=pagina,
+        filtros=filtros,
+        metodos=METODOS,
+        status_revisao=STATUS_REVISAO,
+    )
+
+
+@bp.route("/alertas/<int:alerta_id>")
+@perfil_requerido(PERFIL_AUDITOR)
+def alerta(alerta_id: int):
+    alerta = repo_alertas.obter_alerta(alerta_id)
+    if alerta is None:
+        abort(404)
+    return render_template(
+        "web/alerta.html", alerta=alerta, outros=repo_alertas.outros_alertas_da_despesa(alerta)
     )
