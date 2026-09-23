@@ -1,10 +1,12 @@
 """Carga da base sintética no banco (flask seed-base)."""
 
+from decimal import Decimal
+
+import pandas as pd
 import pytest
 from sqlalchemy import func, select
 
 from dados.gerar_base_sintetica import ConfiguracaoBase, gerar_base, salvar_base
-from dados.seed_banco import CargaBaseError, ler_csv
 
 
 @pytest.fixture
@@ -29,7 +31,7 @@ def _contar(sessao, modelo):
 
 
 def test_carrega_as_despesas_sem_rotulos(seed_base, csv_base, sessao, administrador):
-    from app.models import Despesa, LoteImportacao
+    from app.models import Despesa, EstatisticaReferencia, LoteImportacao
 
     resultado = seed_base("--arquivo", str(csv_base))
 
@@ -41,9 +43,10 @@ def test_carrega_as_despesas_sem_rotulos(seed_base, csv_base, sessao, administra
     assert (lote.total_linhas, lote.linhas_validas, lote.erros) == (300, 300, [])
     assert _contar(sessao, Despesa) == 300
 
-    base = ler_csv(csv_base)
+    base = pd.read_csv(csv_base, dtype=str)
     total = sessao.scalar(select(func.sum(Despesa.valor)))
-    assert total == sum(base["valor"])
+    assert total == sum(Decimal(v) for v in base["valor"])
+    assert _contar(sessao, EstatisticaReferencia) > 0  # US02: recalculadas na carga
 
 
 def test_segunda_carga_nao_duplica(seed_base, csv_base, sessao):
@@ -95,9 +98,11 @@ def test_exige_administrador(app, csv_base, monkeypatch):
     assert "flask seed-admin" in resultado.output
 
 
-def test_csv_sem_colunas_obrigatorias(tmp_path):
+def test_csv_sem_colunas_obrigatorias(seed_base, tmp_path):
     caminho = tmp_path / "incompleto.csv"
     caminho.write_text("data,valor\n2026-01-05,10.00\n", encoding="utf-8")
 
-    with pytest.raises(CargaBaseError, match="categoria"):
-        ler_csv(caminho)
+    resultado = seed_base("--arquivo", str(caminho))
+
+    assert resultado.exit_code != 0
+    assert "Colunas obrigatórias ausentes" in resultado.output

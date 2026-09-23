@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block titulo %}Lote {{ lote.id }} · {{ super() }}{% endblock %}
+{% block conteudo %}
+{% set com_erro = lote.total_linhas - lote.linhas_validas %}
+<h1 class="h4 mb-1">Importação de {{ lote.nome_arquivo }}</h1>
+<p class="text-muted small">Lote {{ lote.id }} · {{ lote.importado_em | data_hora_br }} · por {{ lote.usuario.nome }}</p>
+
+<div class="row g-3 mb-3">
+  <div class="col-sm-4"><div class="card"><div class="card-body">
+    <div class="text-muted small">Linhas no arquivo</div>
+    <div class="fs-3 fw-semibold">{{ lote.total_linhas }}</div>
+  </div></div></div>
+  <div class="col-sm-4"><div class="card border-success"><div class="card-body">
+    <div class="text-muted small">Importadas</div>
+    <div class="fs-3 fw-semibold text-success">{{ lote.linhas_validas }}</div>
+  </div></div></div>
+  <div class="col-sm-4"><div class="card {{ 'border-danger' if com_erro }}"><div class="card-body">
+    <div class="text-muted small">Com erro (não importadas)</div>
+    <div class="fs-3 fw-semibold {{ 'text-danger' if com_erro }}">{{ com_erro }}</div>
+  </div></div></div>
+</div>
+
+{% if lote.linhas_validas %}
+<p><a href="{{ url_for('web.despesas', lote_id=lote.id) }}">Ver as despesas importadas</a></p>
+{% endif %}
+
+{% if lote.erros %}
+<h2 class="h6">Erros por linha</h2>
+<p class="small text-muted">Corrija as linhas no arquivo e importe só elas novamente.</p>
+<div class="table-responsive">
+  <table class="table table-sm align-middle">
+    <thead><tr><th>Linha</th><th>Campo</th><th>Problema</th></tr></thead>
+    <tbody>
+      {% for erro in lote.erros %}
+      <tr>
+        <td>{{ erro.linha if erro.linha is not none else '' }}</td>
+        <td>{{ erro.campo or '' }}</td>
+        <td>{{ erro.mensagem }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="alert alert-success">Todas as linhas foram importadas.</div>
+{% endif %}
+{% endblock %}

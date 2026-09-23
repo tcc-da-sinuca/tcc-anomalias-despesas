@@ -68,9 +68,10 @@ def registrar_comandos(app: Flask) -> None:
         from sqlalchemy import select
 
         from app.models import Usuario
+        from app.servicos.importacao import ArquivoInvalidoError
         from app.servicos.usuarios import buscar_por_email
         from dados.gerar_base_sintetica import NOME_BASE, ConfiguracaoBase, gerar_base, salvar_base
-        from dados.seed_banco import CargaBaseError, buscar_lote, carregar_base, ler_csv
+        from dados.seed_banco import CargaBaseError, buscar_lote, carregar_base
 
         nome_arquivo = arquivo.name if arquivo else f"{NOME_BASE}.csv"
         existente = buscar_lote(nome_arquivo)
@@ -95,9 +96,21 @@ def registrar_comandos(app: Flask) -> None:
             click.echo(f"Base gerada em {arquivo} (seed {seed}).")
 
         try:
-            lote = carregar_base(ler_csv(arquivo), nome_arquivo, usuario, forcar=forcar)
-        except CargaBaseError as erro:
+            lote = carregar_base(arquivo, usuario, forcar=forcar)
+        except (CargaBaseError, ArquivoInvalidoError) as erro:
             db.session.rollback()
             raise click.ClickException(str(erro)) from erro
         db.session.commit()
-        click.echo(f"{lote.linhas_validas} despesas carregadas no lote {lote.id}.")
+        click.echo(
+            f"{lote.linhas_validas} despesas carregadas no lote {lote.id}. "
+            "Estatísticas de referência recalculadas."
+        )
+
+    @app.cli.command("recalcular-estatisticas")
+    def recalcular_estatisticas_cmd():
+        """Recalcula as estatísticas de referência de todas as despesas (US02)."""
+        from app.servicos.estatisticas import recalcular_estatisticas
+
+        grupos = recalcular_estatisticas()
+        db.session.commit()
+        click.echo(f"Estatísticas recalculadas: {grupos} grupos.")

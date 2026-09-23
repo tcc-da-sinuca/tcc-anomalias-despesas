@@ -47,9 +47,9 @@ interface deve deixar isso claro e sempre exigir revisão humana.
 | RF03 / US03 | Z-score e IQR por grupo. Score numérico por despesa e sinalização acima do limiar. | Must | 2 |
 | RF05 / US05 | Regras contextuais: combinação categoria × conta × centro de custo rara ou inexistente no histórico. | Must | 2 |
 | RF04 / US04 | Isolation Forest multivariado, com score por despesa. | Should | 3 |
-| RF04 / US06 | Lista de alertas com score, método e ao menos um motivo textual. | Must | 2–4 |
-| RF06-07 / US07 | Classificar alerta: `aprovado`, `irregular`, `necessita_justificativa`. | Must | 4 |
-| RF08 / US08 | Parecer obrigatório quando o status for `irregular` ou `necessita_justificativa`. | Should | 4 |
+| RF04 / US06 | Lista de alertas com score, método e ao menos um motivo textual. | Must | 2 |
+| RF06-07 / US07 | Classificar alerta: `aprovado`, `irregular`, `necessita_justificativa`. | Must | 3 |
+| RF08 / US08 | Parecer obrigatório quando o status for `irregular` ou `necessita_justificativa`. | Should | 3 |
 | RF09 / US09 | Dashboard: total de despesas, total sinalizado, % sinalizado, alertas por status. | Must | 4 |
 | RF10 / US10 | Filtros combináveis: período, categoria, conta, centro de custo, funcionário, status, método. | Should | 4 |
 | RF11 / US11 | Relatório mensal exportável: total analisado, anomalias e taxa de confirmação de irregularidade. | Could | 4 |
@@ -58,6 +58,7 @@ interface deve deixar isso claro e sempre exigir revisão humana.
 
 **Sprints:** S1 14/09–27/09 · S2 28/09–11/10 · S3 12/10–25/10 · S4 26/10–02/11.
 A S4 tem só uma semana e muitas histórias. **Antecipe a tela de alertas e o fluxo de revisão sempre que possível.**
+Decisão da equipe (23/09): US06 foi para a S2 e US07/US08 para a S3; se faltar tempo na S4, a US11 é a primeira a sair.
 
 ### Requisitos não funcionais (texto da documentação entregue)
 - **RNF01 Desempenho:** o processamento deverá ser eficiente para o volume de dados definido no projeto.
@@ -136,14 +137,14 @@ Já existem: `GET /api/saude` (verificação de saúde) e `GET /api/usuario-atua
 ```
 app/
   __init__.py          # create_app()
-  config.py  extensoes.py  cli.py
+  config.py  extensoes.py  cli.py  formularios.py  filtros.py
   models/              # entidades SQLAlchemy + dominio.py
   repositorios/
   servicos/            # importacao, analise, revisao, relatorio, usuarios, parametros
   rotas/               # blueprints: api, web, auth (+ autorizacao.py)
   templates/  static/
 motor/
-  zscore.py  iqr.py  isolation_forest.py  contextual.py  consolidador.py
+  calendario.py  estatisticas.py  zscore.py  iqr.py  isolation_forest.py  contextual.py  consolidador.py
 dados/
   gerar_base_sintetica.py   # base realista + anomalias injetadas e rotuladas
   seed_banco.py

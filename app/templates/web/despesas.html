@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% from "_macros.html" import paginacao %}
+{% block titulo %}Despesas · {{ super() }}{% endblock %}
+{% block conteudo %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <h1 class="h4 m-0">Despesas</h1>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-primary btn-sm" href="{{ url_for('web.importar') }}">Importar arquivo</a>
+    <a class="btn btn-primary btn-sm" href="{{ url_for('web.nova_despesa') }}">Nova despesa</a>
+  </div>
+</div>
+
+{% if lote %}
+<div class="alert alert-light border d-flex justify-content-between align-items-center">
+  <span>Mostrando só o lote <a href="{{ url_for('web.lote', lote_id=lote.id) }}">{{ lote.nome_arquivo }}</a>.</span>
+  <a href="{{ url_for('web.despesas') }}">Ver todas</a>
+</div>
+{% endif %}
+
+{% if pagina.total %}
+<p class="text-muted small">{{ pagina.total }} despesa(s).</p>
+<div class="table-responsive">
+  <table class="table table-sm table-hover align-middle">
+    <thead>
+      <tr>
+        <th>Data</th>
+        <th class="text-end">Valor</th>
+        <th>Categoria</th>
+        <th>Conta</th>
+        <th>Centro de custo</th>
+        <th>Funcionário</th>
+        <th>Descrição</th>
+        <th>Origem</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for despesa in pagina.items %}
+      <tr>
+        <td class="text-nowrap">{{ despesa.data | data_br }}</td>
+        <td class="text-end text-nowrap">{{ despesa.valor | moeda }}</td>
+        <td>{{ despesa.categoria }}</td>
+        <td>{{ despesa.conta_contabil }}</td>
+        <td>{{ despesa.centro_custo }}</td>
+        <td>{{ despesa.funcionario }}</td>
+        <td class="text-muted small">{{ despesa.descricao or '' }}</td>
+        <td class="small">
+          {% if despesa.lote_id %}
+          <a href="{{ url_for('web.lote', lote_id=despesa.lote_id) }}">lote {{ despesa.lote_id }}</a>
+          {% else %}manual{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{{ paginacao(pagina, 'web.despesas', lote_id=lote.id if lote else None) }}
+{% else %}
+<p class="text-muted">Nenhuma despesa cadastrada. Importe um arquivo ou cadastre uma despesa.</p>
+{% endif %}
+{% endblock %}

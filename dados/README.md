@@ -31,7 +31,7 @@ rótulos **não vão para o banco**: o experimento lê o CSV e roda o motor dire
 
 ## Despesas normais
 
-- 12 meses (01/10/2025 a 30/09/2026), só em dias úteis (segunda a sexta, sem feriados nacionais; ver `motor/calendario.py`).
+- 12 meses (01/09/2025 a 31/08/2026, todo no passado, porque a importação recusa datas futuras), só em dias úteis (segunda a sexta, sem feriados nacionais; ver `motor/calendario.py`).
 - 7 categorias, cada uma com valor log-normal (mediana e dispersão próprias), 1 ou 2 contas contábeis exclusivas e os centros de custo em que costuma aparecer.
 - 5 centros de custo (`CC-ADM`, `CC-COM`, `CC-TI`, `CC-OPS`, `CC-RH`) e 40 funcionários (`F001` a `F040`), cada um ligado a um único centro de custo.
 - Sazonalidade: volume menor em dezembro e janeiro; Viagens e Hospedagem caem nas férias; Treinamentos se concentram em mar–mai e ago–out; Material de escritório sobe no início do ano.

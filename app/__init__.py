@@ -30,6 +30,10 @@ def create_app(config_class=Config) -> Flask:
     registrar_comandos(app)
     _registrar_erros(app)
 
+    from app.filtros import registrar_filtros
+
+    registrar_filtros(app)
+
     return app
 
 
@@ -70,3 +74,7 @@ def _registrar_erros(app: Flask) -> None:
     @app.errorhandler(404)
     def nao_encontrado(_erro):
         return _responder(404, "Página ou recurso não encontrado.")
+
+    @app.errorhandler(413)
+    def arquivo_grande(_erro):
+        return _responder(413, "Arquivo grande demais. O limite é de 16 MB.")

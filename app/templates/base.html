@@ -12,12 +12,33 @@
     <div class="container-fluid">
       <a class="navbar-brand" href="{{ url_for('web.inicio') }}">Anomalias em Despesas</a>
       {% if current_user.is_authenticated %}
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menu"
+              aria-controls="menu" aria-expanded="false" aria-label="Abrir menu">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="menu">
+      {% set itens_menu = [
+        ('web.inicio', 'Início'),
+        ('web.despesas', 'Despesas'),
+        ('web.importar', 'Importar'),
+        ('web.estatisticas', 'Estatísticas'),
+      ] %}
+      <ul class="navbar-nav me-auto">
+        {% for endpoint, rotulo in itens_menu %}
+        <li class="nav-item">
+          <a class="nav-link {{ 'active' if request.endpoint == endpoint }}"
+             {{ 'aria-current=page' if request.endpoint == endpoint }}
+             href="{{ url_for(endpoint) }}">{{ rotulo }}</a>
+        </li>
+        {% endfor %}
+      </ul>
       <div class="d-flex align-items-center gap-3 text-light">
         <span class="small">{{ current_user.nome }} <span class="badge text-bg-secondary">{{ current_user.perfil }}</span></span>
         <form method="post" action="{{ url_for('auth.logout') }}" class="m-0">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <button type="submit" class="btn btn-outline-light btn-sm">Sair</button>
         </form>
+      </div>
       </div>
       {% endif %}
     </div>

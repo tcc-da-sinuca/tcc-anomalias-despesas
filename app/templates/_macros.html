@@ -1,0 +1,35 @@
+{# Macros compartilhadas pelas páginas. #}
+
+{% macro paginacao(pagina, endpoint) %}
+{% if pagina.pages > 1 %}
+<nav aria-label="Paginação">
+  <ul class="pagination pagination-sm">
+    <li class="page-item {{ 'disabled' if not pagina.has_prev }}">
+      <a class="page-link" href="{{ url_for(endpoint, pagina=pagina.prev_num, **kwargs) if pagina.has_prev else '#' }}">Anterior</a>
+    </li>
+    {% for numero in pagina.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+      {% if numero %}
+      <li class="page-item {{ 'active' if numero == pagina.page }}">
+        <a class="page-link" href="{{ url_for(endpoint, pagina=numero, **kwargs) }}">{{ numero }}</a>
+      </li>
+      {% else %}
+      <li class="page-item disabled"><span class="page-link">…</span></li>
+      {% endif %}
+    {% endfor %}
+    <li class="page-item {{ 'disabled' if not pagina.has_next }}">
+      <a class="page-link" href="{{ url_for(endpoint, pagina=pagina.next_num, **kwargs) if pagina.has_next else '#' }}">Próxima</a>
+    </li>
+  </ul>
+</nav>
+{% endif %}
+{% endmacro %}
+
+{% macro campo(field, classe_coluna='col-md-6') %}
+<div class="{{ classe_coluna }}">
+  {{ field.label(class_='form-label') }}
+  {{ field(class_='form-control' ~ (' is-invalid' if field.errors else '')) }}
+  {% for erro in field.errors %}
+  <div class="invalid-feedback">{{ erro }}</div>
+  {% endfor %}
+</div>
+{% endmacro %}

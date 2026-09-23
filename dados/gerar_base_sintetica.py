@@ -168,8 +168,8 @@ CATEGORIAS_FRACIONAMENTO = ("Material de escritório", "Software", "Hospedagem")
 class ConfiguracaoBase:
     seed: int = 42
     n: int = 5000  # total de linhas (normais + anômalas)
-    inicio: date = date(2025, 10, 1)
-    fim: date = date(2026, 9, 30)
+    inicio: date = date(2025, 9, 1)
+    fim: date = date(2026, 8, 31)
     taxa_anomalias: float = 0.03  # eventos de anomalia / n
     limite_fracionamento: Decimal = field(default=Decimal("1000.00"))
 

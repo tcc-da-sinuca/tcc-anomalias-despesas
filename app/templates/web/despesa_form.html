@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% from "_macros.html" import campo %}
+{% block titulo %}Nova despesa · {{ super() }}{% endblock %}
+{% block conteudo %}
+<h1 class="h4 mb-3">Nova despesa</h1>
+<form method="post" class="card card-body" novalidate>
+  {{ form.hidden_tag() }}
+  <div class="row g-3">
+    {{ campo(form.valor, 'col-sm-6 col-md-3') }}
+    {{ campo(form.data, 'col-sm-6 col-md-3') }}
+    {{ campo(form.categoria) }}
+    {{ campo(form.conta_contabil, 'col-md-4') }}
+    {{ campo(form.centro_custo, 'col-md-4') }}
+    {{ campo(form.funcionario, 'col-md-4') }}
+    {{ campo(form.descricao, 'col-12') }}
+  </div>
+  <div class="mt-3 d-flex gap-2">
+    <button type="submit" class="btn btn-primary">Cadastrar</button>
+    <a href="{{ url_for('web.despesas') }}" class="btn btn-link">Cancelar</a>
+  </div>
+</form>
+{% for campo_nome, valores in sugestoes.items() %}
+<datalist id="sugestoes-{{ campo_nome }}">
+  {% for valor in valores %}<option value="{{ valor }}">{% endfor %}
+</datalist>
+{% endfor %}
+{% endblock %}

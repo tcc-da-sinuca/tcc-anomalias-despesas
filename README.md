@@ -37,7 +37,7 @@ Entre com o `ADMIN_EMAIL` e a `ADMIN_SENHA` definidos no `.env`.
 
 ### Carga da base sintética
 
-A base sintética tem 5.000 despesas de 12 meses (out/2025 a set/2026), com anomalias
+A base sintética tem 5.000 despesas de 12 meses (set/2025 a ago/2026), com anomalias
 injetadas e rotuladas. Ela é gerada com seed fixa, então todos obtêm a mesma base.
 
 ```bash
@@ -58,9 +58,19 @@ python -m dados.gerar_base_sintetica --help        # seed, volume, período, tax
 Os rótulos (`anomalia_real`, `tipo_anomalia`) ficam só no arquivo e não vão para o
 banco. Detalhes em [`dados/README.md`](dados/README.md).
 
+### Importar despesas
+
+Pela tela **Importar** (menu superior) ou pela API (`POST /api/despesas/importar`,
+campo `arquivo`). Aceita CSV separado por `,` ou `;` e XLSX. A primeira linha precisa
+ter as colunas valor, data, categoria, conta contábil, centro de custo e funcionário;
+descrição é opcional. Linhas com erro não entram e aparecem listadas por número de
+linha; as demais são importadas. Após cada importação, as estatísticas de referência
+(tela **Estatísticas**) são recalculadas.
+
 ### Comandos úteis
 
 ```bash
+docker compose exec app flask recalcular-estatisticas          # recalcula as estatísticas de referência
 docker compose exec app flask criar-usuario --perfil auditor   # cria um auditor
 docker compose exec app flask db migrate -m "Descreve a mudança"   # nova migration após alterar modelos
 docker compose exec app flask db upgrade
@@ -119,7 +129,7 @@ O caminho até a entrega final, com o que já foi feito e o que falta, está em
 
 | Sprint | Período | Conteúdo | Situação |
 |---|---|---|---|
-| S1 | 14/09–27/09 | Modelo de dados, autenticação, infraestrutura; importação (US01) e estatísticas (US02) | Modelo de dados, autenticação, infraestrutura e base sintética prontos; US01 e US02 pendentes (ver `docs/ROTEIRO.md`) |
-| S2 | 28/09–11/10 | Z-score, IQR (US03), regras contextuais (US05), alertas iniciais | — |
-| S3 | 12/10–25/10 | Isolation Forest (US04), experimento comparativo | — |
-| S4 | 26/10–02/11 | Revisão e parecer, dashboard, filtros, relatório, parâmetros | — |
+| S1 | 14/09–27/09 | Modelo de dados, autenticação, infraestrutura; importação (US01) e estatísticas (US02) | Modelo de dados, autenticação, infraestrutura, base sintética, importação (US01) e estatísticas (US02) prontos |
+| S2 | 28/09–11/10 | Z-score, IQR (US03), regras contextuais (US05), lista de alertas (US06) | — |
+| S3 | 12/10–25/10 | Isolation Forest (US04), experimento comparativo, revisão e parecer (US07, US08) | — |
+| S4 | 26/10–02/11 | Dashboard, filtros, parâmetros, usuários, job, relatório | — |
