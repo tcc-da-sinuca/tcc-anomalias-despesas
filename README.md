@@ -30,13 +30,33 @@ Na subida, o container da aplicação:
 
 1. aplica as migrations (`flask db upgrade`);
 2. cria o administrador inicial com os dados `ADMIN_*` do `.env` e os parâmetros padrão dos métodos (`flask seed-admin`);
-3. inicia o servidor em <http://localhost:5000>.
+3. carrega a base sintética, se `SEED_BASE_SINTETICA=1` (`flask seed-base`);
+4. inicia o servidor em <http://localhost:5000>.
 
 Entre com o `ADMIN_EMAIL` e a `ADMIN_SENHA` definidos no `.env`.
 
 ### Carga da base sintética
 
-Ainda não disponível. Entra na Sprint 1–2 com `dados/gerar_base_sintetica.py` e `dados/seed_banco.py`.
+A base sintética tem 5.000 despesas de 12 meses (out/2025 a set/2026), com anomalias
+injetadas e rotuladas. Ela é gerada com seed fixa, então todos obtêm a mesma base.
+
+```bash
+docker compose exec app flask seed-base            # gera (seed 42) e carrega no banco
+```
+
+Para carregar automaticamente na subida, defina `SEED_BASE_SINTETICA=1` no `.env`.
+O comando pode ser repetido: se a base já estiver carregada, não faz nada
+(`--forcar` substitui o lote, desde que as despesas ainda não tenham alertas).
+
+Para só gerar os arquivos, sem banco:
+
+```bash
+python -m dados.gerar_base_sintetica               # CSV, XLSX e metadados em dados/gerados/
+python -m dados.gerar_base_sintetica --help        # seed, volume, período, taxa, limite
+```
+
+Os rótulos (`anomalia_real`, `tipo_anomalia`) ficam só no arquivo e não vão para o
+banco. Detalhes em [`dados/README.md`](dados/README.md).
 
 ### Comandos úteis
 
@@ -68,10 +88,11 @@ Os testes marcados `postgres` usam `TEST_DATABASE_URL` e são pulados quando o
 banco não está disponível. O banco `despesas_teste` é criado automaticamente na
 primeira subida do container `db`.
 
-> **Primeira execução:** o repositório foi criado num ambiente sem acesso ao PyPI.
-> Por isso, os testes que dependem de Flask-SQLAlchemy e Flask-Login ainda não foram
-> executados. O SQL do trigger de imutabilidade foi validado à parte no PostgreSQL 16.
-> Rode `pytest` e `docker compose up` e corrija o que falhar antes de seguir.
+> **Validação (23/09/2026):** os testes passaram com PostgreSQL 16, incluindo
+> o trigger de imutabilidade e a sincronia entre modelos e migrations. O fluxo do
+> entrypoint (`flask db upgrade`, `flask seed-admin` e `flask run`) foi executado
+> fora do Docker. A subida completa com `docker compose up` ainda precisa ser
+> conferida num ambiente com Docker, como o Codespace.
 
 ---
 
@@ -96,7 +117,7 @@ O diagrama de classes está em [`docs/diagramas/classes.puml`](docs/diagramas/cl
 
 | Sprint | Período | Conteúdo | Situação |
 |---|---|---|---|
-| S1 | 14/09–27/09 | Modelo de dados, autenticação, infraestrutura; importação (US01) e estatísticas (US02) | Modelo de dados, autenticação e infraestrutura prontos; US01 e US02 em andamento |
+| S1 | 14/09–27/09 | Modelo de dados, autenticação, infraestrutura; importação (US01) e estatísticas (US02) | Modelo de dados, autenticação, infraestrutura e base sintética prontos; US01 e US02 em andamento |
 | S2 | 28/09–11/10 | Z-score, IQR (US03), regras contextuais (US05), alertas iniciais | — |
 | S3 | 12/10–25/10 | Isolation Forest (US04), experimento comparativo | — |
 | S4 | 26/10–02/11 | Revisão e parecer, dashboard, filtros, relatório, parâmetros | — |

@@ -1,6 +1,7 @@
 """Comandos de linha de comando (flask <comando>)."""
 
 import os
+from pathlib import Path
 
 import click
 from flask import Flask
@@ -50,3 +51,53 @@ def registrar_comandos(app: Flask) -> None:
             raise click.ClickException(str(erro)) from erro
         db.session.commit()
         click.echo(f"Usuário {email} ({perfil}) criado.")
+
+    @app.cli.command("seed-base")
+    @click.option(
+        "--arquivo",
+        type=click.Path(exists=True, dir_okay=False, path_type=Path),
+        help="CSV gerado por dados/gerar_base_sintetica.py. Sem esta opção, a base é gerada agora.",
+    )
+    @click.option("--seed", default=42, show_default=True, help="Seed usada ao gerar a base.")
+    @click.option("--forcar", is_flag=True, help="Substitui a base sintética já carregada.")
+    def seed_base(arquivo, seed, forcar):
+        """Carrega a base sintética de despesas, sem os rótulos de anomalia.
+
+        Pode ser executado várias vezes: se a base já estiver carregada, não faz nada.
+        """
+        from sqlalchemy import select
+
+        from app.models import Usuario
+        from app.servicos.usuarios import buscar_por_email
+        from dados.gerar_base_sintetica import NOME_BASE, ConfiguracaoBase, gerar_base, salvar_base
+        from dados.seed_banco import CargaBaseError, buscar_lote, carregar_base, ler_csv
+
+        nome_arquivo = arquivo.name if arquivo else f"{NOME_BASE}.csv"
+        existente = buscar_lote(nome_arquivo)
+        if existente is not None and not forcar:
+            click.echo(
+                f"Base sintética já carregada (lote {existente.id}). Use --forcar para substituir."
+            )
+            return
+
+        email = os.environ.get("ADMIN_EMAIL")
+        usuario = buscar_por_email(email) if email else None
+        if usuario is None or not usuario.eh_administrador:
+            usuario = db.session.scalar(
+                select(Usuario).where(Usuario.perfil == PERFIL_ADMINISTRADOR).order_by(Usuario.id)
+            )
+        if usuario is None:
+            raise click.ClickException("Nenhum administrador cadastrado. Rode: flask seed-admin")
+
+        if arquivo is None:
+            config = ConfiguracaoBase(seed=seed)
+            arquivo = salvar_base(gerar_base(config), config)["csv"]
+            click.echo(f"Base gerada em {arquivo} (seed {seed}).")
+
+        try:
+            lote = carregar_base(ler_csv(arquivo), nome_arquivo, usuario, forcar=forcar)
+        except CargaBaseError as erro:
+            db.session.rollback()
+            raise click.ClickException(str(erro)) from erro
+        db.session.commit()
+        click.echo(f"{lote.linhas_validas} despesas carregadas no lote {lote.id}.")

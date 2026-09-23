@@ -8,4 +8,9 @@ flask db upgrade
 echo ">> Garantindo administrador inicial e parâmetros padrão..."
 flask seed-admin
 
+if [ "${SEED_BASE_SINTETICA:-0}" = "1" ]; then
+    echo ">> Carregando a base sintética (não faz nada se já estiver carregada)..."
+    flask seed-base
+fi
+
 exec "$@"
