@@ -12,15 +12,15 @@ entregue continuam indo para [`MUDANCAS_PARA_DOCUMENTACAO.md`](MUDANCAS_PARA_DOC
 
 ## Situação atual (atualizado em 23/09/2026)
 
-**Sprint 1 (14/09–27/09): histórias concluídas.** Importação (US01) e estatísticas de
-referência (US02) prontas, além da base do sistema e da base sintética. Na S1 só falta
-testar o `docker compose up` num ambiente com Docker.
+**Sprint 1 (14/09–27/09): concluída.** Importação (US01), estatísticas de referência
+(US02), base do sistema e base sintética prontas. A subida completa com `docker compose up`
+foi testada no Codespace (é preciso um contorno de firewall, descrito no README).
 
 | Área | Situação |
 |---|---|
 | Modelo de dados e migrations | ✅ Pronto, com imutabilidade do parecer (eventos + trigger) |
 | Autenticação e perfis | ✅ Login, logout, `perfil_requerido`, CSRF |
-| Infraestrutura | ✅ Docker Compose e entrypoint escritos · ⚠️ `docker compose up` ainda não testado num ambiente com Docker |
+| Infraestrutura | ✅ `docker compose up` testado no Codespace: migrations, admin, login, `seed-base` e testes no container |
 | Base sintética | ✅ Gerador, carga no banco (`flask seed-base`) e calendário de feriados |
 | Importação e estatísticas (US01, US02) | ✅ CSV/XLSX com erros por linha, cadastro manual, API, telas e estatísticas recalculadas a cada importação |
 | Motor de detecção | ⬜ Contrato, calendário e estatísticas por grupo (base para Z-score e IQR) |
@@ -37,7 +37,7 @@ testar o `docker compose up` num ambiente com Docker.
 | Data | Marco | Quem depende | Situação |
 |---|---|---|---|
 | 25/09 | Modelo de dados estável, refletido em `classes.puml` | Documentação: diagrama de classes (27/09) | ✅ |
-| 27/09 | **Fim da S1:** US01 e US02 | — | ✅ (23/09) |
+| 27/09 | **Fim da S1:** US01, US02 e subida com Docker Compose | — | ✅ (23/09) |
 | 01/10 | Fluxo "executar análise → gerar alertas → registrar parecer" implementado ou, no mínimo, definido | Documentação: diagramas de sequência e arquitetura (03/10) | ⬜ |
 | 11/10 | **Fim da S2:** Z-score, IQR, contextual e lista de alertas com motivo | — | ⬜ |
 | 18/10 | `experimentos/resultados/metricas.csv` gerado por script, com seed e parâmetros | Artigo: resultados (25/10) | ⬜ |
@@ -72,8 +72,9 @@ testar o `docker compose up` num ambiente com Docker.
   - recalculadas automaticamente após cada importação e cadastro (substituem as anteriores)
   - tela de estatísticas e comando `flask recalcular-estatisticas`
 
-### Falta
-- [ ] Rodar `docker compose up` no Codespace e corrigir o que falhar
+- [x] **`docker compose up` testado no Codespace**: migrations, admin inicial, login, `GET /api/saude`,
+  `flask seed-base` e os 157 testes dentro do container. O tráfego entre containers precisou de um
+  contorno de firewall do Codespace (seção "Problema conhecido" do README)
 
 ---
 
@@ -131,7 +132,7 @@ testar o `docker compose up` num ambiente com Docker.
 |---|---|
 | S4 tem uma semana e muitas histórias | Lista de alertas adiantada para a S2 e revisão/parecer para a S3. US11 (Could) é a primeira a sair se faltar tempo |
 | Prazo de 01/10 para o fluxo de análise cai no começo da S2 | Definir as assinaturas dos serviços antes de implementar os detectores |
-| `docker compose up` nunca foi executado | Testar no Codespace ainda na S1 |
+| `docker compose up` só foi testado no Codespace | Repetir num clone limpo e, se possível, com Docker Desktop no Fechamento |
 | Isolation Forest pode detectar mal duplicidade e fracionamento | O experimento mostra isso por tipo de anomalia; o resultado é reportado, não é meta |
 
 ---
@@ -143,3 +144,4 @@ testar o `docker compose up` num ambiente com Docker.
 | 23/09/2026 | Roteiro criado. S1: base do sistema e base sintética prontas; US01 e US02 abertas. Proposta de adiantar a lista de alertas (S2) e a revisão/parecer (S3). |
 | 23/09/2026 | Equipe aprovou o novo plano: US06 na S2, US07/US08 na S3; US11 é a primeira a sair se faltar tempo. |
 | 23/09/2026 | US01 e US02 concluídas (importação CSV/XLSX, cadastro manual, API, telas, estatísticas). Base sintética passou para 01/09/2025–31/08/2026, porque a importação recusa datas futuras. 157 testes. |
+| 23/09/2026 | `docker compose up` testado no Codespace; S1 concluída. Documentado no README o contorno do firewall (`iptables-legacy`) que bloqueava o tráfego entre os containers. |

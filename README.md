@@ -78,6 +78,24 @@ docker compose down            # para os serviços (os dados continuam no volume
 docker compose down -v         # para e APAGA o banco
 ```
 
+### Problema conhecido no Codespace: o app não conecta no banco
+
+Se o `docker compose up` parar em `>> Aplicando migrations...` com
+`connection timeout expired`, o firewall da VM está bloqueando o tráfego entre os
+containers. A imagem do Codespace deixa uma tabela `iptables-legacy` com
+`FORWARD DROP` que só libera a rede padrão `docker0`, não a rede criada pelo
+Compose. Libere as redes do Docker nessa tabela (vale até o Codespace reiniciar)
+e suba de novo:
+
+```bash
+sudo iptables-legacy -I DOCKER-USER -i br-+ -j ACCEPT
+sudo iptables-legacy -I DOCKER-USER -o br-+ -j ACCEPT
+docker compose up --build
+```
+
+O problema é do ambiente do Codespace, não do projeto. Com Docker Desktop (Windows e
+Mac) ele não deve aparecer, mas isso ainda não foi testado.
+
 ---
 
 ## Testes
@@ -98,11 +116,9 @@ Os testes marcados `postgres` usam `TEST_DATABASE_URL` e são pulados quando o
 banco não está disponível. O banco `despesas_teste` é criado automaticamente na
 primeira subida do container `db`.
 
-> **Validação (23/09/2026):** os testes passaram com PostgreSQL 16, incluindo
-> o trigger de imutabilidade e a sincronia entre modelos e migrations. O fluxo do
-> entrypoint (`flask db upgrade`, `flask seed-admin` e `flask run`) foi executado
-> fora do Docker. A subida completa com `docker compose up` ainda precisa ser
-> conferida num ambiente com Docker, como o Codespace.
+> **Validação (23/09/2026):** `docker compose up --build` testado no Codespace.
+> As migrations, o administrador inicial, o login, `GET /api/saude`, `flask seed-base`
+> (5.000 despesas) e os 157 testes rodaram dentro do container, contra o PostgreSQL 16.
 
 ---
 
