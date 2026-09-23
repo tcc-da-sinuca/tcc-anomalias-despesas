@@ -38,7 +38,7 @@ foi testada no Codespace (é preciso um contorno de firewall, descrito no README
 |---|---|---|---|
 | 25/09 | Modelo de dados estável, refletido em `classes.puml` | Documentação: diagrama de classes (27/09) | ✅ |
 | 27/09 | **Fim da S1:** US01, US02 e subida com Docker Compose | — | ✅ (23/09) |
-| 01/10 | Fluxo "executar análise → gerar alertas → registrar parecer" implementado ou, no mínimo, definido | Documentação: diagramas de sequência e arquitetura (03/10) | ⬜ |
+| 01/10 | Fluxo "executar análise → gerar alertas → registrar parecer" implementado ou, no mínimo, definido | Documentação: diagramas de sequência e arquitetura (03/10) | ✅ definido (23/09) |
 | 11/10 | **Fim da S2:** Z-score, IQR, contextual e lista de alertas com motivo | — | ⬜ |
 | 18/10 | `experimentos/resultados/metricas.csv` gerado por script, com seed e parâmetros | Artigo: resultados (25/10) | ⬜ |
 | 25/10 | **Fim da S3:** Isolation Forest, experimento, revisão e parecer | — | ⬜ |
@@ -80,12 +80,11 @@ foi testada no Codespace (é preciso um contorno de firewall, descrito no README
 
 ## Sprint 2 — 28/09 a 11/10
 
-- [ ] **Até 01/10: definir o fluxo de análise** para a equipe de documentação
-  - assinaturas de `servicos/analise.py` e `servicos/revisao.py` e do `motor/consolidador.py`
-  - avisar a documentação e registrar em `MUDANCAS_PARA_DOCUMENTACAO.md`
-- [ ] **US03: Z-score por grupo** (`motor/zscore.py`): score = |z|, sinaliza acima do limiar (padrão 3), motivo do tipo "valor 4,2x acima da média da categoria Viagens"
-- [ ] **US03: IQR por grupo** (`motor/iqr.py`): fator 1,5, motivo com os limites do grupo
-- [ ] **US05: regra contextual** (`motor/contextual.py`): combinação categoria × conta × centro de custo inexistente ou com frequência < 1%
+- [x] **Até 01/10: definir o fluxo de análise** para a equipe de documentação: feito em 23/09
+  em [`FLUXO_ANALISE.md`](FLUXO_ANALISE.md), registrado nos itens 11 e 12 de `MUDANCAS_PARA_DOCUMENTACAO.md`
+- [ ] **US03: Z-score por categoria** (`motor/zscore.py`): score = |z|, sinaliza acima do limiar (padrão 3), motivo do tipo "valor 4,2x acima da média da categoria Viagens"
+- [ ] **US03: IQR por categoria** (`motor/iqr.py`): fator 1,5, motivo com os limites do grupo
+- [ ] **US05: regra contextual** (`motor/contextual.py`): combinação categoria × conta × centro de custo inexistente ou com frequência < 1% dentro da categoria
 - [ ] **Consolidador** (`motor/consolidador.py`): junta os detectores e gera os dados dos alertas
 - [ ] **Serviço de análise** (`servicos/analise.py`): carrega despesas → roda o motor → grava `ExecucaoAnalise` (parâmetros e seed) e os `AlertaAnomalia` (RF12, RNF06)
 - [ ] `POST /api/analises`, `GET /api/analises/{id}` e botão "Executar análise" na tela
@@ -145,3 +144,4 @@ foi testada no Codespace (é preciso um contorno de firewall, descrito no README
 | 23/09/2026 | Equipe aprovou o novo plano: US06 na S2, US07/US08 na S3; US11 é a primeira a sair se faltar tempo. |
 | 23/09/2026 | US01 e US02 concluídas (importação CSV/XLSX, cadastro manual, API, telas, estatísticas). Base sintética passou para 01/09/2025–31/08/2026, porque a importação recusa datas futuras. 157 testes. |
 | 23/09/2026 | `docker compose up` testado no Codespace; S1 concluída. Documentado no README o contorno do firewall (`iptables-legacy`) que bloqueava o tráfego entre os containers. |
+| 23/09/2026 | Fluxo de análise definido e aprovado (`FLUXO_ANALISE.md`): Z-score e IQR por categoria, frequência contextual dentro da categoria, sem alerta repetido por despesa + método, grupo mínimo de 10. Item de 01/10 concluído. |
