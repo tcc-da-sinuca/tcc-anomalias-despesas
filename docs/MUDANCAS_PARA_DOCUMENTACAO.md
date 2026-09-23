@@ -21,6 +21,6 @@ deve incorporar cada item na próxima versão e marcar a coluna "Incorporado".
 
 `docs/diagramas/classes.puml` está em PlantUML. Há três opções:
 
-- **VS Code / Codespace:** extensão *PlantUML* (jebbs.plantuml), já recomendada no devcontainer. Abra o arquivo e use `Alt+D` para a pré-visualização.
+- **VS Code / Codespace:** instale a extensão *PlantUML* (jebbs.plantuml). Abra o arquivo e use `Alt+D` para a pré-visualização.
 - **Navegador:** cole o conteúdo em <https://www.plantuml.com/plantuml>.
 - **Linha de comando:** `java -jar plantuml.jar docs/diagramas/classes.puml` gera um PNG.

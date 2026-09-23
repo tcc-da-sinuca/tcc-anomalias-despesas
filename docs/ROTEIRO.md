@@ -53,7 +53,7 @@ testar o `docker compose up` num ambiente com Docker.
 - [x] Imutabilidade do `Parecer` em duas camadas: eventos do SQLAlchemy e trigger no PostgreSQL (RNF02)
 - [x] Login com senha em hash, perfis `auditor` e `administrador` e decorador `perfil_requerido` (RNF03)
 - [x] Aviso de que alertas são indícios, visível em todas as páginas (RNF04)
-- [x] Docker Compose, entrypoint (migrations + admin inicial) e devcontainer (RNF07)
+- [x] Docker Compose, entrypoint (migrations + admin inicial) (RNF07)
 - [x] Diagrama de classes (`docs/diagramas/classes.puml`)
 - [x] Base sintética: 5.000 despesas, 5 tipos de anomalia rotulados, seed fixa (RNF06)
 - [x] Carga da base no banco: `flask seed-base`, opcional na subida

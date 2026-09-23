@@ -19,7 +19,7 @@ Melcksedeck Teyllor Rocha de Sousa, Omar Darbas Mustafa Filho e Vinicius Girotto
 ## Como rodar (Docker Compose)
 
 Pré-requisitos: Docker com Docker Compose v2.24 ou mais recente. No GitHub
-Codespaces isso já vem pronto pelo devcontainer.
+Codespaces isso já vem pronto na imagem padrão.
 
 ```bash
 cp .env.example .env          # ajuste SECRET_KEY, ADMIN_EMAIL e ADMIN_SENHA
@@ -89,7 +89,7 @@ docker compose exec app pytest          # todos os testes, inclusive os de Postg
 Fora do Docker (por exemplo, no terminal do Codespace):
 
 ```bash
-pip install -r requirements-dev.txt
+pip install -r requirements-dev.txt && cp -n .env.example .env   # uma vez por Codespace
 pytest                                  # testes em SQLite em memória
 docker compose up -d db && pytest       # inclui os testes de PostgreSQL (trigger e migrations)
 ```
