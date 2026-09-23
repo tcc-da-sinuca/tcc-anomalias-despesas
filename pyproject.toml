@@ -1,0 +1,14 @@
+[project]
+name = "tcc-anomalias-despesas"
+version = "0.1.0"
+description = "Detecção automática de anomalias em despesas corporativas por métodos estatísticos e análise de dados (TCC 2026/2)."
+requires-python = ">=3.11"
+
+# Dependências em requirements.txt / requirements-dev.txt.
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "B", "UP", "I"]

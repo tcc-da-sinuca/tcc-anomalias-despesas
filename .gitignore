@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+
+# Configuração local (nunca versionar credenciais)
+.env
+
+# Bancos locais e arquivos gerados
+*.sqlite
+*.db
+instance/
+uploads/
+
+# Base sintética gerada localmente (o script é versionado; os arquivos grandes não)
+dados/gerados/
+
+# Editores e SO
+.idea/
+.DS_Store
+Thumbs.db
