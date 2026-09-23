@@ -112,12 +112,14 @@ O contexto completo do projeto (requisitos, modelo de dados, arquitetura e
 convenções) está em [`CLAUDE.md`](CLAUDE.md). Decisões que afetam a documentação
 entregue ficam em [`docs/MUDANCAS_PARA_DOCUMENTACAO.md`](docs/MUDANCAS_PARA_DOCUMENTACAO.md).
 O diagrama de classes está em [`docs/diagramas/classes.puml`](docs/diagramas/classes.puml).
+O caminho até a entrega final, com o que já foi feito e o que falta, está em
+[`docs/ROTEIRO.md`](docs/ROTEIRO.md).
 
 ## Situação por sprint
 
 | Sprint | Período | Conteúdo | Situação |
 |---|---|---|---|
-| S1 | 14/09–27/09 | Modelo de dados, autenticação, infraestrutura; importação (US01) e estatísticas (US02) | Modelo de dados, autenticação, infraestrutura e base sintética prontos; US01 e US02 em andamento |
+| S1 | 14/09–27/09 | Modelo de dados, autenticação, infraestrutura; importação (US01) e estatísticas (US02) | Modelo de dados, autenticação, infraestrutura e base sintética prontos; US01 e US02 pendentes (ver `docs/ROTEIRO.md`) |
 | S2 | 28/09–11/10 | Z-score, IQR (US03), regras contextuais (US05), alertas iniciais | — |
 | S3 | 12/10–25/10 | Isolation Forest (US04), experimento comparativo | — |
 | S4 | 26/10–02/11 | Revisão e parecer, dashboard, filtros, relatório, parâmetros | — |

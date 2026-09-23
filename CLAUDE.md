@@ -153,7 +153,7 @@ migrations/
 tests/
   test_models/  test_motor/  test_servicos/  test_api/
 docs/
-  MUDANCAS_PARA_DOCUMENTACAO.md  diagramas/
+  ROTEIRO.md  MUDANCAS_PARA_DOCUMENTACAO.md  diagramas/
 docker-compose.yml  Dockerfile  .env.example  README.md
 ```
 
@@ -189,6 +189,8 @@ Outra parte da equipe escreve a documentação e o artigo. Eles dependem do que 
   com data, o que mudou e qual diagrama ou seção é afetado. Atualize também `docs/diagramas/classes.puml`.
 - Mudou um modelo? Gere a migration (`flask db migrate -m "..."`), revise e rode os testes: o teste
   `test_migrations_refletem_modelos` acusa modelos e migrations dessincronizados.
+- Mantenha `docs/ROTEIRO.md` atualizado: ao concluir ou replanejar um item, marque-o, atualize
+  a seção "Situação atual" e registre a mudança no histórico do arquivo.
 - Os resultados de experimentos são sempre gerados por script, com seed fixa. Nunca informe
   números de desempenho que não tenham saído de uma execução real.
 
