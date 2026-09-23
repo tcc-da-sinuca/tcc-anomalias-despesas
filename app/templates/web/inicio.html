@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block conteudo %}
+<h1 class="h4 mb-4">Visão geral</h1>
+<div class="row g-3">
+  <div class="col-sm-4">
+    <div class="card"><div class="card-body">
+      <div class="text-muted small">Despesas cadastradas</div>
+      <div class="fs-3 fw-semibold">{{ totais.despesas }}</div>
+    </div></div>
+  </div>
+  <div class="col-sm-4">
+    <div class="card"><div class="card-body">
+      <div class="text-muted small">Lotes importados</div>
+      <div class="fs-3 fw-semibold">{{ totais.lotes }}</div>
+    </div></div>
+  </div>
+  <div class="col-sm-4">
+    <div class="card"><div class="card-body">
+      <div class="text-muted small">Alertas gerados</div>
+      <div class="fs-3 fw-semibold">{{ totais.alertas }}</div>
+    </div></div>
+  </div>
+</div>
+<p class="text-muted mt-4 small">
+  Importação de despesas, alertas, revisão e dashboard serão adicionados nas próximas sprints.
+</p>
+{% endblock %}

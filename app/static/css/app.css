@@ -1,0 +1,6 @@
+/* Estilos próprios da aplicação. O restante vem do Bootstrap. */
+
+.aviso-indicio {
+  border-left: 0;
+  border-right: 0;
+}
