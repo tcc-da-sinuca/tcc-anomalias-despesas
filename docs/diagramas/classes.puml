@@ -1,0 +1,144 @@
+@startuml classes
+' Diagrama de classes do domínio, espelhando os modelos em app/models/.
+' Atualize este arquivo sempre que uma entidade ou relacionamento mudar
+' (e registre a mudança em docs/MUDANCAS_PARA_DOCUMENTACAO.md).
+
+title Detecção de Anomalias em Despesas Corporativas — Diagrama de Classes
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+hide empty methods
+
+' ---------------------------------------------------------------- Enumerações
+enum Perfil <<enumeration>> {
+  auditor
+  administrador
+}
+
+enum MetodoDeteccao <<enumeration>> {
+  zscore
+  iqr
+  isolation_forest
+  contextual
+}
+
+enum StatusRevisao <<enumeration>> {
+  pendente
+  aprovado
+  irregular
+  necessita_justificativa
+}
+
+' ---------------------------------------------------------------- Entidades
+class Usuario {
+  - id : Integer
+  - nome : String
+  - email : String {unique}
+  - senha_hash : String
+  - perfil : Perfil
+  - ativo : Boolean
+  --
+  + definir_senha(senha : String) : void
+  + verificar_senha(senha : String) : Boolean
+}
+
+class LoteImportacao {
+  - id : Integer
+  - nome_arquivo : String
+  - importado_em : DateTime
+  - total_linhas : Integer
+  - linhas_validas : Integer
+  - erros : JSON
+}
+
+class Despesa {
+  - id : Integer
+  - valor : Decimal
+  - data : Date
+  - categoria : String
+  - conta_contabil : String
+  - centro_custo : String
+  - funcionario : String
+  - descricao : String [0..1]
+}
+
+class EstatisticaReferencia {
+  - id : Integer
+  - dimensao : String
+  - chave : String
+  - media : Decimal
+  - desvio : Decimal [0..1]
+  - q1 : Decimal
+  - q3 : Decimal
+  - n : Integer
+  - calculada_em : DateTime
+}
+note bottom of EstatisticaReferencia
+  Um registro por (dimensao, chave).
+  Ex.: ("categoria", "Viagens").
+  Recalculada após cada importação (US02).
+end note
+
+class ExecucaoAnalise {
+  - id : Integer
+  - iniciada_em : DateTime
+  - duracao_s : Float [0..1]
+  - parametros : JSON
+  - seed : Integer
+  - total_despesas : Integer
+  - total_alertas : Integer
+}
+note bottom of ExecucaoAnalise
+  Guarda parâmetros e seed
+  para reprodutibilidade (RNF06).
+  Sem usuário quando disparada
+  por job agendado.
+end note
+
+class AlertaAnomalia {
+  - id : Integer
+  - metodo : MetodoDeteccao
+  - score : Float
+  - motivo : String
+  - status_revisao : StatusRevisao = pendente
+  - criado_em : DateTime
+}
+
+class Parecer <<somente inserção>> {
+  - id : Integer
+  - status : StatusRevisao
+  - observacao : String [0..1]
+  - criado_em : DateTime
+}
+note right of Parecer
+  RNF02: sem UPDATE/DELETE
+  (aplicação + trigger no PostgreSQL).
+  RF08: observação obrigatória quando
+  status = irregular ou necessita_justificativa.
+  Status "pendente" não é aceito.
+end note
+
+class ParametroMetodo {
+  - metodo : MetodoDeteccao {PK}
+  - chave : String {PK}
+  - valor : String
+  - alterado_em : DateTime
+}
+
+' ---------------------------------------------------------------- Relacionamentos
+Usuario "1" -- "0..*" LoteImportacao : importa >
+LoteImportacao "0..1" o-- "0..*" Despesa : contém >
+Usuario "0..1" -- "0..*" ExecucaoAnalise : executa >
+ExecucaoAnalise "1" *-- "0..*" AlertaAnomalia : gera >
+Despesa "1" -- "0..*" AlertaAnomalia : sinalizada por <
+AlertaAnomalia "1" -- "0..*" Parecer : recebe >
+Usuario "1" -- "0..*" Parecer : emite >
+Usuario "0..1" -- "0..*" ParametroMetodo : altera >
+
+Usuario ..> Perfil
+AlertaAnomalia ..> MetodoDeteccao
+AlertaAnomalia ..> StatusRevisao
+ParametroMetodo ..> MetodoDeteccao
+
+@enduml
