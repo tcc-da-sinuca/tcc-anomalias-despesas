@@ -297,3 +297,24 @@ def test_parametro_invalido_na_tela(client, entrar, administrador):
     assert "Nenhum parâmetro foi alterado." in html
     assert "Fator do IQR: use um valor de 0,5 a 10." in html
     assert 'value="0.1"' in html  # mantém o que foi digitado
+
+
+def test_relatorio_abre_no_mes_da_despesa_mais_recente(client, entrar, auditor, alerta):
+    entrar(auditor)
+    html = client.get("/relatorios").get_data(as_text=True)
+
+    assert "Setembro de 2026" in html
+    assert 'data-indicador="total_despesas">1<' in html
+    assert "indefinida" in html
+    assert "/api/relatorios/mensal?ano=2026&amp;mes=9&amp;formato=csv" in html
+    assert ">Relatório</a>" in html
+
+
+def test_relatorio_mes_sem_despesas_e_invalido(client, entrar, auditor, alerta):
+    entrar(auditor)
+    assert "Nenhuma despesa com data neste mês." in client.get(
+        "/relatorios?ano=2025&mes=1"
+    ).get_data(as_text=True)
+    resposta = client.get("/relatorios?ano=2026&mes=13")
+    assert resposta.status_code == 400
+    assert "O mês deve estar entre 1 e 12." in resposta.get_data(as_text=True)

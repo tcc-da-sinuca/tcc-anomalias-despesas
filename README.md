@@ -91,6 +91,14 @@ de custo, funcionário, status e método. Pela API:
 `POST /api/analises`, `GET /api/alertas`, `POST /api/alertas/{id}/parecer`. Detalhes em
 [`docs/FLUXO_ANALISE.md`](docs/FLUXO_ANALISE.md).
 
+### Relatório mensal
+
+A tela **Relatório** mostra, para o mês escolhido (pela data da despesa), o total de
+despesas, as sinalizadas, os alertas por status e método e a taxa de confirmação de
+irregularidade = irregular ÷ (aprovado + irregular). O botão **Baixar CSV** exporta
+no padrão do Excel brasileiro. Pela API: `GET /api/relatorios/mensal?ano=2026&mes=3&formato=csv`
+(ou `formato=json`).
+
 ### Parâmetros dos métodos
 
 A tela **Parâmetros** mostra os critérios de cada método (limiar do Z-score, fator do

@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block titulo %}Relatório mensal · {{ super() }}{% endblock %}
+{% block conteudo %}
+<h1 class="h4 mb-1">Relatório mensal</h1>
+<p class="text-muted small">Considera as despesas com data no mês escolhido e os alertas dessas despesas.</p>
+
+<form method="get" class="row g-2 align-items-end mb-3">
+  <div class="col-auto">
+    <label class="form-label small" for="mes">Mês</label>
+    <select class="form-select form-select-sm" id="mes" name="mes">
+      {% for nome in meses %}
+      <option value="{{ loop.index }}" {{ 'selected' if mes_escolhido | string == loop.index | string }}>{{ nome }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-auto">
+    <label class="form-label small" for="ano">Ano</label>
+    <input class="form-control form-control-sm" type="number" id="ano" name="ano" value="{{ ano_escolhido }}" min="2000" max="2100" style="width: 7rem">
+  </div>
+  <div class="col-auto">
+    <button type="submit" class="btn btn-primary btn-sm">Ver relatório</button>
+    {% if relatorio %}
+    <a class="btn btn-outline-secondary btn-sm"
+       href="{{ url_for('api.relatorio_mensal', ano=relatorio.ano, mes=relatorio.mes, formato='csv') }}">Baixar CSV</a>
+    {% endif %}
+  </div>
+</form>
+
+{% if erro %}
+<div class="alert alert-danger" role="alert">{{ erro }}</div>
+{% elif relatorio %}
+{% set r = relatorio %}
+<h2 class="h5 mb-3">{{ r.nome_mes | capitalize }} de {{ r.ano }}</h2>
+
+{% if not r.total_despesas %}
+<p class="text-muted">Nenhuma despesa com data neste mês.</p>
+{% else %}
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-lg-3">
+    <div class="card h-100"><div class="card-body">
+      <div class="text-muted small">Despesas analisadas</div>
+      <div class="fs-3 fw-semibold" data-indicador="total_despesas">{{ r.total_despesas }}</div>
+      <div class="small text-muted">{{ r.valor_despesas | moeda }}</div>
+    </div></div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card h-100"><div class="card-body">
+      <div class="text-muted small">Despesas sinalizadas</div>
+      <div class="fs-3 fw-semibold" data-indicador="despesas_sinalizadas">{{ r.despesas_sinalizadas }}</div>
+      <div class="small text-muted">{{ r.percentual_sinalizado | score }}% · {{ r.valor_sinalizado | moeda }}</div>
+    </div></div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card h-100"><div class="card-body">
+      <div class="text-muted small">Alertas</div>
+      <div class="fs-3 fw-semibold" data-indicador="total_alertas">{{ r.total_alertas }}</div>
+      <div class="small text-muted">{{ r.alertas_concluidos }} com conclusão (aprovado ou irregular)</div>
+    </div></div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card h-100"><div class="card-body">
+      <div class="text-muted small">Taxa de confirmação de irregularidade</div>
+      <div class="fs-3 fw-semibold" data-indicador="taxa_confirmacao">
+        {{ (r.taxa_confirmacao | score ~ '%') if r.taxa_confirmacao is not none else 'indefinida' }}
+      </div>
+      <div class="small text-muted">irregular ÷ (aprovado + irregular)</div>
+    </div></div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-md-6">
+    <h3 class="h6">Alertas por status</h3>
+    <table class="table table-sm">
+      <tbody>
+        {% for status, quantidade in r.alertas_por_status.items() %}
+        <tr>
+          <td><span class="badge status-{{ status }}">{{ status | nome_status }}</span></td>
+          <td class="text-end">
+            <a href="{{ url_for('web.alertas', status=status, data_inicio=r.inicio.isoformat(), data_fim=r.fim.isoformat()) }}">{{ quantidade }}</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="col-md-6">
+    <h3 class="h6">Alertas por método</h3>
+    <table class="table table-sm">
+      <tbody>
+        {% for metodo, quantidade in r.alertas_por_metodo.items() %}
+        <tr>
+          <td>{{ metodo | nome_metodo }}</td>
+          <td class="text-end">
+            <a href="{{ url_for('web.alertas', metodo=metodo, data_inicio=r.inicio.isoformat(), data_fim=r.fim.isoformat()) }}">{{ quantidade }}</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<p class="small text-muted mt-3">
+  {% if r.ultima_analise %}
+  Última análise: <a href="{{ url_for('web.analise', execucao_id=r.ultima_analise.id) }}">#{{ r.ultima_analise.id }}</a>
+  em {{ r.ultima_analise.iniciada_em | data_hora_br }}. Despesas importadas depois dela ainda não foram analisadas.
+  {% else %}
+  Nenhuma análise foi executada ainda: as despesas do mês não foram analisadas.
+  {% endif %}
+  A taxa de confirmação usa o status atual dos alertas e fica indefinida enquanto nenhum alerta do mês tiver conclusão.
+</p>
+{% endif %}
+{% endblock %}

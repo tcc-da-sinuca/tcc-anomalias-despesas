@@ -3,7 +3,7 @@
 Os endpoints da seção 6 do CLAUDE.md entram aqui ao longo das sprints.
 """
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, Response, jsonify, request
 from flask_login import current_user, login_required
 from sqlalchemy import text
 
@@ -14,6 +14,7 @@ from app.repositorios import alertas as repo_alertas
 from app.repositorios.despesas import POR_PAGINA_PADRAO, paginar_despesas
 from app.rotas.autorizacao import perfil_requerido
 from app.servicos import parametros as servico_parametros
+from app.servicos import relatorio as servico_relatorio
 from app.servicos.analise import MetodoDesconhecidoError, executar_analise
 from app.servicos.dashboard import resumo as resumo_dashboard
 from app.servicos.importacao import ArquivoInvalidoError, importar_arquivo
@@ -291,3 +292,41 @@ def atualizar_parametros():
         return jsonify(erros=erro.erros), 400
     db.session.commit()
     return jsonify(alterados=alterados, parametros=_parametros_json())
+
+
+@bp.route("/relatorios/mensal")
+@perfil_requerido(PERFIL_AUDITOR)
+def relatorio_mensal():
+    """Relatório mensal (US11): ``?ano=2026&mes=3&formato=json|csv`` (padrão json).
+
+    O mês se refere à data da despesa. O CSV segue o padrão do Excel brasileiro
+    (``;`` e vírgula decimal), em UTF-8 com BOM para os acentos abrirem corretamente.
+    """
+    formato = (request.args.get("formato") or "json").lower()
+    if formato not in ("json", "csv"):
+        return jsonify(erro="formato inválido. Use json ou csv.", campo="formato"), 400
+    try:
+        relatorio = servico_relatorio.relatorio_mensal(
+            request.args.get("ano"), request.args.get("mes")
+        )
+    except servico_relatorio.PeriodoInvalidoError as erro:
+        return jsonify(erro=str(erro)), 400
+
+    if formato == "csv":
+        nome = f"relatorio_{relatorio['ano']}_{relatorio['mes']:02d}.csv"
+        return Response(
+            "\ufeff" + servico_relatorio.para_csv(relatorio),
+            mimetype="text/csv",
+            headers={"Content-Disposition": f'attachment; filename="{nome}"'},
+        )
+    ultima = relatorio["ultima_analise"]
+    return jsonify(
+        {
+            **relatorio,
+            "inicio": relatorio["inicio"].isoformat(),
+            "fim": relatorio["fim"].isoformat(),
+            "valor_despesas": str(relatorio["valor_despesas"]),
+            "valor_sinalizado": str(relatorio["valor_sinalizado"]),
+            "ultima_analise": _execucao_json(ultima) if ultima else None,
+        }
+    )

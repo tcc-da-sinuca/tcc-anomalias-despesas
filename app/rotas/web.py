@@ -11,6 +11,7 @@ from app.repositorios import alertas as repo_alertas
 from app.repositorios.despesas import paginar_despesas, paginar_lotes, valores_distintos
 from app.rotas.autorizacao import perfil_requerido
 from app.servicos import parametros as servico_parametros
+from app.servicos import relatorio as servico_relatorio
 from app.servicos import usuarios as servico_usuarios
 from app.servicos.analise import executar_analise
 from app.servicos.dashboard import resumo as resumo_dashboard
@@ -290,3 +291,25 @@ def alterar_ativo_usuario(usuario_id: int):
         db.session.commit()
         flash(f"Usuário {usuario.email} {'reativado' if ativo else 'desativado'}.", "success")
     return redirect(url_for("web.usuarios"))
+
+
+@bp.route("/relatorios")
+@perfil_requerido(PERFIL_AUDITOR)
+def relatorios():
+    """Relatório mensal (US11). Sem ano e mês, mostra o mês da despesa mais recente."""
+    ano, mes = request.args.get("ano"), request.args.get("mes")
+    if not ano and not mes:
+        ano, mes = servico_relatorio.mes_mais_recente()
+    try:
+        relatorio = servico_relatorio.relatorio_mensal(ano, mes)
+        erro = None
+    except servico_relatorio.PeriodoInvalidoError as falha:
+        relatorio, erro = None, str(falha)
+    return render_template(
+        "web/relatorio.html",
+        relatorio=relatorio,
+        erro=erro,
+        meses=servico_relatorio.NOMES_MESES,
+        ano_escolhido=ano,
+        mes_escolhido=mes,
+    ), (400 if erro else 200)
