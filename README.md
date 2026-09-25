@@ -88,6 +88,14 @@ de custo, funcionário, status e método. Pela API:
 `POST /api/analises`, `GET /api/alertas`, `POST /api/alertas/{id}/parecer`. Detalhes em
 [`docs/FLUXO_ANALISE.md`](docs/FLUXO_ANALISE.md).
 
+### Parâmetros dos métodos
+
+A tela **Parâmetros** mostra os critérios de cada método (limiar do Z-score, fator do
+IQR, frequência mínima da regra contextual, proporção, seed e limite de aprovação do
+Isolation Forest), com a faixa válida e o valor padrão. O auditor só consulta; o
+administrador altera. A mudança vale para as próximas análises. Pela API:
+`GET /api/parametros` e `PUT /api/parametros` (administrador).
+
 ### Comandos úteis
 
 ```bash

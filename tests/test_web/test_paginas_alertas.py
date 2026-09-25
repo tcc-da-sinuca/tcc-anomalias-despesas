@@ -256,3 +256,44 @@ def test_filtro_invalido_na_tela(client, entrar, auditor, varios_alertas):
     assert resposta.status_code == 400
     assert "A data final não pode ser anterior à inicial." in html
     assert "Os filtros não foram aplicados." in html
+
+
+def test_parametros_somente_leitura_para_auditor(client, entrar, auditor):
+    entrar(auditor)
+    html = client.get("/parametros").get_data(as_text=True)
+
+    assert "Limiar do |z|" in html
+    assert "Só o administrador pode alterar" in html
+    assert "Salvar parâmetros" not in html
+    assert client.post("/parametros", data={"zscore.limiar": "2"}).status_code == 403
+
+
+def test_administrador_salva_parametros(client, entrar, administrador, sessao):
+    from app.models import ParametroMetodo
+    from app.servicos.parametros import REGRAS, listar_parametros
+
+    entrar(administrador)
+    atuais = {item["regra"].nome: str(item["valor"]) for item in listar_parametros()}
+    atuais["zscore.limiar"] = "2.5"
+    resposta = client.post("/parametros", data=atuais, follow_redirects=True)
+
+    html = resposta.get_data(as_text=True)
+    assert "1 parâmetro(s) alterado(s)." in html
+    assert "alterado</span>" in html
+    assert sessao.get(ParametroMetodo, ("zscore", "limiar")).valor == "2.5"
+    assert len(REGRAS) == len(atuais)
+
+
+def test_parametro_invalido_na_tela(client, entrar, administrador):
+    from app.servicos.parametros import listar_parametros
+
+    entrar(administrador)
+    dados = {item["regra"].nome: str(item["valor"]) for item in listar_parametros()}
+    dados["iqr.fator"] = "0.1"
+    resposta = client.post("/parametros", data=dados)
+
+    html = resposta.get_data(as_text=True)
+    assert resposta.status_code == 400
+    assert "Nenhum parâmetro foi alterado." in html
+    assert "Fator do IQR: use um valor de 0,5 a 10." in html
+    assert 'value="0.1"' in html  # mantém o que foi digitado

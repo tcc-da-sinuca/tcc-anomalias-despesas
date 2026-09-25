@@ -6,10 +6,11 @@ from flask_login import current_user
 from app.extensoes import db
 from app.formularios import DespesaForm, ExecutarAnaliseForm, ImportacaoForm, ParecerForm
 from app.models import ExecucaoAnalise, LoteImportacao
-from app.models.dominio import METODOS, PERFIL_AUDITOR, STATUS_REVISAO
+from app.models.dominio import METODOS, PERFIL_ADMINISTRADOR, PERFIL_AUDITOR, STATUS_REVISAO
 from app.repositorios import alertas as repo_alertas
 from app.repositorios.despesas import paginar_despesas, paginar_lotes, valores_distintos
 from app.rotas.autorizacao import perfil_requerido
+from app.servicos import parametros as servico_parametros
 from app.servicos.analise import executar_analise
 from app.servicos.dashboard import resumo as resumo_dashboard
 from app.servicos.estatisticas import listar_estatisticas
@@ -183,3 +184,46 @@ def alerta(alerta_id: int):
         outros=repo_alertas.outros_alertas_da_despesa(alerta),
         form=form,
     ), status
+
+
+@bp.route("/parametros")
+@perfil_requerido(PERFIL_AUDITOR)
+def parametros():
+    """Parâmetros dos métodos (US12): o auditor vê; o administrador altera."""
+    return render_template(
+        "web/parametros.html",
+        itens=servico_parametros.listar_parametros(),
+        pode_editar=current_user.perfil == PERFIL_ADMINISTRADOR,
+        enviados={},
+        erros={},
+    )
+
+
+@bp.route("/parametros", methods=["POST"])
+@perfil_requerido(PERFIL_ADMINISTRADOR)
+def salvar_parametros():
+    # O token CSRF é verificado pelo CSRFProtect antes de chegar aqui.
+    enviados = {r.nome: request.form.get(r.nome, "") for r in servico_parametros.REGRAS}
+    alteracoes: dict[str, dict] = {}
+    for regra in servico_parametros.REGRAS:
+        alteracoes.setdefault(regra.metodo, {})[regra.chave] = enviados[regra.nome]
+    try:
+        alterados = servico_parametros.atualizar_parametros(alteracoes, current_user)
+    except servico_parametros.ParametrosInvalidosError as erro:
+        db.session.rollback()
+        return render_template(
+            "web/parametros.html",
+            itens=servico_parametros.listar_parametros(),
+            pode_editar=True,
+            enviados=enviados,
+            erros=erro.erros,
+        ), 400
+    db.session.commit()
+    if alterados:
+        flash(
+            f"{len(alterados)} parâmetro(s) alterado(s). A mudança vale para as próximas análises.",
+            "success",
+        )
+    else:
+        flash("Nenhum parâmetro foi alterado.", "info")
+    return redirect(url_for("web.parametros"))

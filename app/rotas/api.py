@@ -9,10 +9,11 @@ from sqlalchemy import text
 
 from app.extensoes import csrf, db
 from app.models import ExecucaoAnalise
-from app.models.dominio import PERFIL_AUDITOR
+from app.models.dominio import PERFIL_ADMINISTRADOR, PERFIL_AUDITOR
 from app.repositorios import alertas as repo_alertas
 from app.repositorios.despesas import POR_PAGINA_PADRAO, paginar_despesas
 from app.rotas.autorizacao import perfil_requerido
+from app.servicos import parametros as servico_parametros
 from app.servicos.analise import MetodoDesconhecidoError, executar_analise
 from app.servicos.dashboard import resumo as resumo_dashboard
 from app.servicos.importacao import ArquivoInvalidoError, importar_arquivo
@@ -245,3 +246,48 @@ def dashboard():
             "ultima_analise": _execucao_json(ultima) if ultima else None,
         }
     )
+
+
+def _parametros_json() -> list[dict]:
+    return [
+        {
+            "metodo": item["regra"].metodo,
+            "chave": item["regra"].chave,
+            "valor": item["valor"],
+            "padrao": item["padrao"],
+            "tipo": item["regra"].tipo.__name__,
+            "minimo": item["regra"].minimo,
+            "maximo": item["regra"].maximo,
+            "minimo_exclusivo": item["regra"].minimo_exclusivo,
+            "rotulo": item["regra"].rotulo,
+            "ajuda": item["regra"].ajuda,
+            "alterado_por": item["alterado_por"].id if item["alterado_por"] else None,
+            "alterado_em": item["alterado_em"].isoformat() if item["alterado_por"] else None,
+        }
+        for item in servico_parametros.listar_parametros()
+    ]
+
+
+@bp.route("/parametros")
+@perfil_requerido(PERFIL_AUDITOR)
+def listar_parametros():
+    """Parâmetros atuais dos métodos, com faixa válida e padrão (US12). Leitura para todos."""
+    return jsonify(parametros=_parametros_json())
+
+
+@bp.route("/parametros", methods=["PUT"])
+@perfil_requerido(PERFIL_ADMINISTRADOR)
+def atualizar_parametros():
+    """Altera parâmetros (somente administrador). Corpo: ``{"zscore": {"limiar": 2.5}}``.
+
+    Tudo ou nada: se algum valor for inválido, nada muda e a resposta traz os erros.
+    """
+    try:
+        alterados = servico_parametros.atualizar_parametros(
+            request.get_json(silent=True), current_user
+        )
+    except servico_parametros.ParametrosInvalidosError as erro:
+        db.session.rollback()
+        return jsonify(erros=erro.erros), 400
+    db.session.commit()
+    return jsonify(alterados=alterados, parametros=_parametros_json())

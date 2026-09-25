@@ -60,6 +60,11 @@ def score(valor: float | None) -> str:
     return "—" if valor is None else f"{valor:.2f}".replace(".", ",")
 
 
+def numero(valor) -> str:
+    """0.05 → "0,05"; 1000.0 → "1000" (sem zeros inúteis, vírgula decimal)."""
+    return "—" if valor is None else format(valor, ".12g").replace(".", ",")
+
+
 def registrar_filtros(app: Flask) -> None:
     app.add_template_filter(moeda)
     app.add_template_filter(data_br)
@@ -67,3 +72,4 @@ def registrar_filtros(app: Flask) -> None:
     app.add_template_filter(nome_metodo)
     app.add_template_filter(nome_status)
     app.add_template_filter(score)
+    app.add_template_filter(numero)

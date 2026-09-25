@@ -24,7 +24,7 @@ análise pela tela, pela API e por comando; lista e detalhe de alertas (US06).
 concluídos em 25/09. Isolation Forest (US04) e experimento com os quatro métodos
 concluídos em 25/09 (seeds 42 e 7). **A S3 está concluída.**
 
-**Sprint 4 (26/10–02/11): adiantada, em andamento.** Dashboard (US09) concluído em 26/09 e filtros (US10) em 27/09.
+**Sprint 4 (26/10–02/11): adiantada, em andamento.** Dashboard (US09) concluído em 26/09, filtros (US10) e parâmetros (US12) em 27/09.
 
 | Área | Situação |
 |---|---|
@@ -36,9 +36,9 @@ concluídos em 25/09 (seeds 42 e 7). **A S3 está concluída.**
 | Motor de detecção | ✅ Z-score, IQR, contextual, Isolation Forest e consolidador |
 | Telas de alertas, revisão e dashboard | ✅ Análises, lista de alertas com filtros combináveis, detalhe, parecer com histórico, dashboard |
 | Experimento | ✅ `metricas.csv` com os quatro métodos, seeds 42 e 7 |
-| Testes | 302 passando (SQLite + PostgreSQL) |
+| Testes | 329 passando (SQLite + PostgreSQL) |
 
-**Próximo passo:** S4 adiantada: parâmetros dos métodos pelo administrador (US12) e gerenciamento de usuários.
+**Próximo passo:** S4 adiantada: gerenciamento de usuários, job de reprocessamento e relatório mensal (US11).
 
 ---
 
@@ -121,7 +121,7 @@ concluídos em 25/09 (seeds 42 e 7). **A S3 está concluída.**
 
 - [x] **US09: dashboard**: total de despesas, total sinalizado, % sinalizado, alertas por status (Chart.js); `GET /api/dashboard` (26/09)
 - [x] **US10: filtros combináveis** na lista de alertas: período, categoria, conta, centro de custo, funcionário, status e método (27/09; período = data da despesa)
-- [ ] **US12: parâmetros dos métodos** (admin): `GET`/`PUT /api/parametros`, tela com validação
+- [x] **US12: parâmetros dos métodos** (admin): `GET`/`PUT /api/parametros`, tela com validação (27/09; auditor vê, administrador altera)
 - [ ] **Gerenciamento de usuários** (admin): criar, desativar, trocar perfil (seção 4 do CLAUDE.md)
 - [ ] **Job do APScheduler**: reprocessa despesas novas (`executada_por` vazio)
 - [ ] **US11: relatório mensal** (Could): total analisado, anomalias e taxa de confirmação = irregular ÷ (aprovado + irregular) (item 18 de `MUDANCAS_PARA_DOCUMENTACAO.md`); `GET /api/relatorios/mensal` em CSV (PDF se der tempo)
@@ -163,3 +163,4 @@ concluídos em 25/09 (seeds 42 e 7). **A S3 está concluída.**
 | 26/09/2026 | Definidos o significado dos status de revisão e a fórmula da taxa de confirmação (irregular ÷ (aprovado + irregular)); itens 17 e 18 de `MUDANCAS_PARA_DOCUMENTACAO.md` e seção 4 de `FLUXO_ANALISE.md`. |
 | 26/09/2026 | US09 concluída: dashboard na página inicial e `GET /api/dashboard` (item 19 de `MUDANCAS_PARA_DOCUMENTACAO.md`). 281 testes. |
 | 27/09/2026 | US10 concluída: filtros combináveis na tela de alertas e em `GET /api/alertas` (item 20 de `MUDANCAS_PARA_DOCUMENTACAO.md`). 302 testes. |
+| 27/09/2026 | US12 concluída: tela e API de parâmetros com validação de faixa (item 21 de `MUDANCAS_PARA_DOCUMENTACAO.md`). 329 testes. |
