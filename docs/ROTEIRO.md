@@ -122,7 +122,7 @@ concluídos em 25/09 (seeds 42 e 7). **A S3 está concluída.**
 - [ ] **US12: parâmetros dos métodos** (admin): `GET`/`PUT /api/parametros`, tela com validação
 - [ ] **Gerenciamento de usuários** (admin): criar, desativar, trocar perfil (seção 4 do CLAUDE.md)
 - [ ] **Job do APScheduler**: reprocessa despesas novas (`executada_por` vazio)
-- [ ] **US11: relatório mensal** (Could): total analisado, anomalias e taxa de confirmação; `GET /api/relatorios/mensal` em CSV (PDF se der tempo)
+- [ ] **US11: relatório mensal** (Could): total analisado, anomalias e taxa de confirmação = irregular ÷ (aprovado + irregular) (item 18 de `MUDANCAS_PARA_DOCUMENTACAO.md`); `GET /api/relatorios/mensal` em CSV (PDF se der tempo)
 
 ## Fechamento (até 02/11)
 
@@ -158,3 +158,4 @@ concluídos em 25/09 (seeds 42 e 7). **A S3 está concluída.**
 | 25/09/2026 | US07/US08 concluídas: `servicos/revisao.py`, `POST /api/alertas/{id}/parecer` e formulário de parecer no detalhe do alerta, com histórico. Próximo: experimento antes do Isolation Forest. 250 testes. |
 | 25/09/2026 | Experimento rodando com Z-score, IQR e contextual: `metricas.csv`, `metricas_por_tipo.csv` e `execucao.json` versionados em `experimentos/resultados/`. Metodologia registrada no item 13 de `MUDANCAS_PARA_DOCUMENTACAO.md`. 258 testes. |
 | 25/09/2026 | Isolation Forest implementado (atributos derivados, parâmetro `limite_aprovacao`, motivo pelos atributos ativos) e gerador corrigido (valor novo nas combinações incompatíveis e fins de semana). Experimento gerado de novo com os quatro métodos, seeds 42 e 7. S3 concluída. 272 testes. |
+| 26/09/2026 | Definidos o significado dos status de revisão e a fórmula da taxa de confirmação (irregular ÷ (aprovado + irregular)); itens 17 e 18 de `MUDANCAS_PARA_DOCUMENTACAO.md` e seção 4 de `FLUXO_ANALISE.md`. |

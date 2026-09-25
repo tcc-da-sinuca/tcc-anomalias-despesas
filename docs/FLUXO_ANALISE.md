@@ -189,6 +189,24 @@ def registrar_parecer(
   registrado no item 7 de `MUDANCAS_PARA_DOCUMENTACAO.md`.
 - Qualquer usuário autenticado (auditor ou administrador) pode dar parecer.
 
+### Significado dos status (definido em 26/09/2026)
+
+Os status descrevem a decisão do auditor sobre a **despesa** que gerou o alerta.
+
+| Status | Significado | Quando usar | Observação |
+|---|---|---|---|
+| `pendente` | Ninguém revisou ainda | Automático na criação do alerta; nenhum parecer registra este status | — |
+| `aprovado` | A despesa é regular (o alerta foi um falso positivo). Refere-se à despesa, não ao alerta | Despesa incomum, mas correta e autorizada | Opcional (recomendado dizer por quê) |
+| `irregular` | A despesa não se justifica (o indício foi confirmado) | Duplicidade, fracionamento, lançamento indevido, erro de classificação etc. | Obrigatória |
+| `necessita_justificativa` | Ainda não dá para concluir; falta explicação ou documento do responsável | Quando é preciso pedir recibo, nota fiscal ou autorização | Obrigatória, dizendo o que foi pedido |
+
+Fluxo normal: `pendente` → `aprovado` ou `irregular`, ou `pendente` →
+`necessita_justificativa` → novo parecer com `aprovado` ou `irregular`.
+
+**Taxa de confirmação de irregularidade** (US11): `irregular ÷ (aprovado + irregular)`,
+contando o status atual dos alertas. Só entram os alertas com conclusão; `pendente` e
+`necessita_justificativa` ficam fora.
+
 ---
 
 ## 5. Rotas
