@@ -47,7 +47,10 @@ def _configurar_login(app: Flask) -> None:
     def carregar_usuario(usuario_id: str):
         from app.models import Usuario
 
-        return db.session.get(Usuario, int(usuario_id))
+        usuario = db.session.get(Usuario, int(usuario_id))
+        # Usuário desativado perde a sessão já aberta. O UserMixin do Flask-Login 0.6 já
+        # trata inativo como não autenticado; a verificação aqui deixa a regra explícita.
+        return usuario if usuario is not None and usuario.ativo else None
 
     @login_manager.unauthorized_handler
     def nao_autenticado():

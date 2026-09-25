@@ -25,7 +25,7 @@
         ('web.analises', 'Análises'),
         ('web.alertas', 'Alertas'),
         ('web.parametros', 'Parâmetros'),
-      ] %}
+      ] + ([('web.usuarios', 'Usuários')] if current_user.eh_administrador else []) %}
       <ul class="navbar-nav me-auto">
         {% for endpoint, rotulo in itens_menu %}
         <li class="nav-item">

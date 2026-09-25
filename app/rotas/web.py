@@ -5,12 +5,13 @@ from flask_login import current_user
 
 from app.extensoes import db
 from app.formularios import DespesaForm, ExecutarAnaliseForm, ImportacaoForm, ParecerForm
-from app.models import ExecucaoAnalise, LoteImportacao
-from app.models.dominio import METODOS, PERFIL_ADMINISTRADOR, PERFIL_AUDITOR, STATUS_REVISAO
+from app.models import ExecucaoAnalise, LoteImportacao, Usuario
+from app.models.dominio import METODOS, PERFIL_ADMINISTRADOR, PERFIL_AUDITOR, PERFIS, STATUS_REVISAO
 from app.repositorios import alertas as repo_alertas
 from app.repositorios.despesas import paginar_despesas, paginar_lotes, valores_distintos
 from app.rotas.autorizacao import perfil_requerido
 from app.servicos import parametros as servico_parametros
+from app.servicos import usuarios as servico_usuarios
 from app.servicos.analise import executar_analise
 from app.servicos.dashboard import resumo as resumo_dashboard
 from app.servicos.estatisticas import listar_estatisticas
@@ -227,3 +228,65 @@ def salvar_parametros():
     else:
         flash("Nenhum parâmetro foi alterado.", "info")
     return redirect(url_for("web.parametros"))
+
+
+@bp.route("/usuarios")
+@perfil_requerido(PERFIL_ADMINISTRADOR)
+def usuarios():
+    """Gerenciamento de usuários (somente administrador)."""
+    return render_template(
+        "web/usuarios.html", usuarios=servico_usuarios.listar_usuarios(), perfis=PERFIS, novo={}
+    )
+
+
+@bp.route("/usuarios", methods=["POST"])
+@perfil_requerido(PERFIL_ADMINISTRADOR)
+def criar_usuario():
+    novo = {campo: request.form.get(campo, "") for campo in ("nome", "email", "perfil")}
+    try:
+        usuario = servico_usuarios.criar_usuario(
+            novo["nome"], novo["email"], request.form.get("senha", ""), novo["perfil"]
+        )
+    except servico_usuarios.UsuarioInvalidoError as erro:
+        db.session.rollback()
+        flash(str(erro), "danger")
+        return render_template(
+            "web/usuarios.html",
+            usuarios=servico_usuarios.listar_usuarios(),
+            perfis=PERFIS,
+            novo=novo,
+        ), 400
+    db.session.commit()
+    flash(f"Usuário {usuario.email} criado como {usuario.perfil}.", "success")
+    return redirect(url_for("web.usuarios"))
+
+
+@bp.route("/usuarios/<int:usuario_id>/perfil", methods=["POST"])
+@perfil_requerido(PERFIL_ADMINISTRADOR)
+def alterar_perfil_usuario(usuario_id: int):
+    usuario = db.get_or_404(Usuario, usuario_id)
+    try:
+        servico_usuarios.alterar_perfil(usuario, request.form.get("perfil", ""), current_user)
+    except servico_usuarios.UsuarioInvalidoError as erro:
+        db.session.rollback()
+        flash(str(erro), "danger")
+    else:
+        db.session.commit()
+        flash(f"Perfil de {usuario.email}: {usuario.perfil}.", "success")
+    return redirect(url_for("web.usuarios"))
+
+
+@bp.route("/usuarios/<int:usuario_id>/ativo", methods=["POST"])
+@perfil_requerido(PERFIL_ADMINISTRADOR)
+def alterar_ativo_usuario(usuario_id: int):
+    usuario = db.get_or_404(Usuario, usuario_id)
+    ativo = request.form.get("ativo") == "1"
+    try:
+        servico_usuarios.definir_ativo(usuario, ativo, current_user)
+    except servico_usuarios.UsuarioInvalidoError as erro:
+        db.session.rollback()
+        flash(str(erro), "danger")
+    else:
+        db.session.commit()
+        flash(f"Usuário {usuario.email} {'reativado' if ativo else 'desativado'}.", "success")
+    return redirect(url_for("web.usuarios"))

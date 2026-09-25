@@ -96,6 +96,13 @@ Isolation Forest), com a faixa válida e o valor padrão. O auditor só consulta
 administrador altera. A mudança vale para as próximas análises. Pela API:
 `GET /api/parametros` e `PUT /api/parametros` (administrador).
 
+### Usuários
+
+O administrador gerencia os usuários na tela **Usuários**: cria (com senha inicial),
+troca o perfil (`auditor` ou `administrador`), desativa e reativa. Usuários não são
+excluídos, porque os pareceres guardam quem os registrou; desativar tira o acesso na
+hora. Pela linha de comando também é possível criar: `flask criar-usuario`.
+
 ### Comandos úteis
 
 ```bash
