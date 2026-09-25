@@ -270,8 +270,13 @@ class _Gerador:
         return self._rotular({**base, "valor": valor}, TIPO_VALOR_EXTREMO)
 
     def _combinacao_incompativel(self, base: dict) -> dict:
-        """Troca o centro de custo ou a conta por um que a categoria nunca usa."""
+        """Troca o centro de custo ou a conta por um que a categoria nunca usa.
+
+        O valor é sorteado de novo: a despesa modelo continua na base, e copiar o
+        valor dela criaria um "gêmeo" que se confunde com duplicidade.
+        """
         categoria = CATEGORIAS[base["categoria"]]
+        base = {**base, "valor": self._valor(categoria)}
         centros_fora = [c for c in CENTROS_CUSTO if c not in categoria.centros]
         if centros_fora and self.rng.random() < 0.5:
             centro = self._escolher(centros_fora)
@@ -318,10 +323,18 @@ class _Gerador:
         return linhas
 
     def _fim_semana_feriado(self, base: dict) -> dict:
-        """Move a despesa para um sábado, domingo ou feriado do mesmo mês."""
+        """Lança uma despesa como a modelo num sábado, domingo ou feriado do mesmo mês.
+
+        O valor é sorteado de novo, pelo mesmo motivo de ``_combinacao_incompativel``.
+        """
         mes = (base["data"].year, base["data"].month)
         candidatos = [d for d in self.dias_nao_uteis if (d.year, d.month) == mes]
-        return self._rotular({**base, "data": self._escolher(candidatos)}, TIPO_FIM_SEMANA_FERIADO)
+        alterada = {
+            **base,
+            "data": self._escolher(candidatos),
+            "valor": self._valor(CATEGORIAS[base["categoria"]]),
+        }
+        return self._rotular(alterada, TIPO_FIM_SEMANA_FERIADO)
 
     # --- montagem -------------------------------------------------------------
 

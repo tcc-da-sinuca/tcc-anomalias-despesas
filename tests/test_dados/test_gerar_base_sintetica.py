@@ -122,6 +122,15 @@ def test_fim_semana_feriado(base):
     assert not linhas["data"].map(eh_dia_util).any()
 
 
+@pytest.mark.parametrize("tipo", [g.TIPO_COMBINACAO_INCOMPATIVEL, g.TIPO_FIM_SEMANA_FERIADO])
+def test_anomalia_nao_copia_o_valor_da_despesa_modelo(base, normais, tipo):
+    # Um "gêmeo" com mesmo funcionário, categoria e valor pareceria duplicidade.
+    chaves = ["funcionario", "categoria", "valor"]
+    normais_por_chave = set(normais[chaves].itertuples(index=False, name=None))
+    for linha in _anomalias(base, tipo)[chaves].itertuples(index=False, name=None):
+        assert linha not in normais_por_chave
+
+
 @pytest.mark.parametrize(
     "alteracao",
     [{"n": 100}, {"taxa_anomalias": 0}, {"taxa_anomalias": 0.5}, {"limite_fracionamento": 0}],

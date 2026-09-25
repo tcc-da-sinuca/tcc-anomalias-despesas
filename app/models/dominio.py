@@ -46,7 +46,12 @@ DIMENSOES = (DIMENSAO_CATEGORIA, DIMENSAO_CONTA, DIMENSAO_CENTRO_CUSTO)
 PARAMETROS_PADRAO = {
     METODO_ZSCORE: {"limiar": "3"},
     METODO_IQR: {"fator": "1.5"},
-    METODO_ISOLATION_FOREST: {"contamination": "0.05", "random_state": "42"},
+    # limite_aprovacao: valor (R$) abaixo do qual se procura fracionamento (decisão D6).
+    METODO_ISOLATION_FOREST: {
+        "contamination": "0.05",
+        "random_state": "42",
+        "limite_aprovacao": "1000",
+    },
     METODO_CONTEXTUAL: {"frequencia_minima": "0.01"},
 }
 

@@ -77,7 +77,12 @@ def test_gera_os_arquivos_com_seed_e_parametros(saida):
     execucao = json.loads((saida / "execucao.json").read_text(encoding="utf-8"))
     assert execucao["seed_base"] == 42
     assert execucao["metadados_base"]["linhas_anomalas"] == 216
-    assert set(execucao["tempo_s_por_metodo"]) == {"zscore", "iqr", "contextual"}
+    assert set(execucao["tempo_s_por_metodo"]) == {
+        "zscore",
+        "iqr",
+        "contextual",
+        "isolation_forest",
+    }
 
 
 def test_recorte_por_tipo_soma_as_linhas_da_base(saida):

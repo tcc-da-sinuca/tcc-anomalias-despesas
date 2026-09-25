@@ -231,7 +231,7 @@ def test_nova_revisao_gera_novo_parecer_e_preserva_historico(
 def test_parametros_padrao_sao_inseridos_uma_unica_vez(sessao):
     from app.servicos.parametros import garantir_parametros_padrao
 
-    assert garantir_parametros_padrao() == 5
+    assert garantir_parametros_padrao() == 6
     sessao.commit()
     assert garantir_parametros_padrao() == 0
     assert sessao.get(ParametroMetodo, ("zscore", "limiar")).valor == "3"

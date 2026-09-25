@@ -120,7 +120,7 @@ def test_seed_admin_e_idempotente(app, monkeypatch):
     assert segunda.exit_code == 0, segunda.output
     assert "já existe" in segunda.output
     assert db.session.scalar(select(func.count(Usuario.id))) == 1
-    assert db.session.scalar(select(func.count()).select_from(ParametroMetodo)) == 5
+    assert db.session.scalar(select(func.count()).select_from(ParametroMetodo)) == 6
     admin = db.session.scalar(select(Usuario))
     assert admin.perfil == "administrador"
     assert admin.verificar_senha("senha-admin-123")

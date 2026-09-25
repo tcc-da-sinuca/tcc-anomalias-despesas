@@ -21,8 +21,8 @@ foi testada no Codespace (é preciso um contorno de firewall, descrito no README
 análise pela tela, pela API e por comando; lista e detalhe de alertas (US06).
 
 **Sprint 3 (12/10–25/10): em andamento, adiantada.** Revisão e parecer (US07/US08)
-concluídos em 25/09. Experimento rodando com Z-score, IQR e contextual (25/09); falta
-incluir o Isolation Forest, que é o próximo item.
+concluídos em 25/09. Isolation Forest (US04) e experimento com os quatro métodos
+concluídos em 25/09 (seeds 42 e 7). **A S3 está concluída.**
 
 | Área | Situação |
 |---|---|
@@ -31,12 +31,12 @@ incluir o Isolation Forest, que é o próximo item.
 | Infraestrutura | ✅ `docker compose up` testado no Codespace: migrations, admin, login, `seed-base` e testes no container |
 | Base sintética | ✅ Gerador, carga no banco (`flask seed-base`) e calendário de feriados |
 | Importação e estatísticas (US01, US02) | ✅ CSV/XLSX com erros por linha, cadastro manual, API, telas e estatísticas recalculadas a cada importação |
-| Motor de detecção | ✅ Z-score, IQR, contextual e consolidador · ⬜ Isolation Forest (S3) |
+| Motor de detecção | ✅ Z-score, IQR, contextual, Isolation Forest e consolidador |
 | Telas de alertas, revisão e dashboard | ✅ Análises, lista e detalhe de alertas, parecer com histórico · ⬜ dashboard e filtros da US10 (S4) |
-| Experimento | 🟡 Script e `metricas.csv` gerados com Z-score, IQR e contextual · ⬜ Isolation Forest |
-| Testes | 258 passando (SQLite + PostgreSQL) |
+| Experimento | ✅ `metricas.csv` com os quatro métodos, seeds 42 e 7 |
+| Testes | 272 passando (SQLite + PostgreSQL) |
 
-**Próximo passo:** proposta do Isolation Forest (US04): atributos derivados e motivo legível; depois implementar e incluir no experimento.
+**Próximo passo:** entregar os resultados à equipe do artigo e adiantar a S4: dashboard (US09) e filtros (US10).
 
 ---
 
@@ -48,8 +48,8 @@ incluir o Isolation Forest, que é o próximo item.
 | 27/09 | **Fim da S1:** US01, US02 e subida com Docker Compose | — | ✅ (23/09) |
 | 01/10 | Fluxo "executar análise → gerar alertas → registrar parecer" implementado ou, no mínimo, definido | Documentação: diagramas de sequência e arquitetura (03/10) | ✅ definido; análise e alertas implementados (23/09) |
 | 11/10 | **Fim da S2:** Z-score, IQR, contextual e lista de alertas com motivo | — | ✅ (23/09) |
-| 18/10 | `experimentos/resultados/metricas.csv` gerado por script, com seed e parâmetros | Artigo: resultados (25/10) | ⬜ |
-| 25/10 | **Fim da S3:** Isolation Forest, experimento, revisão e parecer | — | ⬜ |
+| 18/10 | `experimentos/resultados/metricas.csv` gerado por script, com seed e parâmetros | Artigo: resultados (25/10) | ✅ (25/09) |
+| 25/10 | **Fim da S3:** Isolation Forest, experimento, revisão e parecer | — | ✅ (25/09) |
 | 02/11 | **Entrega final:** software funcionando, com código e base de dados | Orientador | ⬜ |
 
 ---
@@ -101,14 +101,14 @@ incluir o Isolation Forest, que é o próximo item.
 
 ## Sprint 3 — 12/10 a 25/10
 
-- [ ] **US04: Isolation Forest** (`motor/isolation_forest.py`)
+- [x] **US04: Isolation Forest** (`motor/isolation_forest.py`), conforme [`ISOLATION_FOREST.md`](ISOLATION_FOREST.md)
   - atributos derivados: valor, dia da semana, feriado (`motor/calendario.py`), repetições por funcionário e valor, proximidade de um limite
   - `contamination=0.05` e `random_state=42`
-- [ ] **Experimento** (`experimentos/avaliar_metodos.py`), **até 18/10**
+- [x] **Experimento** (`experimentos/avaliar_metodos.py`), **até 18/10**
   - [x] gera a base (seed 42) ou lê o CSV e roda o motor direto, sem banco
   - [x] precisão, recall, F1 e taxa de FP por método, por combinação (união e votação) e por tipo de anomalia
   - [x] grava `experimentos/resultados/metricas.csv` com seed e parâmetros (25/09)
-  - [ ] incluir o Isolation Forest e gerar a versão final dos resultados
+  - [x] incluir o Isolation Forest e gerar os resultados com as seeds 42 e 7 (25/09)
   - entregar à equipe do artigo só números gerados pelo script
 - [x] **US07/US08: revisão e parecer**, adiantada da S4 (decisão de 23/09); concluída em 25/09
   - `servicos/revisao.py`: insere o `Parecer` e atualiza `status_revisao`
@@ -157,3 +157,4 @@ incluir o Isolation Forest, que é o próximo item.
 | 23/09/2026 | S2 concluída antes do início: Z-score, IQR, contextual, consolidador, serviço de análise, API, comando e telas de análises e alertas (US03, US05, US06). Validado no Docker com a base sintética. 226 testes. |
 | 25/09/2026 | US07/US08 concluídas: `servicos/revisao.py`, `POST /api/alertas/{id}/parecer` e formulário de parecer no detalhe do alerta, com histórico. Próximo: experimento antes do Isolation Forest. 250 testes. |
 | 25/09/2026 | Experimento rodando com Z-score, IQR e contextual: `metricas.csv`, `metricas_por_tipo.csv` e `execucao.json` versionados em `experimentos/resultados/`. Metodologia registrada no item 13 de `MUDANCAS_PARA_DOCUMENTACAO.md`. 258 testes. |
+| 25/09/2026 | Isolation Forest implementado (atributos derivados, parâmetro `limite_aprovacao`, motivo pelos atributos ativos) e gerador corrigido (valor novo nas combinações incompatíveis e fins de semana). Experimento gerado de novo com os quatro métodos, seeds 42 e 7. S3 concluída. 272 testes. |

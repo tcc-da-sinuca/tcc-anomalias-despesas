@@ -23,6 +23,7 @@ def test_parametros_padrao_cobrem_os_quatro_metodos():
     assert dominio.PARAMETROS_PADRAO["isolation_forest"] == {
         "contamination": "0.05",
         "random_state": "42",
+        "limite_aprovacao": "1000",
     }
     assert dominio.PARAMETROS_PADRAO["contextual"]["frequencia_minima"] == "0.01"
 

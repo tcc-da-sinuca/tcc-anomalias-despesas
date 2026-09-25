@@ -35,10 +35,13 @@ def _alertas(sessao):
     return sessao.scalars(select(AlertaAnomalia).order_by(AlertaAnomalia.id)).all()
 
 
+ESTATISTICOS = ["zscore", "iqr", "contextual"]
+
+
 def test_grava_execucao_e_alertas(sessao, auditor, despesas):
     from app.servicos.analise import executar_analise
 
-    execucao = executar_analise(auditor)
+    execucao = executar_analise(auditor, ESTATISTICOS)
     sessao.commit()
 
     pares = {(a.despesa_id, a.metodo) for a in _alertas(sessao)}
@@ -63,13 +66,27 @@ def test_registra_parametros_e_seed(sessao, auditor, despesas):
 
     assert execucao.seed == 42
     assert execucao.parametros == {
-        "metodos": ["zscore", "iqr", "contextual"],
+        "metodos": ["zscore", "iqr", "contextual", "isolation_forest"],
         "zscore": {"limiar": 3.0},
         "iqr": {"fator": 1.5},
         "contextual": {"frequencia_minima": 0.01},
+        "isolation_forest": {"contamination": 0.05, "random_state": 42, "limite_aprovacao": 1000.0},
         "dimensao_valor": "categoria",
         "n_minimo_grupo": 10,
     }
+
+
+def test_seed_vem_do_isolation_forest(sessao, auditor, despesas):
+    from app.models import ParametroMetodo
+    from app.servicos.analise import executar_analise
+
+    sessao.add(ParametroMetodo(metodo="isolation_forest", chave="random_state", valor="7"))
+    sessao.commit()
+
+    execucao = executar_analise(auditor)
+
+    assert execucao.seed == 7
+    assert any(a.metodo == "isolation_forest" for a in _alertas(sessao))
 
 
 def test_usa_os_parametros_gravados(sessao, auditor, despesas):
@@ -89,7 +106,7 @@ def test_reexecucao_nao_duplica_alertas(sessao, auditor, despesas):
     from app.models import Despesa
     from app.servicos.analise import executar_analise
 
-    executar_analise(auditor)
+    executar_analise(auditor, ESTATISTICOS)
     sessao.commit()
     nova = Despesa(
         valor=Decimal("3000.00"),
@@ -102,7 +119,7 @@ def test_reexecucao_nao_duplica_alertas(sessao, auditor, despesas):
     sessao.add(nova)
     sessao.commit()
 
-    segunda = executar_analise(None)
+    segunda = executar_analise(None, ESTATISTICOS)
     sessao.commit()
 
     novos = [a for a in _alertas(sessao) if a.execucao_id == segunda.id]
@@ -127,7 +144,7 @@ def test_metodo_desconhecido(sessao, auditor, despesas):
     from app.servicos.analise import MetodoDesconhecidoError, executar_analise
 
     with pytest.raises(MetodoDesconhecidoError):
-        executar_analise(auditor, metodos=["isolation_forest"])
+        executar_analise(auditor, metodos=["xyz"])
     assert sessao.scalar(select(func.count(ExecucaoAnalise.id))) == 0
 
 

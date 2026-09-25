@@ -10,7 +10,11 @@ def test_padroes_quando_nada_foi_gravado(sessao):
 
     assert set(parametros) == set(PARAMETROS_PADRAO)
     assert parametros["zscore"] == {"limiar": 3.0}
-    assert parametros["isolation_forest"] == {"contamination": 0.05, "random_state": 42}
+    assert parametros["isolation_forest"] == {
+        "contamination": 0.05,
+        "random_state": 42,
+        "limite_aprovacao": 1000.0,
+    }
     assert isinstance(parametros["isolation_forest"]["random_state"], int)
 
 

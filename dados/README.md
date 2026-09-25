@@ -42,14 +42,17 @@ Os parâmetros de cada categoria estão em `CATEGORIAS`, no início do script.
 
 Por padrão, 3% de `n` em eventos (150), divididos igualmente entre os 5 tipos.
 Cada anomalia é uma **linha nova**; a despesa normal usada como modelo continua na base.
+Na combinação incompatível e no fim de semana/feriado, o valor é sorteado de novo da
+distribuição da categoria, para não criar um "gêmeo" da modelo que pareceria duplicidade
+(correção de 25/09/2026).
 
 | `tipo_anomalia` | Como é gerada | Método que deve capturá-la |
 |---|---|---|
 | `valor_extremo` | Valor de 5 a 15 vezes a mediana da categoria | Z-score, IQR |
-| `combinacao_incompativel` | Troca o centro de custo ou a conta por um que a categoria nunca usa nas despesas normais | Contextual |
+| `combinacao_incompativel` | Troca o centro de custo ou a conta por um que a categoria nunca usa nas despesas normais; valor novo | Contextual |
 | `duplicada` | Cópia de uma despesa (mesmo funcionário, valor, categoria, conta, centro de custo e descrição), de 0 a 3 dias úteis depois | Isolation Forest (atributos derivados) |
 | `fracionamento` | Compra dividida em 2 a 4 lançamentos entre 88% e 99,9% do limite (R$ 1.000), mesmo funcionário, em até 3 dias úteis. Categorias: Material de escritório, Software, Hospedagem | Isolation Forest (atributos derivados) |
-| `fim_semana_feriado` | Despesa movida para um sábado, domingo ou feriado do mesmo mês | Isolation Forest (atributos derivados) |
+| `fim_semana_feriado` | Despesa como a modelo, lançada num sábado, domingo ou feriado do mesmo mês; valor novo | Isolation Forest (atributos derivados) |
 
 `grupo_anomalia` liga linhas relacionadas: as partes de um fracionamento
 (`FRAC-001`, ...) e a duplicada com a sua original (`DUP-001`, ...). A original

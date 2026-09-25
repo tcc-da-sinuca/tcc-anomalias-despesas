@@ -78,7 +78,7 @@ COLUNAS_RESULTADO = ("despesa_id", "score", "sinalizado", "motivo")
 | `zscore.py` (S2) | `detectar(despesas, limiar=3.0, dimensao="categoria")` | \|z\| no grupo | \|z\| > limiar | "Valor R$ 9.850,00 é 4,2x a média da categoria Viagens (R$ 2.340,00); z = 5,1, limiar 3." |
 | `iqr.py` (S2) | `detectar(despesas, fator=1.5, dimensao="categoria")` | distância além do quartil, em IQRs (0 dentro da caixa) | score > fator | "Valor R$ 9.850,00 acima do limite do grupo categoria Viagens (Q3 + 1,5 × IQR = R$ 2.100,00)." |
 | `contextual.py` (S2) | `detectar(despesas, frequencia_minima=0.01)` | 1 − frequência da combinação | frequência < mínimo | "A combinação conta 3.1.07 × centro de custo CC-TI aparece em 0,4% das despesas de Viagens (2 de 538)." |
-| `isolation_forest.py` (S3) | `detectar(despesas, contamination=0.05, random_state=42)` | `-score_samples` do scikit-learn | `predict == -1` | Definido na S3, com os atributos que mais pesaram (ex.: "lançada num domingo; 3 despesas do mesmo funcionário e valor em 2 dias"). |
+| `isolation_forest.py` (S3) | `detectar(despesas, contamination=0.05, random_state=42, limite_aprovacao=1000.0)` | `-score_samples` do scikit-learn | `predict == -1` | Uma frase por atributo ativo, por exemplo "Lançada num domingo (14/06/2026)." (ver [`ISOLATION_FOREST.md`](ISOLATION_FOREST.md)) |
 
 Regras comuns do Z-score e do IQR:
 - grupo com menos de **10** despesas, ou com desvio/IQR zero, não é avaliado
@@ -90,7 +90,8 @@ Regras comuns do Z-score e do IQR:
 
 ```python
 DETECTORES = {"zscore": zscore.detectar, "iqr": iqr.detectar,
-              "contextual": contextual.detectar}   # isolation_forest entra na S3
+              "contextual": contextual.detectar,
+              "isolation_forest": isolation_forest.detectar}
 
 def executar_detectores(
     despesas: pd.DataFrame,

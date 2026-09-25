@@ -69,8 +69,8 @@ linha; as demais são importadas. Após cada importação, as estatísticas de r
 
 ### Executar a análise e ver os alertas
 
-Na tela **Análises**, o botão **Executar análise** aplica Z-score, IQR e a regra
-contextual a todas as despesas e grava os alertas. A tela **Alertas** lista cada
+Na tela **Análises**, o botão **Executar análise** aplica Z-score, IQR, a regra
+contextual e o Isolation Forest a todas as despesas e grava os alertas. A tela **Alertas** lista cada
 alerta com score, método e motivo. No detalhe do alerta, o auditor classifica a
 despesa (aprovado, irregular ou necessita justificativa) e registra um parecer; a
 observação é obrigatória nos dois últimos casos. Pareceres não podem ser alterados:

@@ -32,12 +32,12 @@ def test_repassa_os_parametros_de_cada_metodo(despesas):
 
 
 def test_metodo_desconhecido(despesas):
-    with pytest.raises(MetodoDesconhecidoError, match="isolation_forest"):
-        executar_detectores(despesas, {}, ["zscore", "isolation_forest"])
+    with pytest.raises(MetodoDesconhecidoError, match="xyz"):
+        executar_detectores(despesas, {}, ["zscore", "xyz"])
 
 
 def test_um_alerta_por_despesa_e_metodo(despesas):
-    alertas = consolidar(executar_detectores(despesas, {}))
+    alertas = consolidar(executar_detectores(despesas, {}, ["zscore", "iqr", "contextual"]))
 
     assert tuple(alertas.columns) == COLUNAS_ALERTA
     pares = set(zip(alertas["despesa_id"], alertas["metodo"], strict=True))
@@ -47,7 +47,7 @@ def test_um_alerta_por_despesa_e_metodo(despesas):
 
 def test_nada_sinalizado():
     despesas = montar_despesas([{"valor": 100.0 + i % 3} for i in range(20)])
-    alertas = consolidar(executar_detectores(despesas, {}))
+    alertas = consolidar(executar_detectores(despesas, {}, ["zscore", "iqr", "contextual"]))
 
     assert alertas.empty
     assert tuple(alertas.columns) == COLUNAS_ALERTA

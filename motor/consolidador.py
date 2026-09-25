@@ -10,13 +10,13 @@ from collections.abc import Iterable
 
 import pandas as pd
 
-from motor import contextual, iqr, zscore
+from motor import contextual, iqr, isolation_forest, zscore
 
-# O Isolation Forest entra na Sprint 3.
 DETECTORES = {
     "zscore": zscore.detectar,
     "iqr": iqr.detectar,
     "contextual": contextual.detectar,
+    "isolation_forest": isolation_forest.detectar,
 }
 COLUNAS_ALERTA = ("despesa_id", "metodo", "score", "motivo")
 

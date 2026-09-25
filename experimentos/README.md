@@ -27,7 +27,13 @@ saem idênticos.
   F1 = 2·VP / (2·VP + FP + FN); taxa de FP = FP / (FP + VN). Métrica sem denominador
   fica vazia.
 - **Parâmetros:** os padrões do motor (os mesmos da aplicação), salvo `--param`.
-  Z-score e IQR agrupam por categoria e ignoram grupos com menos de 10 despesas.
+  Z-score e IQR agrupam por categoria e ignoram grupos com menos de 10 despesas. O
+  Isolation Forest usa `contamination=0.05`, `random_state=42` e limite de aprovação de
+  R$ 1.000 (atributos em [`docs/ISOLATION_FOREST.md`](../docs/ISOLATION_FOREST.md)).
+- **Seeds:** o resultado principal usa a base com seed 42 (`resultados/`); a seed 7
+  (`resultados/seed_7/`) mostra se o resultado se mantém com outra base.
+- **Atenção ao ler o Isolation Forest:** numa duplicidade ele sinaliza a original e a
+  cópia; a original tem rótulo 0 e conta como falso positivo.
 
 ## Arquivos em `resultados/`
 
@@ -38,4 +44,5 @@ saem idênticos.
 | `execucao.json` | Data, versões do Python e das bibliotecas, tempo de cada método e metadados da base. Muda a cada execução |
 
 Os arquivos em `resultados/` são versionados, para que a equipe do artigo use
-exatamente os números gerados. O Isolation Forest entra na Sprint 3.
+exatamente os números gerados. Para refazer a seed 7:
+`python -m experimentos.avaliar_metodos --seed 7 --saida experimentos/resultados/seed_7`.

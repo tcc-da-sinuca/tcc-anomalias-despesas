@@ -100,7 +100,7 @@ Implementado em `app/models/` e refletido em `docs/diagramas/classes.puml`.
 Valores de domínio (perfis, métodos, status, parâmetros padrão) ficam em `app/models/dominio.py`.
 
 Parâmetros padrão: Z-score com |z| > 3; IQR com fator 1,5; Isolation Forest com
-`contamination=0.05` e `random_state=42`; contextual com frequência mínima da combinação < 1% ou combinação inexistente.
+`contamination=0.05`, `random_state=42` e `limite_aprovacao=1000` (R$, para detectar fracionamento); contextual com frequência mínima da combinação < 1% ou combinação inexistente.
 
 ---
 

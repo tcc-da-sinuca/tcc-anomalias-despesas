@@ -1,7 +1,7 @@
 {
-  "executado_em": "2026-09-25T03:13:55+00:00",
-  "base": "gerada com seed 42",
-  "seed_base": 42,
+  "executado_em": "2026-09-25T03:13:57+00:00",
+  "base": "gerada com seed 7",
+  "seed_base": 7,
   "metodos": [
     "zscore",
     "iqr",
@@ -28,10 +28,10 @@
   "n_minimo_grupo": 10,
   "votos_minimos": 2,
   "tempo_s_por_metodo": {
-    "zscore": 0.0785,
-    "iqr": 0.0159,
-    "contextual": 0.0038,
-    "isolation_forest": 0.2621
+    "zscore": 0.0126,
+    "iqr": 0.0158,
+    "contextual": 0.0036,
+    "isolation_forest": 0.2869
   },
   "linhas": 5000,
   "versoes": {
@@ -41,7 +41,7 @@
     "scikit-learn": "1.7.2"
   },
   "metadados_base": {
-    "seed": 42,
+    "seed": 7,
     "parametros": {
       "n": 5000,
       "inicio": "2025-09-01",
@@ -67,8 +67,8 @@
       ]
     },
     "total_linhas": 5000,
-    "linhas_normais": 4784,
-    "linhas_anomalas": 216,
+    "linhas_normais": 4788,
+    "linhas_anomalas": 212,
     "anomalias_por_tipo": {
       "valor_extremo": {
         "eventos": 30,
@@ -84,7 +84,7 @@
       },
       "fracionamento": {
         "eventos": 30,
-        "linhas": 96
+        "linhas": 92
       },
       "fim_semana_feriado": {
         "eventos": 30,

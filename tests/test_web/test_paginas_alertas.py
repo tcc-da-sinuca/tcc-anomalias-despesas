@@ -55,7 +55,7 @@ def test_executar_analise_pela_tela(client, entrar, auditor, despesas, sessao, a
 
     html = resposta.get_data(as_text=True)
     assert resposta.status_code == 200
-    assert "Análise concluída: 121 despesa(s) analisada(s), 2 alerta(s) novo(s)." in html
+    assert "Análise concluída: 121 despesa(s) analisada(s), 3 alerta(s) novo(s)." in html
     assert "Ver os alertas desta análise" in html
     assert sessao.scalar(select(func.count(ExecucaoAnalise.id))) == 1
 
@@ -113,7 +113,7 @@ def test_comando_executar_analise(app, despesas, auditor):
     resultado = app.test_cli_runner().invoke(args=["executar-analise", "--email", auditor.email])
 
     assert resultado.exit_code == 0, resultado.output
-    assert "121 despesas, 2 alertas novos" in resultado.output
+    assert "121 despesas, 3 alertas novos" in resultado.output
 
 
 def test_comando_com_metodo_invalido(app):

@@ -45,15 +45,16 @@ def test_executar_analise(client, entrar, auditor, despesas):
 
     assert resposta.status_code == 201
     execucao = resposta.get_json()
-    assert (execucao["total_despesas"], execucao["total_alertas"]) == (121, 2)
-    assert execucao["alertas_por_metodo"] == {"iqr": 1, "zscore": 1}
+    # a despesa de R$ 2.500 é sinalizada pelo Z-score, pelo IQR e pelo Isolation Forest
+    assert (execucao["total_despesas"], execucao["total_alertas"]) == (121, 3)
+    assert execucao["alertas_por_metodo"] == {"iqr": 1, "isolation_forest": 1, "zscore": 1}
     assert execucao["seed"] == 42
     assert execucao["executada_por"] == auditor.id
-    assert execucao["parametros"]["metodos"] == ["zscore", "iqr", "contextual"]
+    assert execucao["parametros"]["metodos"] == ["zscore", "iqr", "contextual", "isolation_forest"]
 
     consulta = client.get(f"/api/analises/{execucao['id']}")
     assert consulta.status_code == 200
-    assert consulta.get_json()["total_alertas"] == 2
+    assert consulta.get_json()["total_alertas"] == 3
 
 
 def test_executar_so_alguns_metodos(client, entrar, auditor, despesas):
@@ -84,7 +85,7 @@ def test_listar_alertas(client, entrar, auditor, despesas):
 
     dados = client.get("/api/alertas").get_json()
 
-    assert dados["total"] == 2
+    assert dados["total"] == 3
     alerta = dados["itens"][0]
     assert alerta["status_revisao"] == "pendente"
     assert alerta["motivo"].startswith("Valor R$ 2.500,00")
