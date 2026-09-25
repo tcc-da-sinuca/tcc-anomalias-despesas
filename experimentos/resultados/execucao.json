@@ -1,0 +1,189 @@
+{
+  "executado_em": "2026-09-25T01:26:36+00:00",
+  "base": "gerada com seed 42",
+  "seed_base": 42,
+  "metodos": [
+    "zscore",
+    "iqr",
+    "contextual"
+  ],
+  "parametros": {
+    "zscore": {
+      "limiar": 3.0
+    },
+    "iqr": {
+      "fator": 1.5
+    },
+    "contextual": {
+      "frequencia_minima": 0.01
+    }
+  },
+  "dimensao_valor": "categoria",
+  "n_minimo_grupo": 10,
+  "votos_minimos": 2,
+  "tempo_s_por_metodo": {
+    "zscore": 0.0135,
+    "iqr": 0.0157,
+    "contextual": 0.0037
+  },
+  "linhas": 5000,
+  "versoes": {
+    "python": "3.14.2",
+    "pandas": "2.3.3",
+    "numpy": "2.5.3",
+    "scikit-learn": "1.7.2"
+  },
+  "metadados_base": {
+    "seed": 42,
+    "parametros": {
+      "n": 5000,
+      "inicio": "2025-09-01",
+      "fim": "2026-08-31",
+      "taxa_anomalias": 0.03,
+      "limite_fracionamento": "1000.00",
+      "fator_extremo": [
+        5.0,
+        15.0
+      ],
+      "partes_fracionamento": [
+        2,
+        4
+      ],
+      "faixa_fracionamento": [
+        0.88,
+        0.999
+      ],
+      "janela_fracionamento_dias": 3,
+      "atraso_duplicada_dias": [
+        0,
+        3
+      ]
+    },
+    "total_linhas": 5000,
+    "linhas_normais": 4784,
+    "linhas_anomalas": 216,
+    "anomalias_por_tipo": {
+      "valor_extremo": {
+        "eventos": 30,
+        "linhas": 30
+      },
+      "combinacao_incompativel": {
+        "eventos": 30,
+        "linhas": 30
+      },
+      "duplicada": {
+        "eventos": 30,
+        "linhas": 30
+      },
+      "fracionamento": {
+        "eventos": 30,
+        "linhas": 96
+      },
+      "fim_semana_feriado": {
+        "eventos": 30,
+        "linhas": 30
+      }
+    },
+    "categorias": {
+      "Viagens": {
+        "mediana": 850,
+        "sigma": 0.55,
+        "contas": [
+          "3.1.01.001"
+        ],
+        "centros_custo": [
+          "CC-COM",
+          "CC-OPS",
+          "CC-ADM",
+          "CC-TI"
+        ]
+      },
+      "Hospedagem": {
+        "mediana": 420,
+        "sigma": 0.45,
+        "contas": [
+          "3.1.01.002"
+        ],
+        "centros_custo": [
+          "CC-COM",
+          "CC-OPS",
+          "CC-ADM",
+          "CC-TI"
+        ]
+      },
+      "Alimentação": {
+        "mediana": 55,
+        "sigma": 0.5,
+        "contas": [
+          "3.1.02.001",
+          "3.1.02.002"
+        ],
+        "centros_custo": [
+          "CC-ADM",
+          "CC-COM",
+          "CC-TI",
+          "CC-OPS",
+          "CC-RH"
+        ]
+      },
+      "Combustível": {
+        "mediana": 180,
+        "sigma": 0.4,
+        "contas": [
+          "3.1.03.001"
+        ],
+        "centros_custo": [
+          "CC-COM",
+          "CC-OPS"
+        ]
+      },
+      "Material de escritório": {
+        "mediana": 120,
+        "sigma": 0.7,
+        "contas": [
+          "3.1.04.001"
+        ],
+        "centros_custo": [
+          "CC-ADM",
+          "CC-RH",
+          "CC-COM",
+          "CC-TI",
+          "CC-OPS"
+        ]
+      },
+      "Software": {
+        "mediana": 350,
+        "sigma": 0.8,
+        "contas": [
+          "3.1.05.001",
+          "3.1.05.002"
+        ],
+        "centros_custo": [
+          "CC-TI",
+          "CC-ADM"
+        ]
+      },
+      "Treinamentos": {
+        "mediana": 1200,
+        "sigma": 0.6,
+        "contas": [
+          "3.1.06.001"
+        ],
+        "centros_custo": [
+          "CC-RH",
+          "CC-TI",
+          "CC-COM",
+          "CC-ADM",
+          "CC-OPS"
+        ]
+      }
+    },
+    "funcionarios_por_centro_custo": {
+      "CC-ADM": 6,
+      "CC-COM": 12,
+      "CC-TI": 8,
+      "CC-OPS": 10,
+      "CC-RH": 4
+    }
+  }
+}

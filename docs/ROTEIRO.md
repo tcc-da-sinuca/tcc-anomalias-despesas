@@ -21,7 +21,8 @@ foi testada no Codespace (é preciso um contorno de firewall, descrito no README
 análise pela tela, pela API e por comando; lista e detalhe de alertas (US06).
 
 **Sprint 3 (12/10–25/10): em andamento, adiantada.** Revisão e parecer (US07/US08)
-concluídos em 25/09. Faltam o experimento (prazo 18/10) e o Isolation Forest.
+concluídos em 25/09. Experimento rodando com Z-score, IQR e contextual (25/09); falta
+incluir o Isolation Forest, que é o próximo item.
 
 | Área | Situação |
 |---|---|
@@ -32,10 +33,10 @@ concluídos em 25/09. Faltam o experimento (prazo 18/10) e o Isolation Forest.
 | Importação e estatísticas (US01, US02) | ✅ CSV/XLSX com erros por linha, cadastro manual, API, telas e estatísticas recalculadas a cada importação |
 | Motor de detecção | ✅ Z-score, IQR, contextual e consolidador · ⬜ Isolation Forest (S3) |
 | Telas de alertas, revisão e dashboard | ✅ Análises, lista e detalhe de alertas, parecer com histórico · ⬜ dashboard e filtros da US10 (S4) |
-| Experimento | ⬜ Não iniciado |
-| Testes | 250 passando (SQLite + PostgreSQL) |
+| Experimento | 🟡 Script e `metricas.csv` gerados com Z-score, IQR e contextual · ⬜ Isolation Forest |
+| Testes | 258 passando (SQLite + PostgreSQL) |
 
-**Próximo passo:** esqueleto do experimento com Z-score, IQR e contextual (prazo 18/10); depois, proposta e implementação do Isolation Forest (US04).
+**Próximo passo:** proposta do Isolation Forest (US04): atributos derivados e motivo legível; depois implementar e incluir no experimento.
 
 ---
 
@@ -104,9 +105,10 @@ concluídos em 25/09. Faltam o experimento (prazo 18/10) e o Isolation Forest.
   - atributos derivados: valor, dia da semana, feriado (`motor/calendario.py`), repetições por funcionário e valor, proximidade de um limite
   - `contamination=0.05` e `random_state=42`
 - [ ] **Experimento** (`experimentos/avaliar_metodos.py`), **até 18/10**
-  - lê o CSV da base sintética e roda o motor direto, sem banco
-  - precisão, recall, F1 e taxa de FP por método, por combinação de métodos e por tipo de anomalia
-  - grava `experimentos/resultados/metricas.csv` com seed e parâmetros
+  - [x] gera a base (seed 42) ou lê o CSV e roda o motor direto, sem banco
+  - [x] precisão, recall, F1 e taxa de FP por método, por combinação (união e votação) e por tipo de anomalia
+  - [x] grava `experimentos/resultados/metricas.csv` com seed e parâmetros (25/09)
+  - [ ] incluir o Isolation Forest e gerar a versão final dos resultados
   - entregar à equipe do artigo só números gerados pelo script
 - [x] **US07/US08: revisão e parecer**, adiantada da S4 (decisão de 23/09); concluída em 25/09
   - `servicos/revisao.py`: insere o `Parecer` e atualiza `status_revisao`
@@ -154,3 +156,4 @@ concluídos em 25/09. Faltam o experimento (prazo 18/10) e o Isolation Forest.
 | 23/09/2026 | Fluxo de análise definido e aprovado (`FLUXO_ANALISE.md`): Z-score e IQR por categoria, frequência contextual dentro da categoria, sem alerta repetido por despesa + método, grupo mínimo de 10. Item de 01/10 concluído. |
 | 23/09/2026 | S2 concluída antes do início: Z-score, IQR, contextual, consolidador, serviço de análise, API, comando e telas de análises e alertas (US03, US05, US06). Validado no Docker com a base sintética. 226 testes. |
 | 25/09/2026 | US07/US08 concluídas: `servicos/revisao.py`, `POST /api/alertas/{id}/parecer` e formulário de parecer no detalhe do alerta, com histórico. Próximo: experimento antes do Isolation Forest. 250 testes. |
+| 25/09/2026 | Experimento rodando com Z-score, IQR e contextual: `metricas.csv`, `metricas_por_tipo.csv` e `execucao.json` versionados em `experimentos/resultados/`. Metodologia registrada no item 13 de `MUDANCAS_PARA_DOCUMENTACAO.md`. 258 testes. |

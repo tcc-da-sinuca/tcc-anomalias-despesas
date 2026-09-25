@@ -106,6 +106,15 @@ sudo iptables-legacy -I DOCKER-USER -o br-+ -j ACCEPT
 docker compose up --build
 ```
 
+Depois que o Codespace reinicia, o Docker às vezes perde a camada de arquivos de um
+container e a subida falha com `RWLayer of container ... is unexpectedly nil`. Remova o
+container e suba de novo; os dados do banco ficam no volume `pgdata` e não se perdem:
+
+```bash
+docker compose rm -f db app
+docker compose up -d
+```
+
 O problema é do ambiente do Codespace, não do projeto. Com Docker Desktop (Windows e
 Mac) ele não deve aparecer, mas isso ainda não foi testado.
 
@@ -116,6 +125,14 @@ Mac) ele não deve aparecer, mas isso ainda não foi testado.
 ```bash
 docker compose exec app pytest          # todos os testes, inclusive os de PostgreSQL
 ```
+
+### Experimento
+
+```bash
+python -m experimentos.avaliar_metodos   # métricas por método em experimentos/resultados/
+```
+
+Detalhes da metodologia e dos arquivos em [`experimentos/README.md`](experimentos/README.md).
 
 Fora do Docker (por exemplo, no terminal do Codespace):
 

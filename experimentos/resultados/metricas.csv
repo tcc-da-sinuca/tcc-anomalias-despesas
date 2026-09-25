@@ -1,0 +1,9 @@
+avaliacao,nome,metodos,vp,fp,fn,vn,precisao,recall,f1,taxa_fp,sinalizadas,seed_base,parametros
+metodo,zscore,zscore,56,24,160,4760,0.7000,0.2593,0.3784,0.0050,80,42,"{""zscore"": {""limiar"": 3.0}}"
+metodo,iqr,iqr,59,170,157,4614,0.2576,0.2731,0.2652,0.0355,229,42,"{""iqr"": {""fator"": 1.5}}"
+metodo,contextual,contextual,30,0,186,4784,1.0000,0.1389,0.2439,0.0000,30,42,"{""contextual"": {""frequencia_minima"": 0.01}}"
+uniao,zscore+iqr,zscore+iqr,59,170,157,4614,0.2576,0.2731,0.2652,0.0355,229,42,"{""iqr"": {""fator"": 1.5}, ""zscore"": {""limiar"": 3.0}}"
+uniao,zscore+contextual,zscore+contextual,86,24,130,4760,0.7818,0.3981,0.5276,0.0050,110,42,"{""contextual"": {""frequencia_minima"": 0.01}, ""zscore"": {""limiar"": 3.0}}"
+uniao,iqr+contextual,iqr+contextual,89,170,127,4614,0.3436,0.4120,0.3747,0.0355,259,42,"{""contextual"": {""frequencia_minima"": 0.01}, ""iqr"": {""fator"": 1.5}}"
+uniao,zscore+iqr+contextual,zscore+iqr+contextual,89,170,127,4614,0.3436,0.4120,0.3747,0.0355,259,42,"{""contextual"": {""frequencia_minima"": 0.01}, ""iqr"": {""fator"": 1.5}, ""zscore"": {""limiar"": 3.0}}"
+votacao,>=2 de zscore+iqr+contextual,zscore+iqr+contextual,56,24,160,4760,0.7000,0.2593,0.3784,0.0050,80,42,"{""contextual"": {""frequencia_minima"": 0.01}, ""iqr"": {""fator"": 1.5}, ""zscore"": {""limiar"": 3.0}}"

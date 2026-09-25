@@ -5,6 +5,7 @@ experimento, que precisa das despesas não sinalizadas). ``consolidar`` fica só
 com as sinalizadas: um alerta por despesa e método.
 """
 
+import inspect
 from collections.abc import Iterable
 
 import pandas as pd
@@ -42,6 +43,24 @@ def executar_detectores(
             f"Disponíveis: {', '.join(DETECTORES)}."
         )
     return {m: DETECTORES[m](despesas, **parametros.get(m, {})) for m in metodos}
+
+
+def parametros_padrao(metodos: Iterable[str] | None = None) -> dict[str, dict[str, float | int]]:
+    """Valores padrão dos parâmetros de cada detector, lidos da assinatura da função.
+
+    Usado pelo experimento, que roda sem banco. Na aplicação os valores vêm de
+    ``ParametroMetodo``; um teste garante que os dois coincidem.
+    """
+    metodos = list(DETECTORES) if metodos is None else list(metodos)
+    padroes = {}
+    for metodo in metodos:
+        assinatura = inspect.signature(DETECTORES[metodo])
+        padroes[metodo] = {
+            nome: p.default
+            for nome, p in list(assinatura.parameters.items())[1:]
+            if nome != "dimensao"
+        }
+    return padroes
 
 
 def consolidar(resultados: dict[str, pd.DataFrame]) -> pd.DataFrame:

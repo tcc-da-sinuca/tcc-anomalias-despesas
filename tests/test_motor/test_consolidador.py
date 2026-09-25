@@ -51,3 +51,12 @@ def test_nada_sinalizado():
 
     assert alertas.empty
     assert tuple(alertas.columns) == COLUNAS_ALERTA
+
+
+def test_parametros_padrao_coincidem_com_os_da_aplicacao():
+    from app.models.dominio import PARAMETROS_PADRAO
+    from motor.consolidador import parametros_padrao
+
+    for metodo, parametros in parametros_padrao().items():
+        esperado = {chave: float(valor) for chave, valor in PARAMETROS_PADRAO[metodo].items()}
+        assert parametros == esperado

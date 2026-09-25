@@ -1,0 +1,49 @@
+avaliacao,nome,tipo_anomalia,linhas,sinalizadas,taxa
+metodo,zscore,combinacao_incompativel,30,0,0.0000
+metodo,zscore,duplicada,30,1,0.0333
+metodo,zscore,fim_semana_feriado,30,1,0.0333
+metodo,zscore,fracionamento,96,25,0.2604
+metodo,zscore,valor_extremo,30,29,0.9667
+metodo,zscore,normal,4784,24,0.0050
+metodo,iqr,combinacao_incompativel,30,0,0.0000
+metodo,iqr,duplicada,30,2,0.0667
+metodo,iqr,fim_semana_feriado,30,2,0.0667
+metodo,iqr,fracionamento,96,25,0.2604
+metodo,iqr,valor_extremo,30,30,1.0000
+metodo,iqr,normal,4784,170,0.0355
+metodo,contextual,combinacao_incompativel,30,30,1.0000
+metodo,contextual,duplicada,30,0,0.0000
+metodo,contextual,fim_semana_feriado,30,0,0.0000
+metodo,contextual,fracionamento,96,0,0.0000
+metodo,contextual,valor_extremo,30,0,0.0000
+metodo,contextual,normal,4784,0,0.0000
+uniao,zscore+iqr,combinacao_incompativel,30,0,0.0000
+uniao,zscore+iqr,duplicada,30,2,0.0667
+uniao,zscore+iqr,fim_semana_feriado,30,2,0.0667
+uniao,zscore+iqr,fracionamento,96,25,0.2604
+uniao,zscore+iqr,valor_extremo,30,30,1.0000
+uniao,zscore+iqr,normal,4784,170,0.0355
+uniao,zscore+contextual,combinacao_incompativel,30,30,1.0000
+uniao,zscore+contextual,duplicada,30,1,0.0333
+uniao,zscore+contextual,fim_semana_feriado,30,1,0.0333
+uniao,zscore+contextual,fracionamento,96,25,0.2604
+uniao,zscore+contextual,valor_extremo,30,29,0.9667
+uniao,zscore+contextual,normal,4784,24,0.0050
+uniao,iqr+contextual,combinacao_incompativel,30,30,1.0000
+uniao,iqr+contextual,duplicada,30,2,0.0667
+uniao,iqr+contextual,fim_semana_feriado,30,2,0.0667
+uniao,iqr+contextual,fracionamento,96,25,0.2604
+uniao,iqr+contextual,valor_extremo,30,30,1.0000
+uniao,iqr+contextual,normal,4784,170,0.0355
+uniao,zscore+iqr+contextual,combinacao_incompativel,30,30,1.0000
+uniao,zscore+iqr+contextual,duplicada,30,2,0.0667
+uniao,zscore+iqr+contextual,fim_semana_feriado,30,2,0.0667
+uniao,zscore+iqr+contextual,fracionamento,96,25,0.2604
+uniao,zscore+iqr+contextual,valor_extremo,30,30,1.0000
+uniao,zscore+iqr+contextual,normal,4784,170,0.0355
+votacao,>=2 de zscore+iqr+contextual,combinacao_incompativel,30,0,0.0000
+votacao,>=2 de zscore+iqr+contextual,duplicada,30,1,0.0333
+votacao,>=2 de zscore+iqr+contextual,fim_semana_feriado,30,1,0.0333
+votacao,>=2 de zscore+iqr+contextual,fracionamento,96,25,0.2604
+votacao,>=2 de zscore+iqr+contextual,valor_extremo,30,29,0.9667
+votacao,>=2 de zscore+iqr+contextual,normal,4784,24,0.0050
