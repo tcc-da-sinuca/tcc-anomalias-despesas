@@ -9,7 +9,7 @@ from sqlalchemy import text
 
 from app.extensoes import csrf, db
 from app.models import ExecucaoAnalise
-from app.models.dominio import METODOS, PERFIL_AUDITOR, STATUS_REVISAO
+from app.models.dominio import PERFIL_AUDITOR
 from app.repositorios import alertas as repo_alertas
 from app.repositorios.despesas import POR_PAGINA_PADRAO, paginar_despesas
 from app.rotas.autorizacao import perfil_requerido
@@ -176,19 +176,20 @@ def obter_analise(execucao_id: int):
 @bp.route("/alertas")
 @perfil_requerido(PERFIL_AUDITOR)
 def listar_alertas():
-    """Lista paginada: ``?status=pendente&metodo=zscore&execucao_id=3&pagina=1&por_pagina=50``."""
-    status = request.args.get("status") or None
-    metodo = request.args.get("metodo") or None
-    if status is not None and status not in STATUS_REVISAO:
-        return jsonify(erro=f"status inválido. Use um de: {', '.join(STATUS_REVISAO)}."), 400
-    if metodo is not None and metodo not in METODOS:
-        return jsonify(erro=f"método inválido. Use um de: {', '.join(METODOS)}."), 400
+    """Lista paginada com filtros combináveis (US10).
+
+    ``?data_inicio=2026-03-01&data_fim=2026-03-31&categoria=Viagens&conta_contabil=3.1.01``
+    ``&centro_custo=CC-ADM&funcionario=F001&status=pendente&metodo=zscore&execucao_id=3``
+    ``&pagina=1&por_pagina=50``. O período se refere à data da despesa.
+    """
+    try:
+        filtros = repo_alertas.FiltrosAlertas.de_parametros(request.args)
+    except repo_alertas.FiltroInvalidoError as erro:
+        return jsonify(erro=str(erro), campo=erro.campo), 400
     pagina = repo_alertas.paginar_alertas(
         request.args.get("pagina", 1, type=int),
         request.args.get("por_pagina", repo_alertas.POR_PAGINA_PADRAO, type=int),
-        status=status,
-        metodo=metodo,
-        execucao_id=request.args.get("execucao_id", type=int),
+        filtros,
     )
     return jsonify(
         _pagina_json(pagina, lambda a: {**_alerta_json(a), "despesa": _despesa_json(a.despesa)})

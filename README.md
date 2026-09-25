@@ -82,7 +82,9 @@ alerta com score, método e motivo. No detalhe do alerta, o auditor classifica a
 despesa (aprovado, irregular ou necessita justificativa) e registra um parecer; a
 observação é obrigatória nos dois últimos casos. Pareceres não podem ser alterados:
 uma nova revisão gera um novo parecer e o histórico fica visível. Uma despesa que já tem alerta de um método não recebe outro do mesmo
-método, então a análise pode ser repetida após cada importação. Pela API:
+método, então a análise pode ser repetida após cada importação. A lista de alertas
+tem filtros combináveis: período (data da despesa), categoria, conta contábil, centro
+de custo, funcionário, status e método. Pela API:
 `POST /api/analises`, `GET /api/alertas`, `POST /api/alertas/{id}/parecer`. Detalhes em
 [`docs/FLUXO_ANALISE.md`](docs/FLUXO_ANALISE.md).
 

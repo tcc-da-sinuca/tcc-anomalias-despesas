@@ -8,32 +8,65 @@
   partida para a revisão, não uma conclusão. O score tem escala própria em cada método.
 </p>
 
-<form method="get" class="row g-2 align-items-end mb-3">
-  <div class="col-sm-4 col-md-3">
-    <label class="form-label small" for="status">Status</label>
-    <select class="form-select form-select-sm" id="status" name="status">
-      <option value="">Todos</option>
-      {% for s in status_revisao %}
-      <option value="{{ s }}" {{ 'selected' if filtros.status == s }}>{{ s | nome_status }}</option>
-      {% endfor %}
-    </select>
+{% set nomes_campos = {
+  'categoria': 'Categoria',
+  'conta_contabil': 'Conta contábil',
+  'centro_custo': 'Centro de custo',
+  'funcionario': 'Funcionário',
+} %}
+<form method="get" class="card card-body mb-3" aria-label="Filtros de alertas">
+  <div class="row g-2 align-items-end">
+    <div class="col-6 col-md-3 col-lg-2">
+      <label class="form-label small" for="data_inicio">Despesas de</label>
+      <input class="form-control form-control-sm" type="date" id="data_inicio" name="data_inicio"
+             value="{{ filtros.data_inicio.isoformat() if filtros.data_inicio else '' }}">
+    </div>
+    <div class="col-6 col-md-3 col-lg-2">
+      <label class="form-label small" for="data_fim">até</label>
+      <input class="form-control form-control-sm {{ 'is-invalid' if erro_filtro and erro_filtro.campo == 'data_fim' }}"
+             type="date" id="data_fim" name="data_fim"
+             value="{{ filtros.data_fim.isoformat() if filtros.data_fim else '' }}">
+    </div>
+    {% for campo, nome in nomes_campos.items() %}
+    <div class="col-6 col-md-3 col-lg-2">
+      <label class="form-label small" for="{{ campo }}">{{ nome }}</label>
+      <select class="form-select form-select-sm" id="{{ campo }}" name="{{ campo }}">
+        <option value="">Todos</option>
+        {% for valor in opcoes[campo] %}
+        <option value="{{ valor }}" {{ 'selected' if filtros[campo] == valor }}>{{ valor }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    {% endfor %}
+    <div class="col-6 col-md-3 col-lg-2">
+      <label class="form-label small" for="status">Status</label>
+      <select class="form-select form-select-sm" id="status" name="status">
+        <option value="">Todos</option>
+        {% for s in status_revisao %}
+        <option value="{{ s }}" {{ 'selected' if filtros.status == s }}>{{ s | nome_status }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-6 col-md-3 col-lg-2">
+      <label class="form-label small" for="metodo">Método</label>
+      <select class="form-select form-select-sm" id="metodo" name="metodo">
+        <option value="">Todos</option>
+        {% for m in metodos %}
+        <option value="{{ m }}" {{ 'selected' if filtros.metodo == m }}>{{ m | nome_metodo }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    {% if filtros.execucao_id %}
+    <input type="hidden" name="execucao_id" value="{{ filtros.execucao_id }}">
+    {% endif %}
+    <div class="col-12 col-lg-auto d-flex gap-2">
+      <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
+      <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('web.alertas') }}">Limpar filtros</a>
+    </div>
   </div>
-  <div class="col-sm-4 col-md-3">
-    <label class="form-label small" for="metodo">Método</label>
-    <select class="form-select form-select-sm" id="metodo" name="metodo">
-      <option value="">Todos</option>
-      {% for m in metodos %}
-      <option value="{{ m }}" {{ 'selected' if filtros.metodo == m }}>{{ m | nome_metodo }}</option>
-      {% endfor %}
-    </select>
-  </div>
-  {% if filtros.execucao_id %}
-  <input type="hidden" name="execucao_id" value="{{ filtros.execucao_id }}">
+  {% if erro_filtro %}
+  <div class="alert alert-danger small mt-2 mb-0" role="alert">{{ erro_filtro }} Os filtros não foram aplicados.</div>
   {% endif %}
-  <div class="col-auto">
-    <button type="submit" class="btn btn-outline-primary btn-sm">Filtrar</button>
-    <a class="btn btn-link btn-sm" href="{{ url_for('web.alertas') }}">Limpar</a>
-  </div>
 </form>
 
 {% if filtros.execucao_id %}
@@ -43,7 +76,10 @@
 {% endif %}
 
 {% if pagina.total %}
-<p class="text-muted small">{{ pagina.total }} alerta(s). Pendentes primeiro, depois maior score.</p>
+<p class="text-muted small">
+  {{ pagina.total }} alerta(s){% if filtros.ativos %} com {{ filtros.ativos }} filtro(s) ativo(s){% endif %}.
+  Pendentes primeiro, depois maior score.
+</p>
 <div class="table-responsive">
   <table class="table table-sm table-hover align-middle">
     <thead>
@@ -76,11 +112,11 @@
     </tbody>
   </table>
 </div>
-{{ paginacao(pagina, 'web.alertas', **filtros) }}
+{{ paginacao(pagina, 'web.alertas', **filtros.como_parametros()) }}
 {% else %}
 <p class="text-muted">
-  Nenhum alerta {{ 'com esses filtros' if filtros.status or filtros.metodo or filtros.execucao_id else 'ainda' }}.
-  {% if not (filtros.status or filtros.metodo or filtros.execucao_id) %}
+  Nenhum alerta {{ 'com esses filtros' if filtros.ativos else 'ainda' }}.
+  {% if not filtros.ativos %}
   <a href="{{ url_for('web.analises') }}">Execute uma análise</a> para gerar alertas.
   {% endif %}
 </p>

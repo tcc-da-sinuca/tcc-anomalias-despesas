@@ -140,21 +140,22 @@ def analise(execucao_id: int):
 @bp.route("/alertas")
 @perfil_requerido(PERFIL_AUDITOR)
 def alertas():
-    filtros = {
-        "status": request.args.get("status")
-        if request.args.get("status") in STATUS_REVISAO
-        else None,
-        "metodo": request.args.get("metodo") if request.args.get("metodo") in METODOS else None,
-        "execucao_id": request.args.get("execucao_id", type=int),
-    }
-    pagina = repo_alertas.paginar_alertas(request.args.get("pagina", 1, type=int), **filtros)
+    """Lista de alertas com filtros combináveis (US06, US10)."""
+    try:
+        filtros = repo_alertas.FiltrosAlertas.de_parametros(request.args)
+        erro_filtro = None
+    except repo_alertas.FiltroInvalidoError as erro:
+        filtros, erro_filtro = repo_alertas.FiltrosAlertas(), erro
+    pagina = repo_alertas.paginar_alertas(request.args.get("pagina", 1, type=int), filtros=filtros)
     return render_template(
         "web/alertas.html",
         pagina=pagina,
         filtros=filtros,
+        erro_filtro=erro_filtro,
+        opcoes={campo: valores_distintos(campo) for campo in repo_alertas.CAMPOS_DESPESA},
         metodos=METODOS,
         status_revisao=STATUS_REVISAO,
-    )
+    ), (400 if erro_filtro else 200)
 
 
 @bp.route("/alertas/<int:alerta_id>", methods=["GET", "POST"])

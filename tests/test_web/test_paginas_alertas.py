@@ -198,3 +198,61 @@ def test_grafico_do_dashboard_alinha_rotulos_e_valores(client, entrar, auditor, 
     assert valores[status.index("irregular")] == 1
     assert nomes[status.index("irregular")] == "Irregular"
     assert nomes[status.index("pendente")] == "Pendente"
+
+
+@pytest.fixture
+def varios_alertas(sessao, auditor):
+    """60 alertas pendentes em Viagens/CC-ADM e 1 em Software, para testar paginação."""
+    from app.models import AlertaAnomalia, Despesa, ExecucaoAnalise
+
+    execucao = ExecucaoAnalise(parametros={}, seed=42, executada_por=auditor.id)
+    objetos = [execucao]
+    for i in range(61):
+        categoria = "Software" if i == 60 else "Viagens"
+        despesa = Despesa(
+            valor=Decimal("100.00"),
+            data=date(2026, 3, 2),
+            categoria=categoria,
+            conta_contabil="3.1.01",
+            centro_custo="CC-ADM",
+            funcionario="F001",
+        )
+        objetos += [
+            despesa,
+            AlertaAnomalia(
+                despesa=despesa, execucao=execucao, metodo="zscore", score=i, motivo="m"
+            ),
+        ]
+    sessao.add_all(objetos)
+    sessao.commit()
+
+
+def test_formulario_de_filtros_mantem_as_escolhas(client, entrar, auditor, varios_alertas):
+    entrar(auditor)
+    html = client.get("/alertas?categoria=Viagens&data_inicio=2026-03-01&status=pendente").get_data(
+        as_text=True
+    )
+
+    assert '<option value="Viagens" selected>' in html
+    assert '<option value="Software" >' in html  # opções vêm das despesas existentes
+    assert 'name="data_inicio"\n             value="2026-03-01"' in html
+    assert "60 alerta(s) com 3 filtro(s) ativo(s)." in html
+
+
+def test_paginacao_preserva_os_filtros(client, entrar, auditor, varios_alertas):
+    entrar(auditor)
+    html = client.get("/alertas?categoria=Viagens&status=pendente").get_data(as_text=True)
+
+    links = re.findall(r'href="(/alertas\?[^"]*pagina=2[^"]*)"', html)
+    assert links
+    assert "categoria=Viagens" in links[0] and "status=pendente" in links[0]
+
+
+def test_filtro_invalido_na_tela(client, entrar, auditor, varios_alertas):
+    entrar(auditor)
+    resposta = client.get("/alertas?data_inicio=2026-04-01&data_fim=2026-03-01")
+
+    html = resposta.get_data(as_text=True)
+    assert resposta.status_code == 400
+    assert "A data final não pode ser anterior à inicial." in html
+    assert "Os filtros não foram aplicados." in html
