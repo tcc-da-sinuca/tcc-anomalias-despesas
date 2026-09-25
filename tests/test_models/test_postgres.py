@@ -146,3 +146,40 @@ def test_valor_monetario_preservado_como_numeric(app_pg):
     db.session.commit()
     valor = db.session.query(Despesa.valor).scalar()
     assert valor == Decimal("0.30")
+
+
+def test_analise_com_trava_no_postgres(app_pg):
+    """Durante a análise, outra conexão não consegue a trava; no commit ela é liberada."""
+    from sqlalchemy import text
+
+    from app.extensoes import db
+    from app.models import Despesa
+    from app.servicos.analise import CHAVE_TRAVA, executar_analise
+
+    db.session.add_all(
+        Despesa(
+            valor=Decimal("100.00"),
+            data=date(2026, 3, 2),
+            categoria="Viagens",
+            conta_contabil="3.1.01",
+            centro_custo="CC-ADM",
+            funcionario="F001",
+        )
+        for _ in range(20)
+    )
+    db.session.commit()
+
+    def trava_livre_em_outra_conexao():
+        with db.engine.connect() as outra:
+            livre = outra.execute(
+                text("SELECT pg_try_advisory_xact_lock(:chave)"), {"chave": CHAVE_TRAVA}
+            ).scalar()
+            outra.rollback()
+            return livre
+
+    execucao = executar_analise(None)
+    assert trava_livre_em_outra_conexao() is False  # análise em andamento segura a trava
+    db.session.commit()
+
+    assert execucao.total_despesas == 20
+    assert trava_livre_em_outra_conexao() is True  # liberada no commit

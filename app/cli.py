@@ -115,6 +115,63 @@ def registrar_comandos(app: Flask) -> None:
         db.session.commit()
         click.echo(f"Estatísticas recalculadas: {grupos} grupos.")
 
+    @app.cli.command("agendador")
+    @click.option("--uma-vez", is_flag=True, help="Roda o job uma vez e termina (sem agendar).")
+    def agendador(uma_vez):
+        """Agenda o job de reprocessamento das despesas novas (container "agendador")."""
+        import logging
+        from datetime import datetime
+
+        from apscheduler.schedulers.blocking import BlockingScheduler
+
+        from app.servicos.reprocessamento import reprocessar
+
+        logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+        log = logging.getLogger("agendador")
+
+        def job():
+            with app.app_context():
+                try:
+                    execucao = reprocessar()
+                    db.session.commit()
+                except Exception:  # noqa: BLE001 - registra e tenta de novo no próximo ciclo
+                    db.session.rollback()
+                    log.exception("Falha no reprocessamento; nova tentativa no próximo ciclo.")
+                    return
+                if execucao is None:
+                    log.info("Sem despesas novas desde a última análise.")
+                else:
+                    log.info(
+                        "Análise %s: %s despesas, %s alertas novos em %s s.",
+                        execucao.id,
+                        execucao.total_despesas,
+                        execucao.total_alertas,
+                        execucao.duracao_s,
+                    )
+
+        if uma_vez:
+            job()
+            return
+        intervalo = app.config["REPROCESSAMENTO_INTERVALO_MIN"]
+        if intervalo <= 0:
+            click.echo("Reprocessamento desativado (REPROCESSAMENTO_INTERVALO_MIN=0).")
+            return
+        agendador_ = BlockingScheduler(timezone="UTC")
+        agendador_.add_job(
+            job,
+            "interval",
+            minutes=intervalo,
+            next_run_time=datetime.now(),
+            max_instances=1,
+            coalesce=True,
+            id="reprocessamento",
+        )
+        log.info("Reprocessamento a cada %s minuto(s).", intervalo)
+        try:
+            agendador_.start()
+        except (KeyboardInterrupt, SystemExit):
+            log.info("Agendador encerrado.")
+
     @app.cli.command("executar-analise")
     @click.option(
         "--metodo", "metodos", multiple=True, help="Método a executar (repetível). Padrão: todos."

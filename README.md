@@ -26,6 +26,9 @@ cp .env.example .env          # ajuste SECRET_KEY, ADMIN_EMAIL e ADMIN_SENHA
 docker compose up --build
 ```
 
+O Compose sobe três serviços: `db` (PostgreSQL), `app` (a aplicação web) e
+`agendador` (o job que analisa automaticamente as despesas novas).
+
 Na subida, o container da aplicação:
 
 1. aplica as migrations (`flask db upgrade`);
@@ -103,6 +106,15 @@ troca o perfil (`auditor` ou `administrador`), desativa e reativa. Usuários nã
 excluídos, porque os pareceres guardam quem os registrou; desativar tira o acesso na
 hora. Pela linha de comando também é possível criar: `flask criar-usuario`.
 
+### Reprocessamento automático
+
+O container `agendador` verifica a cada `REPROCESSAMENTO_INTERVALO_MIN` minutos
+(padrão 15, definido no `.env`; 0 desliga) se há despesas novas desde a última
+análise completa. Se houver, executa a análise, que aparece na tela **Análises** como
+"job agendado". Duas análises nunca rodam ao mesmo tempo. Para acompanhar:
+`docker compose logs -f agendador`. Para rodar o job uma vez, na hora:
+`docker compose exec app flask agendador --uma-vez`.
+
 ### Comandos úteis
 
 ```bash
@@ -128,7 +140,7 @@ sudo iptables-legacy -I DOCKER-USER -o br-+ -j ACCEPT
 
 # 2. Descarta o cache de build e os containers antigos (o Docker recria tudo)
 docker builder prune -af
-docker compose rm -f db app
+docker compose rm -f db app agendador
 
 # 3. Sobe de novo
 docker compose up --build

@@ -32,8 +32,8 @@ interface deve deixar isso claro e sempre exigir revisão humana.
 - **Banco:** PostgreSQL 16
 - **Front-end:** Jinja2 + Bootstrap + Chart.js (manter simples)
 - **Autenticação:** Flask-Login com senhas em hash; CSRF com Flask-WTF
-- **Jobs:** APScheduler para reprocessar despesas novas (Celery só se realmente necessário)
-- **Infra:** Docker Compose (app + postgres). O projeto precisa rodar localmente com um comando documentado no README.
+- **Jobs:** APScheduler para reprocessar despesas novas, num container próprio (`agendador`, comando `flask agendador`)
+- **Infra:** Docker Compose (app + agendador + postgres). O projeto precisa rodar localmente com um comando documentado no README.
 - **Testes:** pytest. Por padrão em SQLite em memória; os testes marcados `postgres` usam `TEST_DATABASE_URL`.
 
 ---

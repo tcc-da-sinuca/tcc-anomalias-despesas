@@ -17,7 +17,7 @@ import time
 from collections.abc import Iterable
 
 import pandas as pd
-from sqlalchemy import insert, select
+from sqlalchemy import insert, select, text
 
 from app.extensoes import db
 from app.models import AlertaAnomalia, Despesa, ExecucaoAnalise, Usuario
@@ -29,6 +29,9 @@ from motor.contrato import COLUNAS_ENTRADA
 from motor.estatisticas import DIMENSAO_DETECCAO, N_MINIMO_GRUPO
 
 __all__ = ["MetodoDesconhecidoError", "carregar_despesas", "executar_analise"]
+
+# Identificador da trava de análise no PostgreSQL (pg_advisory_xact_lock).
+CHAVE_TRAVA = 4_906_001
 
 
 def carregar_despesas() -> pd.DataFrame:
@@ -52,6 +55,7 @@ def executar_analise(
     método sem detector.
     """
     metodos = list(DETECTORES) if metodos is None else list(dict.fromkeys(metodos))
+    _travar_analise()
     inicio = time.perf_counter()
     iniciada_em = agora_utc()
 
@@ -89,6 +93,16 @@ def executar_analise(
         )
     execucao.duracao_s = round(time.perf_counter() - inicio, 3)
     return execucao
+
+
+def _travar_analise() -> None:
+    """Impede duas análises ao mesmo tempo (botão e job, por exemplo) no PostgreSQL.
+
+    Sem isso, as duas poderiam ver os mesmos pares (despesa, método) como novos e
+    duplicar alertas. A trava vale até o fim da transação (commit ou rollback).
+    """
+    if db.session.get_bind().dialect.name == "postgresql":
+        db.session.execute(text("SELECT pg_advisory_xact_lock(:chave)"), {"chave": CHAVE_TRAVA})
 
 
 def _sem_alertas_existentes(alertas: pd.DataFrame) -> pd.DataFrame:

@@ -33,5 +33,26 @@ services:
       db:
         condition: service_healthy
 
+  # Job de reprocessamento das despesas novas (APScheduler). Mesma imagem do app, mas
+  # sem o entrypoint: as migrations ficam a cargo do container "app". Se o banco ainda
+  # não estiver pronto, o job registra o erro e tenta de novo no próximo ciclo.
+  agendador:
+    build: .
+    entrypoint: ["flask", "agendador"]
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-tcc}:${POSTGRES_PASSWORD:-tcc}@db:5432/${POSTGRES_DB:-despesas}
+      REPROCESSAMENTO_INTERVALO_MIN: ${REPROCESSAMENTO_INTERVALO_MIN:-15}
+    volumes:
+      - .:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      app:
+        condition: service_started
+    restart: on-failure  # com REPROCESSAMENTO_INTERVALO_MIN=0 ele termina e fica parado
+
 volumes:
   pgdata:

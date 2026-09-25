@@ -22,6 +22,9 @@ class Config:
     SESSION_COOKIE_SAMESITE = "Lax"
     REMEMBER_COOKIE_HTTPONLY = True
 
+    # Job de reprocessamento (container "agendador"): intervalo em minutos; 0 desliga.
+    REPROCESSAMENTO_INTERVALO_MIN = int(os.environ.get("REPROCESSAMENTO_INTERVALO_MIN", "15"))
+
 
 class TestConfig(Config):
     """Configuração dos testes: SQLite em memória, sem CSRF."""

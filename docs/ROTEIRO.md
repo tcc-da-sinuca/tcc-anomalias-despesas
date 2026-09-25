@@ -24,21 +24,21 @@ análise pela tela, pela API e por comando; lista e detalhe de alertas (US06).
 concluídos em 25/09. Isolation Forest (US04) e experimento com os quatro métodos
 concluídos em 25/09 (seeds 42 e 7). **A S3 está concluída.**
 
-**Sprint 4 (26/10–02/11): adiantada, em andamento.** Dashboard (US09) concluído em 26/09; filtros (US10), parâmetros (US12) e gerenciamento de usuários em 27/09.
+**Sprint 4 (26/10–02/11): adiantada, em andamento.** Dashboard (US09) concluído em 26/09; filtros (US10), parâmetros (US12), gerenciamento de usuários e job de reprocessamento em 27/09. Falta só o relatório mensal (US11).
 
 | Área | Situação |
 |---|---|
 | Modelo de dados e migrations | ✅ Pronto, com imutabilidade do parecer (eventos + trigger) |
 | Autenticação e perfis | ✅ Login, logout, `perfil_requerido`, CSRF, gerenciamento de usuários pelo administrador |
-| Infraestrutura | ✅ `docker compose up` testado no Codespace: migrations, admin, login, `seed-base` e testes no container |
+| Infraestrutura | ✅ `docker compose up` testado no Codespace (db, app e agendador): migrations, admin, login, `seed-base`, job e testes no container |
 | Base sintética | ✅ Gerador, carga no banco (`flask seed-base`) e calendário de feriados |
 | Importação e estatísticas (US01, US02) | ✅ CSV/XLSX com erros por linha, cadastro manual, API, telas e estatísticas recalculadas a cada importação |
 | Motor de detecção | ✅ Z-score, IQR, contextual, Isolation Forest e consolidador |
 | Telas de alertas, revisão e dashboard | ✅ Análises, lista de alertas com filtros combináveis, detalhe, parecer com histórico, dashboard |
 | Experimento | ✅ `metricas.csv` com os quatro métodos, seeds 42 e 7 |
-| Testes | 346 passando (SQLite + PostgreSQL) |
+| Testes | 355 passando (SQLite + PostgreSQL) |
 
-**Próximo passo:** S4 adiantada: job de reprocessamento (APScheduler) e relatório mensal (US11).
+**Próximo passo:** relatório mensal (US11), a última história do backlog.
 
 ---
 
@@ -123,7 +123,7 @@ concluídos em 25/09 (seeds 42 e 7). **A S3 está concluída.**
 - [x] **US10: filtros combináveis** na lista de alertas: período, categoria, conta, centro de custo, funcionário, status e método (27/09; período = data da despesa)
 - [x] **US12: parâmetros dos métodos** (admin): `GET`/`PUT /api/parametros`, tela com validação (27/09; auditor vê, administrador altera)
 - [x] **Gerenciamento de usuários** (admin): criar, desativar, trocar perfil (seção 4 do CLAUDE.md) (27/09)
-- [ ] **Job do APScheduler**: reprocessa despesas novas (`executada_por` vazio)
+- [x] **Job do APScheduler**: reprocessa despesas novas (`executada_por` vazio), no container `agendador` (27/09)
 - [ ] **US11: relatório mensal** (Could): total analisado, anomalias e taxa de confirmação = irregular ÷ (aprovado + irregular) (item 18 de `MUDANCAS_PARA_DOCUMENTACAO.md`); `GET /api/relatorios/mensal` em CSV (PDF se der tempo)
 
 ## Fechamento (até 02/11)
@@ -165,3 +165,4 @@ concluídos em 25/09 (seeds 42 e 7). **A S3 está concluída.**
 | 27/09/2026 | US10 concluída: filtros combináveis na tela de alertas e em `GET /api/alertas` (item 20 de `MUDANCAS_PARA_DOCUMENTACAO.md`). 302 testes. |
 | 27/09/2026 | US12 concluída: tela e API de parâmetros com validação de faixa (item 21 de `MUDANCAS_PARA_DOCUMENTACAO.md`). 329 testes. |
 | 27/09/2026 | Gerenciamento de usuários concluído: tela do administrador para criar, trocar perfil, desativar e reativar (item 22 de `MUDANCAS_PARA_DOCUMENTACAO.md`). 346 testes. |
+| 27/09/2026 | Job de reprocessamento concluído, em container próprio `agendador` (item 23 de `MUDANCAS_PARA_DOCUMENTACAO.md`: muda os diagramas de arquitetura e implantação). 355 testes. |
