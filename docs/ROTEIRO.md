@@ -24,6 +24,8 @@ análise pela tela, pela API e por comando; lista e detalhe de alertas (US06).
 concluídos em 25/09. Isolation Forest (US04) e experimento com os quatro métodos
 concluídos em 25/09 (seeds 42 e 7). **A S3 está concluída.**
 
+**Sprint 4 (26/10–02/11): adiantada, em andamento.** Dashboard (US09) concluído em 26/09.
+
 | Área | Situação |
 |---|---|
 | Modelo de dados e migrations | ✅ Pronto, com imutabilidade do parecer (eventos + trigger) |
@@ -32,11 +34,11 @@ concluídos em 25/09 (seeds 42 e 7). **A S3 está concluída.**
 | Base sintética | ✅ Gerador, carga no banco (`flask seed-base`) e calendário de feriados |
 | Importação e estatísticas (US01, US02) | ✅ CSV/XLSX com erros por linha, cadastro manual, API, telas e estatísticas recalculadas a cada importação |
 | Motor de detecção | ✅ Z-score, IQR, contextual, Isolation Forest e consolidador |
-| Telas de alertas, revisão e dashboard | ✅ Análises, lista e detalhe de alertas, parecer com histórico · ⬜ dashboard e filtros da US10 (S4) |
+| Telas de alertas, revisão e dashboard | ✅ Análises, lista e detalhe de alertas, parecer com histórico, dashboard · ⬜ filtros da US10 (S4) |
 | Experimento | ✅ `metricas.csv` com os quatro métodos, seeds 42 e 7 |
-| Testes | 272 passando (SQLite + PostgreSQL) |
+| Testes | 281 passando (SQLite + PostgreSQL) |
 
-**Próximo passo:** entregar os resultados à equipe do artigo e adiantar a S4: dashboard (US09) e filtros (US10).
+**Próximo passo:** S4 adiantada: filtros combináveis na lista de alertas (US10).
 
 ---
 
@@ -117,7 +119,7 @@ concluídos em 25/09 (seeds 42 e 7). **A S3 está concluída.**
 
 ## Sprint 4 — 26/10 a 02/11 (uma semana só)
 
-- [ ] **US09: dashboard**: total de despesas, total sinalizado, % sinalizado, alertas por status (Chart.js); `GET /api/dashboard`
+- [x] **US09: dashboard**: total de despesas, total sinalizado, % sinalizado, alertas por status (Chart.js); `GET /api/dashboard` (26/09)
 - [ ] **US10: filtros combináveis** na lista de alertas: período, categoria, conta, centro de custo, funcionário, status e método
 - [ ] **US12: parâmetros dos métodos** (admin): `GET`/`PUT /api/parametros`, tela com validação
 - [ ] **Gerenciamento de usuários** (admin): criar, desativar, trocar perfil (seção 4 do CLAUDE.md)
@@ -159,3 +161,4 @@ concluídos em 25/09 (seeds 42 e 7). **A S3 está concluída.**
 | 25/09/2026 | Experimento rodando com Z-score, IQR e contextual: `metricas.csv`, `metricas_por_tipo.csv` e `execucao.json` versionados em `experimentos/resultados/`. Metodologia registrada no item 13 de `MUDANCAS_PARA_DOCUMENTACAO.md`. 258 testes. |
 | 25/09/2026 | Isolation Forest implementado (atributos derivados, parâmetro `limite_aprovacao`, motivo pelos atributos ativos) e gerador corrigido (valor novo nas combinações incompatíveis e fins de semana). Experimento gerado de novo com os quatro métodos, seeds 42 e 7. S3 concluída. 272 testes. |
 | 26/09/2026 | Definidos o significado dos status de revisão e a fórmula da taxa de confirmação (irregular ÷ (aprovado + irregular)); itens 17 e 18 de `MUDANCAS_PARA_DOCUMENTACAO.md` e seção 4 de `FLUXO_ANALISE.md`. |
+| 26/09/2026 | US09 concluída: dashboard na página inicial e `GET /api/dashboard` (item 19 de `MUDANCAS_PARA_DOCUMENTACAO.md`). 281 testes. |

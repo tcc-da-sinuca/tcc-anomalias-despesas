@@ -1,31 +1,125 @@
 {% extends "base.html" %}
+{% block titulo %}Dashboard · {{ super() }}{% endblock %}
 {% block conteudo %}
-<h1 class="h4 mb-4">Visão geral</h1>
-<div class="row g-3">
-  <div class="col-sm-4">
-    <div class="card"><div class="card-body">
-      <div class="text-muted small">Despesas cadastradas</div>
-      <div class="fs-3 fw-semibold">{{ totais.despesas }}</div>
+<div class="d-flex flex-wrap justify-content-between align-items-baseline gap-2 mb-3">
+  <h1 class="h4 m-0">Dashboard</h1>
+  <span class="small text-muted">
+    {% if resumo.ultima_analise %}
+    Última análise: <a href="{{ url_for('web.analise', execucao_id=resumo.ultima_analise.id) }}">#{{ resumo.ultima_analise.id }}</a>
+    em {{ resumo.ultima_analise.iniciada_em | data_hora_br }}
+    {% else %}
+    Nenhuma análise executada ainda.
+    {% endif %}
+  </span>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-lg-3">
+    <div class="card h-100"><div class="card-body">
+      <div class="text-muted small">Despesas</div>
+      <div class="fs-3 fw-semibold" data-indicador="total_despesas">{{ resumo.total_despesas }}</div>
+      <div class="small text-muted">{{ resumo.valor_despesas | moeda }}</div>
     </div></div>
   </div>
-  <div class="col-sm-4">
-    <div class="card"><div class="card-body">
-      <div class="text-muted small">Lotes importados</div>
-      <div class="fs-3 fw-semibold">{{ totais.lotes }}</div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card h-100"><div class="card-body">
+      <div class="text-muted small">Despesas sinalizadas</div>
+      <div class="fs-3 fw-semibold" data-indicador="despesas_sinalizadas">{{ resumo.despesas_sinalizadas }}</div>
+      <div class="small text-muted">{{ resumo.valor_sinalizado | moeda }}</div>
     </div></div>
   </div>
-  <div class="col-sm-4">
-    <div class="card"><div class="card-body">
-      <div class="text-muted small">Alertas gerados</div>
-      <div class="fs-3 fw-semibold">{{ totais.alertas }}</div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card h-100"><div class="card-body">
+      <div class="text-muted small">% sinalizado</div>
+      <div class="fs-3 fw-semibold" data-indicador="percentual_sinalizado">{{ resumo.percentual_sinalizado | score }}%</div>
+      <div class="small text-muted">das despesas têm ao menos um alerta</div>
+    </div></div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card h-100"><div class="card-body">
+      <div class="text-muted small">Alertas pendentes</div>
+      <div class="fs-3 fw-semibold" data-indicador="pendentes">{{ resumo.alertas_por_status.pendente }}</div>
+      <div class="small text-muted">de {{ resumo.total_alertas }} alerta(s) no total</div>
     </div></div>
   </div>
 </div>
-<div class="d-flex flex-wrap gap-2 mt-4">
-  <a class="btn btn-primary" href="{{ url_for('web.importar') }}">Importar despesas</a>
-  <a class="btn btn-outline-secondary" href="{{ url_for('web.despesas') }}">Ver despesas</a>
-  <a class="btn btn-outline-secondary" href="{{ url_for('web.estatisticas') }}">Estatísticas de referência</a>
-  <a class="btn btn-outline-secondary" href="{{ url_for('web.analises') }}">Executar análise</a>
-  <a class="btn btn-outline-secondary" href="{{ url_for('web.alertas') }}">Ver alertas</a>
+
+{% if resumo.total_alertas %}
+<div class="row g-4">
+  <div class="col-lg-6">
+    <h2 class="h6">Alertas por status</h2>
+    <div class="grafico-status mb-3"><canvas id="grafico-status" aria-label="Gráfico de alertas por status de revisão" role="img"></canvas></div>
+    <table class="table table-sm align-middle">
+      <tbody>
+        {% for status, quantidade in resumo.alertas_por_status.items() %}
+        <tr>
+          <td><span class="badge status-{{ status }}">{{ status | nome_status }}</span></td>
+          <td class="text-end"><a href="{{ url_for('web.alertas', status=status) }}">{{ quantidade }}</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="col-lg-6">
+    <h2 class="h6">Alertas por método</h2>
+    <table class="table table-sm align-middle">
+      <tbody>
+        {% for metodo, quantidade in resumo.alertas_por_metodo.items() %}
+        <tr>
+          <td>{{ metodo | nome_metodo }}</td>
+          <td class="text-end"><a href="{{ url_for('web.alertas', metodo=metodo) }}">{{ quantidade }}</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p class="small text-muted">
+      Uma despesa pode ter alertas de mais de um método, por isso o total de alertas
+      é maior que o de despesas sinalizadas.
+    </p>
+  </div>
 </div>
+{% else %}
+<p class="text-muted">
+  Ainda não há alertas.
+  {% if resumo.total_despesas %}<a href="{{ url_for('web.analises') }}">Execute uma análise</a>{% else %}<a href="{{ url_for('web.importar') }}">Importe despesas</a> e execute uma análise{% endif %}
+  para ver os indicadores.
+</p>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if resumo.total_alertas %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+  (function () {
+    // Listas, não um objeto: o tojson ordena as chaves e desalinharia rótulos e valores.
+    const status = {{ resumo.alertas_por_status.keys() | list | tojson }};
+    const valores = {{ resumo.alertas_por_status.values() | list | tojson }};
+    const nomes = {{ resumo.alertas_por_status.keys() | map('nome_status') | list | tojson }};
+    const estilo = getComputedStyle(document.documentElement);
+    const cores = {
+      pendente: estilo.getPropertyValue('--bs-secondary'),
+      aprovado: estilo.getPropertyValue('--bs-success'),
+      irregular: estilo.getPropertyValue('--bs-danger'),
+      necessita_justificativa: estilo.getPropertyValue('--bs-warning'),
+    };
+    new Chart(document.getElementById('grafico-status'), {
+      type: 'doughnut',
+      data: {
+        labels: nomes,
+        datasets: [{ data: valores, backgroundColor: status.map((s) => cores[s]) }],
+      },
+      options: {
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'right' } },
+        onClick: (_evento, elementos) => {
+          if (elementos.length) {
+            window.location = '{{ url_for("web.alertas") }}?status=' + status[elementos[0].index];
+          }
+        },
+      },
+    });
+  })();
+</script>
+{% endif %}
 {% endblock %}

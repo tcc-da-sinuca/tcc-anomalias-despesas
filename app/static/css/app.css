@@ -10,3 +10,6 @@
 .status-aprovado { background-color: var(--bs-success); }
 .status-irregular { background-color: var(--bs-danger); }
 .status-necessita_justificativa { background-color: var(--bs-warning); color: var(--bs-dark); }
+
+/* Gráfico do dashboard: altura fixa para o Chart.js não crescer sem limite. */
+.grafico-status { position: relative; height: 220px; }

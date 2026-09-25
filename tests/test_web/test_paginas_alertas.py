@@ -155,3 +155,46 @@ def test_parecer_sem_status_mostra_o_erro(client, entrar, auditor, alerta):
 
     assert resposta.status_code == 400
     assert "Escolha a classificação" in resposta.get_data(as_text=True)
+
+
+def test_dashboard_com_alertas(client, entrar, auditor, alerta):
+    entrar(auditor)
+    html = client.get("/").get_data(as_text=True)
+
+    assert '<h1 class="h4 m-0">Dashboard</h1>' in html
+    assert 'data-indicador="despesas_sinalizadas">1<' in html
+    assert 'data-indicador="percentual_sinalizado">100,00%<' in html
+    assert "grafico-status" in html and "chart.umd.min.js" in html
+    assert "/alertas?status=pendente" in html
+
+
+def test_dashboard_sem_alertas(client, entrar, auditor):
+    entrar(auditor)
+    html = client.get("/").get_data(as_text=True)
+
+    assert "Ainda não há alertas." in html
+    assert "chart.umd.min.js" not in html
+
+
+def test_dashboard_exige_login(client):
+    resposta = client.get("/")
+    assert resposta.status_code == 302
+    assert "/login" in resposta.headers["Location"]
+
+
+def test_grafico_do_dashboard_alinha_rotulos_e_valores(client, entrar, auditor, alerta, sessao):
+    import json
+
+    alerta.status_revisao = "irregular"  # só "irregular" tem valor 1; o resto é 0
+    sessao.commit()
+    entrar(auditor)
+    html = client.get("/").get_data(as_text=True)
+
+    def lista(nome):
+        return json.loads(re.search(rf"const {nome} = (\[.*?\]);", html).group(1))
+
+    status, valores, nomes = lista("status"), lista("valores"), lista("nomes")
+    assert len(status) == len(valores) == len(nomes) == 4
+    assert valores[status.index("irregular")] == 1
+    assert nomes[status.index("irregular")] == "Irregular"
+    assert nomes[status.index("pendente")] == "Pendente"

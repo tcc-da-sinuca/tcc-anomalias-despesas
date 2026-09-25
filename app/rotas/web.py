@@ -1,17 +1,17 @@
 """Blueprint das páginas web (Jinja2)."""
 
 from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
-from flask_login import current_user, login_required
-from sqlalchemy import func, select
+from flask_login import current_user
 
 from app.extensoes import db
 from app.formularios import DespesaForm, ExecutarAnaliseForm, ImportacaoForm, ParecerForm
-from app.models import AlertaAnomalia, Despesa, ExecucaoAnalise, LoteImportacao
+from app.models import ExecucaoAnalise, LoteImportacao
 from app.models.dominio import METODOS, PERFIL_AUDITOR, STATUS_REVISAO
 from app.repositorios import alertas as repo_alertas
 from app.repositorios.despesas import paginar_despesas, paginar_lotes, valores_distintos
 from app.rotas.autorizacao import perfil_requerido
 from app.servicos.analise import executar_analise
+from app.servicos.dashboard import resumo as resumo_dashboard
 from app.servicos.estatisticas import listar_estatisticas
 from app.servicos.importacao import (
     CAMPOS,
@@ -33,14 +33,10 @@ NOMES_DIMENSOES = {
 
 
 @bp.route("/")
-@login_required
+@perfil_requerido(PERFIL_AUDITOR)
 def inicio():
-    totais = {
-        "despesas": db.session.scalar(select(func.count(Despesa.id))),
-        "lotes": db.session.scalar(select(func.count(LoteImportacao.id))),
-        "alertas": db.session.scalar(select(func.count(AlertaAnomalia.id))),
-    }
-    return render_template("web/inicio.html", totais=totais)
+    """Dashboard (US09)."""
+    return render_template("web/inicio.html", resumo=resumo_dashboard())
 
 
 @bp.route("/despesas")

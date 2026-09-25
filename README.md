@@ -67,6 +67,13 @@ descrição é opcional. Linhas com erro não entram e aparecem listadas por nú
 linha; as demais são importadas. Após cada importação, as estatísticas de referência
 (tela **Estatísticas**) são recalculadas.
 
+### Dashboard
+
+A página inicial mostra o total de despesas, quantas foram sinalizadas (despesas
+distintas com pelo menos um alerta), o percentual sinalizado e os alertas por status
+e por método. Clicar num status abre a lista de alertas filtrada. Pela API:
+`GET /api/dashboard`.
+
 ### Executar a análise e ver os alertas
 
 Na tela **Análises**, o botão **Executar análise** aplica Z-score, IQR, a regra

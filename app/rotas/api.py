@@ -14,6 +14,7 @@ from app.repositorios import alertas as repo_alertas
 from app.repositorios.despesas import POR_PAGINA_PADRAO, paginar_despesas
 from app.rotas.autorizacao import perfil_requerido
 from app.servicos.analise import MetodoDesconhecidoError, executar_analise
+from app.servicos.dashboard import resumo as resumo_dashboard
 from app.servicos.importacao import ArquivoInvalidoError, importar_arquivo
 from app.servicos.revisao import ParecerInvalidoError, registrar_parecer
 
@@ -227,3 +228,19 @@ def criar_parecer(alerta_id: int):
         return jsonify(erro=str(erro), campo=erro.campo), 400
     db.session.commit()
     return jsonify({**_parecer_json(parecer), "status_revisao": alerta.status_revisao}), 201
+
+
+@bp.route("/dashboard")
+@perfil_requerido(PERFIL_AUDITOR)
+def dashboard():
+    """Indicadores do dashboard (US09). Valores monetários como texto, sem perder centavos."""
+    resumo = resumo_dashboard()
+    ultima = resumo["ultima_analise"]
+    return jsonify(
+        {
+            **resumo,
+            "valor_despesas": str(resumo["valor_despesas"]),
+            "valor_sinalizado": str(resumo["valor_sinalizado"]),
+            "ultima_analise": _execucao_json(ultima) if ultima else None,
+        }
+    )
