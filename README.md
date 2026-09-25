@@ -100,29 +100,30 @@ docker compose down            # para os serviços (os dados continuam no volume
 docker compose down -v         # para e APAGA o banco
 ```
 
-### Problema conhecido no Codespace: o app não conecta no banco
+### Problemas conhecidos no Codespace: depois de reiniciar
 
-Se o `docker compose up` parar em `>> Aplicando migrations...` com
-`connection timeout expired`, o firewall da VM está bloqueando o tráfego entre os
-containers. A imagem do Codespace deixa uma tabela `iptables-legacy` com
-`FORWARD DROP` que só libera a rede padrão `docker0`, não a rede criada pelo
-Compose. Libere as redes do Docker nessa tabela (vale até o Codespace reiniciar)
-e suba de novo:
+Depois que o Codespace reinicia, o Docker da VM costuma ficar num estado ruim. O
+roteiro abaixo resolve os três sintomas já vistos. Nenhum passo apaga o banco: os
+dados ficam no volume `pgdata`.
 
 ```bash
+# 1. Libera o tráfego entre os containers (as regras se perdem a cada reinício)
 sudo iptables-legacy -I DOCKER-USER -i br-+ -j ACCEPT
 sudo iptables-legacy -I DOCKER-USER -o br-+ -j ACCEPT
+
+# 2. Descarta o cache de build e os containers antigos (o Docker recria tudo)
+docker builder prune -af
+docker compose rm -f db app
+
+# 3. Sobe de novo
 docker compose up --build
 ```
 
-Depois que o Codespace reinicia, o Docker às vezes perde a camada de arquivos de um
-container e a subida falha com `RWLayer of container ... is unexpectedly nil`. Remova o
-container e suba de novo; os dados do banco ficam no volume `pgdata` e não se perdem:
-
-```bash
-docker compose rm -f db app
-docker compose up -d
-```
+| Sintoma | Causa | Passo que resolve |
+|---|---|---|
+| O app para em `>> Aplicando migrations...` com `connection timeout expired` | A imagem do Codespace deixa uma tabela `iptables-legacy` com `FORWARD DROP`, que só libera a rede padrão `docker0`, não a rede do Compose | 1 |
+| O build falha no `COPY . .` com `parent snapshot ... does not exist` | O cache de build aponta para camadas que o Docker perdeu no reinício | 2 (`builder prune`) |
+| A subida falha com `RWLayer of container ... is unexpectedly nil` | O container aponta para uma camada de arquivos que o Docker perdeu | 2 (`compose rm`) |
 
 O problema é do ambiente do Codespace, não do projeto. Com Docker Desktop (Windows e
 Mac) ele não deve aparecer, mas isso ainda não foi testado.
