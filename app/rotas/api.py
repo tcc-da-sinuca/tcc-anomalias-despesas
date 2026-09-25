@@ -15,6 +15,7 @@ from app.repositorios.despesas import POR_PAGINA_PADRAO, paginar_despesas
 from app.rotas.autorizacao import perfil_requerido
 from app.servicos.analise import MetodoDesconhecidoError, executar_analise
 from app.servicos.importacao import ArquivoInvalidoError, importar_arquivo
+from app.servicos.revisao import ParecerInvalidoError, registrar_parecer
 
 bp = Blueprint("api", __name__)
 # A API usa sessão + JSON. A proteção CSRF de formulários HTML não se aplica aqui;
@@ -206,3 +207,23 @@ def obter_alerta(alerta_id: int):
             "pareceres": [_parecer_json(p) for p in alerta.pareceres],
         }
     )
+
+
+@bp.route("/alertas/<int:alerta_id>/parecer", methods=["POST"])
+@perfil_requerido(PERFIL_AUDITOR)
+def criar_parecer(alerta_id: int):
+    """Registra um parecer (US07, US08). Corpo: ``{"status": "irregular", "observacao": "..."}``."""
+    alerta = repo_alertas.obter_alerta(alerta_id)
+    if alerta is None:
+        return jsonify(erro="Alerta não encontrado."), 404
+    corpo = request.get_json(silent=True) or {}
+    status, observacao = corpo.get("status"), corpo.get("observacao")
+    if observacao is not None and not isinstance(observacao, str):
+        return jsonify(erro="'observacao' deve ser texto.", campo="observacao"), 400
+    try:
+        parecer = registrar_parecer(alerta, current_user, status, observacao)
+    except ParecerInvalidoError as erro:
+        db.session.rollback()
+        return jsonify(erro=str(erro), campo=erro.campo), 400
+    db.session.commit()
+    return jsonify({**_parecer_json(parecer), "status_revisao": alerta.status_revisao}), 201

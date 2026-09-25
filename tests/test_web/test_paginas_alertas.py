@@ -120,3 +120,38 @@ def test_comando_com_metodo_invalido(app):
     resultado = app.test_cli_runner().invoke(args=["executar-analise", "--metodo", "xyz"])
     assert resultado.exit_code != 0
     assert "xyz" in resultado.output
+
+
+def test_registrar_parecer_pela_tela(client, entrar, auditor, alerta):
+    entrar(auditor)
+    resposta = client.post(
+        f"/alertas/{alerta.id}",
+        data={"status": "necessita_justificativa", "observacao": "Pedir o comprovante."},
+        follow_redirects=True,
+    )
+
+    html = resposta.get_data(as_text=True)
+    assert resposta.status_code == 200
+    assert "Parecer registrado." in html
+    assert "Pedir o comprovante." in html
+    assert "Registrar novo parecer" in html
+    assert alerta.status_revisao == "necessita_justificativa"
+
+
+def test_parecer_sem_observacao_mostra_o_erro(client, entrar, auditor, alerta, sessao):
+    from app.models import Parecer
+
+    entrar(auditor)
+    resposta = client.post(f"/alertas/{alerta.id}", data={"status": "irregular"})
+
+    assert resposta.status_code == 400
+    assert "A observação é obrigatória para o status irregular." in resposta.get_data(as_text=True)
+    assert sessao.query(Parecer).count() == 0
+
+
+def test_parecer_sem_status_mostra_o_erro(client, entrar, auditor, alerta):
+    entrar(auditor)
+    resposta = client.post(f"/alertas/{alerta.id}", data={"observacao": "texto"})
+
+    assert resposta.status_code == 400
+    assert "Escolha a classificação" in resposta.get_data(as_text=True)

@@ -5,7 +5,7 @@ from flask_login import current_user, login_required
 from sqlalchemy import func, select
 
 from app.extensoes import db
-from app.formularios import DespesaForm, ExecutarAnaliseForm, ImportacaoForm
+from app.formularios import DespesaForm, ExecutarAnaliseForm, ImportacaoForm, ParecerForm
 from app.models import AlertaAnomalia, Despesa, ExecucaoAnalise, LoteImportacao
 from app.models.dominio import METODOS, PERFIL_AUDITOR, STATUS_REVISAO
 from app.repositorios import alertas as repo_alertas
@@ -21,6 +21,7 @@ from app.servicos.importacao import (
     cadastrar_despesa,
     importar_arquivo,
 )
+from app.servicos.revisao import ParecerInvalidoError, registrar_parecer
 
 bp = Blueprint("web", __name__)
 
@@ -160,12 +161,28 @@ def alertas():
     )
 
 
-@bp.route("/alertas/<int:alerta_id>")
+@bp.route("/alertas/<int:alerta_id>", methods=["GET", "POST"])
 @perfil_requerido(PERFIL_AUDITOR)
 def alerta(alerta_id: int):
+    """Detalhe do alerta com o formulário de parecer (US07, US08)."""
     alerta = repo_alertas.obter_alerta(alerta_id)
     if alerta is None:
         abort(404)
+    form = ParecerForm()
+    if form.validate_on_submit():
+        try:
+            registrar_parecer(alerta, current_user, form.status.data, form.observacao.data)
+        except ParecerInvalidoError as erro:
+            db.session.rollback()
+            getattr(form, erro.campo).errors.append(str(erro))
+        else:
+            db.session.commit()
+            flash("Parecer registrado.", "success")
+            return redirect(url_for("web.alerta", alerta_id=alerta.id))
+    status = 400 if request.method == "POST" else 200
     return render_template(
-        "web/alerta.html", alerta=alerta, outros=repo_alertas.outros_alertas_da_despesa(alerta)
-    )
+        "web/alerta.html",
+        alerta=alerta,
+        outros=repo_alertas.outros_alertas_da_despesa(alerta),
+        form=form,
+    ), status

@@ -46,6 +46,35 @@
 </ul>
 {% endif %}
 
+<h2 class="h6 mt-4">{{ 'Registrar novo parecer' if alerta.pareceres else 'Registrar parecer' }}</h2>
+<form method="post" class="card card-body mb-4" novalidate>
+  {{ form.hidden_tag() }}
+  <fieldset class="mb-3">
+    <legend class="form-label fs-6">{{ form.status.label.text }}</legend>
+    {% for opcao in form.status %}
+    <div class="form-check">
+      {{ opcao(class_='form-check-input' ~ (' is-invalid' if form.status.errors else '')) }}
+      {{ opcao.label(class_='form-check-label') }}
+    </div>
+    {% endfor %}
+    {% for erro in form.status.errors %}
+    <div class="invalid-feedback d-block">{{ erro }}</div>
+    {% endfor %}
+  </fieldset>
+  <div class="mb-3">
+    {{ form.observacao.label(class_='form-label') }}
+    {{ form.observacao(class_='form-control' ~ (' is-invalid' if form.observacao.errors else '')) }}
+    {% for erro in form.observacao.errors %}
+    <div class="invalid-feedback">{{ erro }}</div>
+    {% endfor %}
+  </div>
+  <p class="small text-muted">
+    O parecer fica registrado com o seu nome e o horário e não pode ser alterado nem
+    apagado. Para rever a decisão, registre um novo parecer: o histórico é mantido.
+  </p>
+  <div><button type="submit" class="btn btn-primary">Registrar parecer</button></div>
+</form>
+
 <h2 class="h6 mt-4">Histórico de pareceres</h2>
 {% if alerta.pareceres %}
 <ul class="list-group list-group-flush small">

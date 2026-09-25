@@ -71,10 +71,12 @@ linha; as demais são importadas. Após cada importação, as estatísticas de r
 
 Na tela **Análises**, o botão **Executar análise** aplica Z-score, IQR e a regra
 contextual a todas as despesas e grava os alertas. A tela **Alertas** lista cada
-alerta com score, método e motivo; o detalhe mostra a despesa e o histórico de
-pareceres. Uma despesa que já tem alerta de um método não recebe outro do mesmo
+alerta com score, método e motivo. No detalhe do alerta, o auditor classifica a
+despesa (aprovado, irregular ou necessita justificativa) e registra um parecer; a
+observação é obrigatória nos dois últimos casos. Pareceres não podem ser alterados:
+uma nova revisão gera um novo parecer e o histórico fica visível. Uma despesa que já tem alerta de um método não recebe outro do mesmo
 método, então a análise pode ser repetida após cada importação. Pela API:
-`POST /api/analises`, `GET /api/alertas`. Detalhes em
+`POST /api/analises`, `GET /api/alertas`, `POST /api/alertas/{id}/parecer`. Detalhes em
 [`docs/FLUXO_ANALISE.md`](docs/FLUXO_ANALISE.md).
 
 ### Comandos úteis

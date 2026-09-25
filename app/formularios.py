@@ -6,7 +6,7 @@ cadastro manual e a importação sigam exatamente as mesmas regras.
 
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed, FileField, FileRequired
-from wtforms import StringField, TextAreaField
+from wtforms import RadioField, StringField, TextAreaField
 
 
 class ImportacaoForm(FlaskForm):
@@ -31,3 +31,20 @@ class DespesaForm(FlaskForm):
     centro_custo = StringField("Centro de custo", render_kw={"list": "sugestoes-centro_custo"})
     funcionario = StringField("Funcionário", render_kw={"list": "sugestoes-funcionario"})
     descricao = TextAreaField("Descrição (opcional)", render_kw={"rows": 2})
+
+
+class ParecerForm(FlaskForm):
+    # A validação do status e da observação fica no serviço de revisão.
+    status = RadioField(
+        "Classificação",
+        choices=[
+            ("aprovado", "Aprovado: a despesa é regular"),
+            ("necessita_justificativa", "Necessita justificativa: pedir explicação ao responsável"),
+            ("irregular", "Irregular: a despesa não se justifica"),
+        ],
+        validate_choice=False,
+    )
+    observacao = TextAreaField(
+        "Observação (obrigatória para irregular e necessita justificativa)",
+        render_kw={"rows": 3},
+    )

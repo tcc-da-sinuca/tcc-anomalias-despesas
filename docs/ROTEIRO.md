@@ -10,7 +10,7 @@ entregue continuam indo para [`MUDANCAS_PARA_DOCUMENTACAO.md`](MUDANCAS_PARA_DOC
 
 ---
 
-## Situação atual (atualizado em 23/09/2026)
+## Situação atual (atualizado em 25/09/2026)
 
 **Sprint 1 (14/09–27/09): concluída.** Importação (US01), estatísticas de referência
 (US02), base do sistema e base sintética prontas. A subida completa com `docker compose up`
@@ -20,6 +20,9 @@ foi testada no Codespace (é preciso um contorno de firewall, descrito no README
 ([`FLUXO_ANALISE.md`](FLUXO_ANALISE.md)); Z-score, IQR e regra contextual implementados;
 análise pela tela, pela API e por comando; lista e detalhe de alertas (US06).
 
+**Sprint 3 (12/10–25/10): em andamento, adiantada.** Revisão e parecer (US07/US08)
+concluídos em 25/09. Faltam o experimento (prazo 18/10) e o Isolation Forest.
+
 | Área | Situação |
 |---|---|
 | Modelo de dados e migrations | ✅ Pronto, com imutabilidade do parecer (eventos + trigger) |
@@ -28,11 +31,11 @@ análise pela tela, pela API e por comando; lista e detalhe de alertas (US06).
 | Base sintética | ✅ Gerador, carga no banco (`flask seed-base`) e calendário de feriados |
 | Importação e estatísticas (US01, US02) | ✅ CSV/XLSX com erros por linha, cadastro manual, API, telas e estatísticas recalculadas a cada importação |
 | Motor de detecção | ✅ Z-score, IQR, contextual e consolidador · ⬜ Isolation Forest (S3) |
-| Telas de alertas, revisão e dashboard | ✅ Análises, lista e detalhe de alertas · ⬜ parecer (S3), dashboard e filtros da US10 (S4) |
+| Telas de alertas, revisão e dashboard | ✅ Análises, lista e detalhe de alertas, parecer com histórico · ⬜ dashboard e filtros da US10 (S4) |
 | Experimento | ⬜ Não iniciado |
-| Testes | 226 passando (SQLite + PostgreSQL) |
+| Testes | 250 passando (SQLite + PostgreSQL) |
 
-**Próximo passo:** S3 adiantada: revisão e parecer (US07/US08), Isolation Forest (US04) e o experimento (prazo 18/10).
+**Próximo passo:** esqueleto do experimento com Z-score, IQR e contextual (prazo 18/10); depois, proposta e implementação do Isolation Forest (US04).
 
 ---
 
@@ -105,7 +108,7 @@ análise pela tela, pela API e por comando; lista e detalhe de alertas (US06).
   - precisão, recall, F1 e taxa de FP por método, por combinação de métodos e por tipo de anomalia
   - grava `experimentos/resultados/metricas.csv` com seed e parâmetros
   - entregar à equipe do artigo só números gerados pelo script
-- [ ] **US07/US08: revisão e parecer**, adiantada da S4 (decisão de 23/09)
+- [x] **US07/US08: revisão e parecer**, adiantada da S4 (decisão de 23/09); concluída em 25/09
   - `servicos/revisao.py`: insere o `Parecer` e atualiza `status_revisao`
   - observação obrigatória para `irregular` e `necessita_justificativa`
   - `POST /api/alertas/{id}/parecer` e tela de detalhe do alerta com o histórico de pareceres (RF12)
@@ -150,3 +153,4 @@ análise pela tela, pela API e por comando; lista e detalhe de alertas (US06).
 | 23/09/2026 | `docker compose up` testado no Codespace; S1 concluída. Documentado no README o contorno do firewall (`iptables-legacy`) que bloqueava o tráfego entre os containers. |
 | 23/09/2026 | Fluxo de análise definido e aprovado (`FLUXO_ANALISE.md`): Z-score e IQR por categoria, frequência contextual dentro da categoria, sem alerta repetido por despesa + método, grupo mínimo de 10. Item de 01/10 concluído. |
 | 23/09/2026 | S2 concluída antes do início: Z-score, IQR, contextual, consolidador, serviço de análise, API, comando e telas de análises e alertas (US03, US05, US06). Validado no Docker com a base sintética. 226 testes. |
+| 25/09/2026 | US07/US08 concluídas: `servicos/revisao.py`, `POST /api/alertas/{id}/parecer` e formulário de parecer no detalhe do alerta, com histórico. Próximo: experimento antes do Isolation Forest. 250 testes. |
