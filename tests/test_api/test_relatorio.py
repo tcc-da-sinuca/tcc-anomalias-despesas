@@ -20,6 +20,7 @@ def test_json(client, entrar, auditor, alerta):
     assert dados["valor_despesas"] == "1520.75"
     assert dados["total_alertas"] == 1
     assert dados["taxa_confirmacao"] is None
+    assert dados["taxa_confirmacao_texto"] == "indefinida (nenhum alerta com conclusão)"
     assert dados["ultima_analise"]["id"] == alerta.execucao_id
 
 

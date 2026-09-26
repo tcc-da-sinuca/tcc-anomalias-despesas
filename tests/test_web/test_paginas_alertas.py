@@ -306,6 +306,7 @@ def test_relatorio_abre_no_mes_da_despesa_mais_recente(client, entrar, auditor, 
     assert "Setembro de 2026" in html
     assert 'data-indicador="total_despesas">1<' in html
     assert "indefinida" in html
+    assert "nenhum alerta com conclusão" in html
     assert "/api/relatorios/mensal?ano=2026&amp;mes=9&amp;formato=csv" in html
     assert "/api/relatorios/mensal?ano=2026&amp;mes=9&amp;formato=pdf" in html
     assert ">Relatório</a>" in html
@@ -339,3 +340,13 @@ def test_script_dos_filtros_e_servido(client):
     assert resposta.status_code == 200
     assert "data-aplicar-ao-mudar" in resposta.get_data(as_text=True)
     resposta.close()
+
+
+def test_relatorio_mostra_a_amostra_da_taxa(client, entrar, auditor, alerta, sessao):
+    alerta.status_revisao = "irregular"
+    sessao.commit()
+    entrar(auditor)
+    html = client.get("/relatorios?ano=2026&mes=9").get_data(as_text=True)
+
+    assert re.search(r'data-indicador="taxa_confirmacao">\s*100,00%', html)
+    assert "1 irregular(es) de 1 com conclusão" in html

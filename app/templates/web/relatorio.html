@@ -65,7 +65,10 @@
       <div class="fs-3 fw-semibold" data-indicador="taxa_confirmacao">
         {{ (r.taxa_confirmacao | score ~ '%') if r.taxa_confirmacao is not none else 'indefinida' }}
       </div>
-      <div class="small text-muted">irregular ÷ (aprovado + irregular)</div>
+      <div class="small text-muted" data-indicador="taxa_amostra">
+        {% if r.alertas_concluidos %}{{ r.alertas_irregulares }} irregular(es) de {{ r.alertas_concluidos }} com conclusão{% else %}nenhum alerta com conclusão{% endif %}
+        · irregular ÷ (aprovado + irregular)
+      </div>
     </div></div>
   </div>
 </div>

@@ -100,8 +100,9 @@ def relatorio_mensal(ano, mes) -> dict:
 
     por_status = contar_alertas(AlertaAnomalia.status_revisao, STATUS_REVISAO)
     por_metodo = contar_alertas(AlertaAnomalia.metodo, METODOS)
-    concluidos = por_status[STATUS_APROVADO] + por_status[STATUS_IRREGULAR]
-    taxa = round(100 * por_status[STATUS_IRREGULAR] / concluidos, 2) if concluidos else None
+    irregulares = por_status[STATUS_IRREGULAR]
+    concluidos = por_status[STATUS_APROVADO] + irregulares
+    taxa = round(100 * irregulares / concluidos, 2) if concluidos else None
 
     ultima = db.session.scalar(
         select(ExecucaoAnalise).order_by(
@@ -125,9 +126,18 @@ def relatorio_mensal(ano, mes) -> dict:
         "alertas_por_status": por_status,
         "alertas_por_metodo": por_metodo,
         "alertas_concluidos": concluidos,
+        "alertas_irregulares": irregulares,
         "taxa_confirmacao": taxa,
+        "taxa_confirmacao_texto": descrever_taxa(taxa, irregulares, concluidos),
         "ultima_analise": ultima,
     }
+
+
+def descrever_taxa(taxa: float | None, irregulares: int, concluidos: int) -> str:
+    """Taxa com a amostra ao lado: "66,67% (2 de 3)". Evita ler 100% de 1 alerta como forte."""
+    if taxa is None:
+        return "indefinida (nenhum alerta com conclusão)"
+    return f"{taxa:.2f}%".replace(".", ",") + f" ({irregulares} de {concluidos})"
 
 
 def _numero_br(valor) -> str:
@@ -153,6 +163,7 @@ def para_csv(relatorio: dict) -> str:
         ("resumo", "percentual_sinalizado", _numero_br(relatorio["percentual_sinalizado"])),
         ("resumo", "total_alertas", relatorio["total_alertas"]),
         ("resumo", "alertas_concluidos", relatorio["alertas_concluidos"]),
+        ("resumo", "alertas_irregulares", relatorio["alertas_irregulares"]),
         (
             "resumo",
             "taxa_confirmacao_percentual",
@@ -236,17 +247,14 @@ def para_pdf(relatorio: dict, comprimir: bool = True) -> bytes:
                 ["% sinalizado", _percentual(r["percentual_sinalizado"])],
                 ["Alertas", str(r["total_alertas"])],
                 ["Alertas com conclusão (aprovado ou irregular)", str(r["alertas_concluidos"])],
-                [
-                    "Taxa de confirmação de irregularidade",
-                    _percentual(r["taxa_confirmacao"]),
-                ],
+                ["Taxa de confirmação de irregularidade", r["taxa_confirmacao_texto"]],
             ],
             [10 * cm, 7 * cm],
         ),
         Spacer(1, 0.2 * cm),
         Paragraph(
             "Taxa de confirmação = irregular ÷ (aprovado + irregular), pelo status atual "
-            "dos alertas; indefinida enquanto nenhum alerta do mês tiver conclusão.",
+            "dos alertas. Entre parênteses: irregulares de alertas com conclusão.",
             estilos["Italic"],
         ),
         Spacer(1, 0.5 * cm),

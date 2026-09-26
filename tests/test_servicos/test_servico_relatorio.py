@@ -83,6 +83,8 @@ def test_indicadores_do_mes(cenario):
     # irregular ÷ (aprovado + irregular) = 2 ÷ 3
     assert r["alertas_concluidos"] == 3
     assert r["taxa_confirmacao"] == pytest.approx(66.67)
+    assert r["alertas_irregulares"] == 2
+    assert r["taxa_confirmacao_texto"] == "66,67% (2 de 3)"
     assert r["ultima_analise"].id == cenario.id
 
 
@@ -93,6 +95,7 @@ def test_taxa_indefinida_sem_alertas_concluidos(sessao, auditor, alerta):
 
     assert r["total_alertas"] == 1
     assert r["taxa_confirmacao"] is None
+    assert r["taxa_confirmacao_texto"] == "indefinida (nenhum alerta com conclusão)"
 
 
 def test_mes_sem_despesas(sessao):
@@ -126,6 +129,7 @@ def test_csv(cenario):
     assert linhas[0] == "secao;item;valor"
     assert "resumo;valor_despesas;1000,00" in linhas
     assert "resumo;taxa_confirmacao_percentual;66,67" in linhas
+    assert "resumo;alertas_irregulares;2" in linhas
     assert "alertas_por_status;irregular;2" in linhas
     assert "alertas_por_metodo;contextual;1" in linhas
 
@@ -160,7 +164,7 @@ def test_pdf(cenario):
     assert "Março de 2026 (despesas de 01/03/2026 a 31/03/2026)" in texto
     assert "indícios estatísticos, não acusações" in texto  # RNF04 também no PDF
     assert "4 (R$ 1.000,00)" in texto
-    assert "66,67%" in texto
+    assert "66,67% (2 de 3)" in texto
     assert "Necessita justificativa" in texto and "Isolation Forest" in texto
     assert f"Última análise: nº {cenario.id}" in texto
 
@@ -170,7 +174,7 @@ def test_pdf_sem_analise_e_taxa_indefinida(sessao):
 
     texto = _texto_do_pdf(para_pdf(relatorio_mensal(2026, 1), comprimir=False))
 
-    assert "indefinida" in texto
+    assert "indefinida (nenhum alerta com conclusão)" in texto
     assert "Nenhuma análise foi executada ainda" in texto
 
 

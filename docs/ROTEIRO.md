@@ -36,7 +36,7 @@ concluídos em 25/09 (seeds 42 e 7). **A S3 está concluída.**
 | Motor de detecção | ✅ Z-score, IQR, contextual, Isolation Forest e consolidador |
 | Telas de alertas, revisão e dashboard | ✅ Análises, lista de alertas com filtros combináveis, detalhe, parecer com histórico, dashboard |
 | Experimento | ✅ `metricas.csv` com os quatro métodos, seeds 42 e 7 |
-| Testes | 382 passando (SQLite + PostgreSQL) |
+| Testes | 383 passando (SQLite + PostgreSQL) |
 
 **Próximo passo:** Fechamento (clone limpo, README, roteiro de demonstração, banco limpo).
 
@@ -170,3 +170,4 @@ concluídos em 25/09 (seeds 42 e 7). **A S3 está concluída.**
 | 27/09/2026 | US11 concluída em CSV: tela e `GET /api/relatorios/mensal` (item 24 de `MUDANCAS_PARA_DOCUMENTACAO.md`). Todas as histórias implementadas. 375 testes. |
 | 27/09/2026 | Filtros da tela de alertas e escolha do mês do relatório passam a ser aplicados ao mudar o campo, sem botão (o botão fica só para quem estiver sem JavaScript). 378 testes. |
 | 27/09/2026 | Relatório mensal também em PDF (item 25 de `MUDANCAS_PARA_DOCUMENTACAO.md`), com o aviso de indício. 382 testes. |
+| 27/09/2026 | Taxa de confirmação passa a mostrar a amostra, ex.: "66,67% (2 de 3)" (item 26 de `MUDANCAS_PARA_DOCUMENTACAO.md`). 383 testes. |
