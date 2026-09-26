@@ -36,7 +36,7 @@ concluídos em 25/09 (seeds 42 e 7). **A S3 está concluída.**
 | Motor de detecção | ✅ Z-score, IQR, contextual, Isolation Forest e consolidador |
 | Telas de alertas, revisão e dashboard | ✅ Análises, lista de alertas com filtros combináveis, detalhe, parecer com histórico, dashboard |
 | Experimento | ✅ `metricas.csv` com os quatro métodos, seeds 42 e 7 |
-| Testes | 375 passando (SQLite + PostgreSQL) |
+| Testes | 378 passando (SQLite + PostgreSQL) |
 
 **Próximo passo:** decidir sobre o PDF do relatório e partir para o Fechamento (clone limpo, README, roteiro de demonstração, banco limpo).
 
@@ -168,3 +168,4 @@ concluídos em 25/09 (seeds 42 e 7). **A S3 está concluída.**
 | 27/09/2026 | Gerenciamento de usuários concluído: tela do administrador para criar, trocar perfil, desativar e reativar (item 22 de `MUDANCAS_PARA_DOCUMENTACAO.md`). 346 testes. |
 | 27/09/2026 | Job de reprocessamento concluído, em container próprio `agendador` (item 23 de `MUDANCAS_PARA_DOCUMENTACAO.md`: muda os diagramas de arquitetura e implantação). 355 testes. |
 | 27/09/2026 | US11 concluída em CSV: tela e `GET /api/relatorios/mensal` (item 24 de `MUDANCAS_PARA_DOCUMENTACAO.md`). Todas as histórias implementadas. 375 testes. |
+| 27/09/2026 | Filtros da tela de alertas e escolha do mês do relatório passam a ser aplicados ao mudar o campo, sem botão (o botão fica só para quem estiver sem JavaScript). 378 testes. |

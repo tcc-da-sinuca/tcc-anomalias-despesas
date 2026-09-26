@@ -235,7 +235,7 @@ def test_formulario_de_filtros_mantem_as_escolhas(client, entrar, auditor, vario
 
     assert '<option value="Viagens" selected>' in html
     assert '<option value="Software" >' in html  # opções vêm das despesas existentes
-    assert 'name="data_inicio"\n             value="2026-03-01"' in html
+    assert re.search(r'name="data_inicio"[^>]*value="2026-03-01"', html)
     assert "60 alerta(s) com 3 filtro(s) ativo(s)." in html
 
 
@@ -318,3 +318,23 @@ def test_relatorio_mes_sem_despesas_e_invalido(client, entrar, auditor, alerta):
     resposta = client.get("/relatorios?ano=2026&mes=13")
     assert resposta.status_code == 400
     assert "O mês deve estar entre 1 e 12." in resposta.get_data(as_text=True)
+
+
+@pytest.mark.parametrize(
+    ("caminho", "botao"), [("/alertas", "Filtrar"), ("/relatorios", "Ver relatório")]
+)
+def test_filtros_aplicados_ao_mudar(client, entrar, auditor, alerta, caminho, botao):
+    entrar(auditor)
+    html = client.get(caminho).get_data(as_text=True)
+
+    assert re.search(r"<form method=\"get\"[^>]*data-aplicar-ao-mudar>", html)
+    assert "/static/js/app.js" in html
+    # o botão de envio só aparece para quem estiver sem JavaScript
+    assert re.search(rf"<noscript><button type=\"submit\"[^>]*>{botao}</button></noscript>", html)
+
+
+def test_script_dos_filtros_e_servido(client):
+    resposta = client.get("/static/js/app.js")
+    assert resposta.status_code == 200
+    assert "data-aplicar-ao-mudar" in resposta.get_data(as_text=True)
+    resposta.close()
