@@ -1,0 +1,12 @@
+Valor;Data;Categoria;Conta Contábil;Centro de Custo;Funcionário;Descrição
+890,00;24/08/2026;Viagens;3.1.01.001;CC-COM;F007;Passagem aérea para visita a cliente
+52,90;24/08/2026;Alimentação;3.1.02.002;CC-OPS;F027;Almoço em viagem
+118,50;25/08/2026;Material de escritório;3.1.04.001;CC-ADM;F001;Papel e toner
+14.900,00;26/08/2026;Viagens;3.1.01.001;CC-COM;F007;Passagem aérea internacional
+185,00;30/08/2026;Combustível;3.1.03.001;CC-OPS;F027;Abastecimento
+955,00;25/08/2026;Software;3.1.05.002;CC-TI;F019;Licença de software (parte 1)
+962,00;26/08/2026;Software;3.1.05.002;CC-TI;F019;Licença de software (parte 2)
+971,00;27/08/2026;Software;3.1.05.002;CC-TI;F019;Licença de software (parte 3)
+430,00;27/08/2026;Hospedagem;3.1.06.001;CC-COM;F007;Diária de hotel
+;28/08/2026;Viagens;3.1.01.001;CC-COM;F007;Linha sem valor (erro proposital)
+210,00;31/02/2026;Alimentação;3.1.02.002;CC-OPS;F027;Data inexistente (erro proposital)

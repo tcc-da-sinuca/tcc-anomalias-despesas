@@ -36,9 +36,9 @@ concluídos em 25/09 (seeds 42 e 7). **A S3 está concluída.**
 | Motor de detecção | ✅ Z-score, IQR, contextual, Isolation Forest e consolidador |
 | Telas de alertas, revisão e dashboard | ✅ Análises, lista de alertas com filtros combináveis, detalhe, parecer com histórico, dashboard |
 | Experimento | ✅ `metricas.csv` com os quatro métodos, seeds 42 e 7 |
-| Testes | 383 passando (SQLite + PostgreSQL) |
+| Testes | 384 passando (SQLite + PostgreSQL) |
 
-**Próximo passo:** Fechamento (clone limpo, README, roteiro de demonstração, banco limpo).
+**Próximo passo:** recriar o banco limpo antes da apresentação e testar com Docker Desktop. O restante do Fechamento está pronto.
 
 ---
 
@@ -129,11 +129,13 @@ concluídos em 25/09 (seeds 42 e 7). **A S3 está concluída.**
 
 ## Fechamento (até 02/11)
 
-- [ ] `docker compose up` do zero, num clone limpo, sobe tudo e carrega a base
-- [ ] README revisado: subir, rodar migrations, carregar a base, rodar testes e o experimento
-- [ ] `.env.example` atualizado; nenhuma credencial no repositório
-- [ ] `MUDANCAS_PARA_DOCUMENTACAO.md` e `classes.puml` alinhados com o código final
-- [ ] Roteiro de demonstração: importar → analisar → revisar → dashboard → relatório
+- [x] `docker compose up` do zero, num clone limpo, sobe tudo e carrega a base (27/09). Revelou e corrigiu: o `agendador` rodava antes das migrations (agora espera o `app` saudável); documentado o erro com `umask` restritiva no Linux
+- [x] README revisado: início rápido em 4 comandos, testes e experimento pelo Docker, situação das sprints, validação atualizada (27/09)
+- [x] `.env.example` atualizado; nenhuma credencial no repositório nem no histórico (27/09)
+- [x] `MUDANCAS_PARA_DOCUMENTACAO.md` e `classes.puml` alinhados com o código final: atributos, associações (as 8 chaves estrangeiras) e enums conferidos automaticamente (27/09)
+- [x] Roteiro de demonstração em [`ROTEIRO_DEMONSTRACAO.md`](ROTEIRO_DEMONSTRACAO.md), com arquivo de exemplo `dados/exemplos/importacao_demonstracao.csv` e números conferidos numa execução real (27/09)
+- [ ] Recriar o banco de desenvolvimento limpo antes da apresentação (seção 1 do roteiro de demonstração)
+- [ ] Testar `docker compose up` com Docker Desktop (Windows ou Mac) de alguém da equipe
 
 ---
 
@@ -171,3 +173,4 @@ concluídos em 25/09 (seeds 42 e 7). **A S3 está concluída.**
 | 27/09/2026 | Filtros da tela de alertas e escolha do mês do relatório passam a ser aplicados ao mudar o campo, sem botão (o botão fica só para quem estiver sem JavaScript). 378 testes. |
 | 27/09/2026 | Relatório mensal também em PDF (item 25 de `MUDANCAS_PARA_DOCUMENTACAO.md`), com o aviso de indício. 382 testes. |
 | 27/09/2026 | Taxa de confirmação passa a mostrar a amostra, ex.: "66,67% (2 de 3)" (item 26 de `MUDANCAS_PARA_DOCUMENTACAO.md`). 383 testes. |
+| 27/09/2026 | Fechamento: clone limpo validado (e corrigida a ordem de subida do `agendador`), README revisado, credenciais e diagrama de classes conferidos, roteiro de demonstração escrito. Pendentes: banco limpo e teste com Docker Desktop. 384 testes. |

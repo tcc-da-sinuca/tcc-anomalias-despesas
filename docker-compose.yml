@@ -32,10 +32,19 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    # Saudável = servidor respondendo, o que só acontece depois das migrations
+    # (o entrypoint aplica as migrations antes de iniciar o Flask).
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/api/saude', timeout=3)"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
 
   # Job de reprocessamento das despesas novas (APScheduler). Mesma imagem do app, mas
-  # sem o entrypoint: as migrations ficam a cargo do container "app". Se o banco ainda
-  # não estiver pronto, o job registra o erro e tenta de novo no próximo ciclo.
+  # sem o entrypoint: as migrations ficam a cargo do container "app", por isso ele só
+  # sobe depois que o app estiver saudável. Se o banco cair depois, o job registra o
+  # erro e tenta de novo no próximo ciclo.
   agendador:
     build: .
     entrypoint: ["flask", "agendador"]
@@ -51,7 +60,7 @@ services:
       db:
         condition: service_healthy
       app:
-        condition: service_started
+        condition: service_healthy
     restart: on-failure  # com REPROCESSAMENTO_INTERVALO_MIN=0 ele termina e fica parado
 
 volumes:

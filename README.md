@@ -22,9 +22,14 @@ Pré-requisitos: Docker com Docker Compose v2.24 ou mais recente. No GitHub
 Codespaces isso já vem pronto na imagem padrão.
 
 ```bash
-cp .env.example .env          # ajuste SECRET_KEY, ADMIN_EMAIL e ADMIN_SENHA
-docker compose up --build
+cp .env.example .env                                  # ajuste SECRET_KEY, ADMIN_EMAIL e ADMIN_SENHA
+docker compose up --build -d                          # sobe banco, aplicação e agendador
+docker compose exec app flask seed-base               # carrega a base sintética (5.000 despesas)
+docker compose exec app flask executar-analise        # primeira análise (ou pelo botão na tela)
 ```
+
+Depois, abra <http://localhost:5000> e entre com o `ADMIN_EMAIL` e a `ADMIN_SENHA` do `.env`.
+Sem o `-d`, os logs ficam no terminal e os comandos seguintes vão em outro terminal.
 
 O Compose sobe três serviços: `db` (PostgreSQL), `app` (a aplicação web) e
 `agendador` (o job que analisa automaticamente as despesas novas).
@@ -36,7 +41,7 @@ Na subida, o container da aplicação:
 3. carrega a base sintética, se `SEED_BASE_SINTETICA=1` (`flask seed-base`);
 4. inicia o servidor em <http://localhost:5000>.
 
-Entre com o `ADMIN_EMAIL` e a `ADMIN_SENHA` definidos no `.env`.
+O `agendador` só sobe depois que a aplicação responde, ou seja, com as migrations já aplicadas.
 
 ### Carga da base sintética
 
@@ -80,16 +85,19 @@ e por método. Clicar num status abre a lista de alertas filtrada. Pela API:
 ### Executar a análise e ver os alertas
 
 Na tela **Análises**, o botão **Executar análise** aplica Z-score, IQR, a regra
-contextual e o Isolation Forest a todas as despesas e grava os alertas. A tela **Alertas** lista cada
-alerta com score, método e motivo. No detalhe do alerta, o auditor classifica a
-despesa (aprovado, irregular ou necessita justificativa) e registra um parecer; a
-observação é obrigatória nos dois últimos casos. Pareceres não podem ser alterados:
-uma nova revisão gera um novo parecer e o histórico fica visível. Uma despesa que já tem alerta de um método não recebe outro do mesmo
-método, então a análise pode ser repetida após cada importação. A lista de alertas
-tem filtros combináveis: período (data da despesa), categoria, conta contábil, centro
-de custo, funcionário, status e método. Pela API:
-`POST /api/analises`, `GET /api/alertas`, `POST /api/alertas/{id}/parecer`. Detalhes em
-[`docs/FLUXO_ANALISE.md`](docs/FLUXO_ANALISE.md).
+contextual e o Isolation Forest a todas as despesas e grava os alertas. Uma despesa
+que já tem alerta de um método não recebe outro do mesmo método, então a análise pode
+ser repetida após cada importação.
+
+A tela **Alertas** lista cada alerta com score, método e motivo, com filtros
+combináveis (aplicados ao escolher): período (data da despesa), categoria, conta
+contábil, centro de custo, funcionário, status e método. No detalhe do alerta, o
+auditor classifica a despesa (aprovado, irregular ou necessita justificativa) e
+registra um parecer; a observação é obrigatória nos dois últimos casos. Pareceres não
+podem ser alterados: uma nova revisão gera um novo parecer e o histórico fica visível.
+
+Pela API: `POST /api/analises`, `GET /api/alertas`, `POST /api/alertas/{id}/parecer`.
+Detalhes do fluxo e do significado de cada status em [`docs/FLUXO_ANALISE.md`](docs/FLUXO_ANALISE.md).
 
 ### Relatório mensal
 
@@ -163,6 +171,18 @@ docker compose up --build
 O problema é do ambiente do Codespace, não do projeto. Com Docker Desktop (Windows e
 Mac) ele não deve aparecer, mas isso ainda não foi testado.
 
+### Problema conhecido no Linux: `umask` restritiva
+
+Se o container `db` terminar com `/docker-entrypoint-initdb.d/01-criar-banco-teste.sql:
+Permission denied`, o repositório foi clonado com uma `umask` que tira dos "outros" a
+permissão de leitura (por exemplo, 027), e o usuário `postgres` do container não
+consegue ler o script. Libere a leitura e suba de novo:
+
+```bash
+chmod -R o+rX docker/postgres-init
+docker compose down -v && docker compose up --build -d
+```
+
 ---
 
 ## Testes
@@ -174,7 +194,7 @@ docker compose exec app pytest          # todos os testes, inclusive os de Postg
 ### Experimento
 
 ```bash
-python -m experimentos.avaliar_metodos   # métricas por método em experimentos/resultados/
+docker compose exec app python -m experimentos.avaliar_metodos   # métricas em experimentos/resultados/
 ```
 
 Detalhes da metodologia e dos arquivos em [`experimentos/README.md`](experimentos/README.md).
@@ -191,9 +211,14 @@ Os testes marcados `postgres` usam `TEST_DATABASE_URL` e são pulados quando o
 banco não está disponível. O banco `despesas_teste` é criado automaticamente na
 primeira subida do container `db`.
 
-> **Validação (23/09/2026):** `docker compose up --build` testado no Codespace.
-> As migrations, o administrador inicial, o login, `GET /api/saude`, `flask seed-base`
-> (5.000 despesas) e os 157 testes rodaram dentro do container, contra o PostgreSQL 16.
+> **Validação (27/09/2026):** num clone limpo do GitHub, seguindo só este README e o
+> `.env.example` sem alterações. A pasta temporária usada tinha permissões restritivas e
+> precisou do `chmod` da seção sobre `umask`; com isso, os três containers subiram na
+> ordem certa (o `agendador` só depois do `app` saudável), a migration e o
+> administrador inicial foram aplicados, `flask seed-base` carregou 5.000 despesas, a
+> análise gerou 596 alertas, os 383 testes passaram dentro do container (incluindo os
+> de PostgreSQL), o experimento reproduziu exatamente o `metricas.csv` versionado e as
+> 12 telas e os downloads do relatório responderam.
 
 ---
 
@@ -206,21 +231,27 @@ dados/          base sintética e carga no banco
 experimentos/   avaliação dos métodos (precisão, recall, F1, taxa de FP)
 migrations/     migrations do Alembic (Flask-Migrate)
 tests/          testes pytest
-docs/           registro de mudanças para a documentação e diagramas (PlantUML)
+docs/           decisões, fluxo da análise, Isolation Forest, roteiro e diagramas (PlantUML)
 ```
 
 O contexto completo do projeto (requisitos, modelo de dados, arquitetura e
 convenções) está em [`CLAUDE.md`](CLAUDE.md). Decisões que afetam a documentação
 entregue ficam em [`docs/MUDANCAS_PARA_DOCUMENTACAO.md`](docs/MUDANCAS_PARA_DOCUMENTACAO.md).
 O diagrama de classes está em [`docs/diagramas/classes.puml`](docs/diagramas/classes.puml).
+O fluxo da análise e o significado dos status estão em [`docs/FLUXO_ANALISE.md`](docs/FLUXO_ANALISE.md),
+e os atributos do Isolation Forest em [`docs/ISOLATION_FOREST.md`](docs/ISOLATION_FOREST.md).
 O caminho até a entrega final, com o que já foi feito e o que falta, está em
-[`docs/ROTEIRO.md`](docs/ROTEIRO.md).
+[`docs/ROTEIRO.md`](docs/ROTEIRO.md). Para apresentar o sistema, siga
+[`docs/ROTEIRO_DEMONSTRACAO.md`](docs/ROTEIRO_DEMONSTRACAO.md).
 
 ## Situação por sprint
 
+Todas as histórias foram implementadas antes do fim previsto de cada sprint (detalhes
+e datas em [`docs/ROTEIRO.md`](docs/ROTEIRO.md)).
+
 | Sprint | Período | Conteúdo | Situação |
 |---|---|---|---|
-| S1 | 14/09–27/09 | Modelo de dados, autenticação, infraestrutura; importação (US01) e estatísticas (US02) | Modelo de dados, autenticação, infraestrutura, base sintética, importação (US01) e estatísticas (US02) prontos |
-| S2 | 28/09–11/10 | Z-score, IQR (US03), regras contextuais (US05), lista de alertas (US06) | — |
-| S3 | 12/10–25/10 | Isolation Forest (US04), experimento comparativo, revisão e parecer (US07, US08) | — |
-| S4 | 26/10–02/11 | Dashboard, filtros, parâmetros, usuários, job, relatório | — |
+| S1 | 14/09–27/09 | Modelo de dados, autenticação, infraestrutura, base sintética; importação (US01) e estatísticas (US02) | ✅ Concluída em 23/09 |
+| S2 | 28/09–11/10 | Z-score, IQR (US03), regras contextuais (US05), lista de alertas (US06) | ✅ Concluída em 23/09 |
+| S3 | 12/10–25/10 | Isolation Forest (US04), experimento comparativo, revisão e parecer (US07, US08) | ✅ Concluída em 25/09 |
+| S4 | 26/10–02/11 | Dashboard (US09), filtros (US10), relatório CSV/PDF (US11), parâmetros (US12), usuários, job | ✅ Concluída em 27/09 |
