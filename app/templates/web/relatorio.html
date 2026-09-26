@@ -22,6 +22,8 @@
     {% if relatorio %}
     <a class="btn btn-outline-secondary btn-sm"
        href="{{ url_for('api.relatorio_mensal', ano=relatorio.ano, mes=relatorio.mes, formato='csv') }}">Baixar CSV</a>
+    <a class="btn btn-outline-secondary btn-sm"
+       href="{{ url_for('api.relatorio_mensal', ano=relatorio.ano, mes=relatorio.mes, formato='pdf') }}">Baixar PDF</a>
     {% endif %}
   </div>
 </form>

@@ -307,6 +307,7 @@ def test_relatorio_abre_no_mes_da_despesa_mais_recente(client, entrar, auditor, 
     assert 'data-indicador="total_despesas">1<' in html
     assert "indefinida" in html
     assert "/api/relatorios/mensal?ano=2026&amp;mes=9&amp;formato=csv" in html
+    assert "/api/relatorios/mensal?ano=2026&amp;mes=9&amp;formato=pdf" in html
     assert ">Relatório</a>" in html
 
 

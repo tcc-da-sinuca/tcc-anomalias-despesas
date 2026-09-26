@@ -95,9 +95,9 @@ de custo, funcionário, status e método. Pela API:
 
 A tela **Relatório** mostra, para o mês escolhido (pela data da despesa), o total de
 despesas, as sinalizadas, os alertas por status e método e a taxa de confirmação de
-irregularidade = irregular ÷ (aprovado + irregular). O botão **Baixar CSV** exporta
-no padrão do Excel brasileiro. Pela API: `GET /api/relatorios/mensal?ano=2026&mes=3&formato=csv`
-(ou `formato=json`).
+irregularidade = irregular ÷ (aprovado + irregular). Os botões **Baixar CSV** (padrão
+do Excel brasileiro) e **Baixar PDF** exportam o relatório. Pela API:
+`GET /api/relatorios/mensal?ano=2026&mes=3&formato=pdf` (ou `csv`, ou `json`).
 
 ### Parâmetros dos métodos
 

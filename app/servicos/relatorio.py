@@ -19,10 +19,17 @@ import io
 from datetime import date
 from decimal import Decimal
 
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.units import cm
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 from sqlalchemy import func, select
 
 from app.extensoes import db
+from app.filtros import data_br, data_hora_br, moeda, nome_metodo, nome_status
 from app.models import AlertaAnomalia, Despesa, ExecucaoAnalise
+from app.models.base import agora_utc
 from app.models.dominio import (
     METODOS,
     STATUS_APROVADO,
@@ -159,4 +166,112 @@ def para_csv(relatorio: dict) -> str:
         ("analise", "ultima_analise_em", ultima.iniciada_em.isoformat() if ultima else ""),
     ]
     escritor.writerows(linhas)
+    return saida.getvalue()
+
+
+AVISO_INDICIO = (
+    "Os alertas deste relatório são indícios estatísticos, não acusações. Toda despesa "
+    "sinalizada precisa de revisão humana antes de qualquer conclusão."
+)
+
+
+def _percentual(valor) -> str:
+    return "indefinida" if valor is None else f"{valor:.2f}%".replace(".", ",")
+
+
+def para_pdf(relatorio: dict, comprimir: bool = True) -> bytes:
+    """PDF de uma página com os indicadores do mês e o aviso de indício (RNF04).
+
+    ``comprimir=False`` deixa o texto legível no arquivo (usado nos testes).
+    """
+    saida = io.BytesIO()
+    documento = SimpleDocTemplate(
+        saida,
+        pagesize=A4,
+        leftMargin=2 * cm,
+        rightMargin=2 * cm,
+        topMargin=2 * cm,
+        bottomMargin=2 * cm,
+        title=f"Relatório mensal {relatorio['mes']:02d}/{relatorio['ano']}",
+        pageCompression=1 if comprimir else 0,
+    )
+    estilos = getSampleStyleSheet()
+    r = relatorio
+
+    def tabela(linhas, larguras):
+        t = Table(linhas, colWidths=larguras, hAlign="LEFT")
+        t.setStyle(
+            TableStyle(
+                [
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#e9ecef")),
+                    ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#adb5bd")),
+                    ("ALIGN", (1, 1), (-1, -1), "RIGHT"),
+                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                    ("TOPPADDING", (0, 0), (-1, -1), 4),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+                ]
+            )
+        )
+        return t
+
+    ultima = r["ultima_analise"]
+    elementos = [
+        Paragraph("Relatório mensal de anomalias em despesas", estilos["Title"]),
+        Paragraph(
+            f"{r['nome_mes'].capitalize()} de {r['ano']} "
+            f"(despesas de {data_br(r['inicio'])} a {data_br(r['fim'])})",
+            estilos["Heading3"],
+        ),
+        Paragraph(f"<b>Atenção:</b> {AVISO_INDICIO}", estilos["Normal"]),
+        Spacer(1, 0.5 * cm),
+        tabela(
+            [
+                ["Indicador", "Valor"],
+                ["Despesas analisadas", f"{r['total_despesas']} ({moeda(r['valor_despesas'])})"],
+                [
+                    "Despesas sinalizadas",
+                    f"{r['despesas_sinalizadas']} ({moeda(r['valor_sinalizado'])})",
+                ],
+                ["% sinalizado", _percentual(r["percentual_sinalizado"])],
+                ["Alertas", str(r["total_alertas"])],
+                ["Alertas com conclusão (aprovado ou irregular)", str(r["alertas_concluidos"])],
+                [
+                    "Taxa de confirmação de irregularidade",
+                    _percentual(r["taxa_confirmacao"]),
+                ],
+            ],
+            [10 * cm, 7 * cm],
+        ),
+        Spacer(1, 0.2 * cm),
+        Paragraph(
+            "Taxa de confirmação = irregular ÷ (aprovado + irregular), pelo status atual "
+            "dos alertas; indefinida enquanto nenhum alerta do mês tiver conclusão.",
+            estilos["Italic"],
+        ),
+        Spacer(1, 0.5 * cm),
+        tabela(
+            [["Status de revisão", "Alertas"]]
+            + [[nome_status(s), str(n)] for s, n in r["alertas_por_status"].items()],
+            [10 * cm, 7 * cm],
+        ),
+        Spacer(1, 0.5 * cm),
+        tabela(
+            [["Método", "Alertas"]]
+            + [[nome_metodo(m), str(n)] for m, n in r["alertas_por_metodo"].items()],
+            [10 * cm, 7 * cm],
+        ),
+        Spacer(1, 0.5 * cm),
+        Paragraph(
+            (
+                f"Última análise: nº {ultima.id}, em {data_hora_br(ultima.iniciada_em)}. "
+                "Despesas importadas depois dela ainda não foram analisadas."
+            )
+            if ultima
+            else "Nenhuma análise foi executada ainda: as despesas do mês não foram analisadas.",
+            estilos["Normal"],
+        ),
+        Paragraph(f"Gerado em {data_hora_br(agora_utc())}.", estilos["Normal"]),
+    ]
+    documento.build(elementos)
     return saida.getvalue()

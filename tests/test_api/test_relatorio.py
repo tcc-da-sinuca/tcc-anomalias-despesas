@@ -37,8 +37,18 @@ def test_csv(client, entrar, auditor, alerta):
 
 
 @pytest.mark.parametrize(
-    "consulta", ["ano=2026", "mes=9", "ano=2026&mes=13", "ano=2026&mes=9&formato=pdf"]
+    "consulta", ["ano=2026", "mes=9", "ano=2026&mes=13", "ano=2026&mes=9&formato=xml"]
 )
 def test_parametros_invalidos(client, entrar, auditor, consulta):
     entrar(auditor)
     assert client.get(f"/api/relatorios/mensal?{consulta}").status_code == 400
+
+
+def test_pdf(client, entrar, auditor, alerta):
+    entrar(auditor)
+    resposta = client.get("/api/relatorios/mensal?ano=2026&mes=9&formato=pdf")
+
+    assert resposta.status_code == 200
+    assert resposta.mimetype == "application/pdf"
+    assert 'filename="relatorio_2026_09.pdf"' in resposta.headers["Content-Disposition"]
+    assert resposta.data.startswith(b"%PDF-")

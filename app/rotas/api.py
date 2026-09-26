@@ -297,14 +297,14 @@ def atualizar_parametros():
 @bp.route("/relatorios/mensal")
 @perfil_requerido(PERFIL_AUDITOR)
 def relatorio_mensal():
-    """Relatório mensal (US11): ``?ano=2026&mes=3&formato=json|csv`` (padrão json).
+    """Relatório mensal (US11): ``?ano=2026&mes=3&formato=json|csv|pdf`` (padrão json).
 
     O mês se refere à data da despesa. O CSV segue o padrão do Excel brasileiro
     (``;`` e vírgula decimal), em UTF-8 com BOM para os acentos abrirem corretamente.
     """
     formato = (request.args.get("formato") or "json").lower()
-    if formato not in ("json", "csv"):
-        return jsonify(erro="formato inválido. Use json ou csv.", campo="formato"), 400
+    if formato not in ("json", "csv", "pdf"):
+        return jsonify(erro="formato inválido. Use json, csv ou pdf.", campo="formato"), 400
     try:
         relatorio = servico_relatorio.relatorio_mensal(
             request.args.get("ano"), request.args.get("mes")
@@ -312,6 +312,13 @@ def relatorio_mensal():
     except servico_relatorio.PeriodoInvalidoError as erro:
         return jsonify(erro=str(erro)), 400
 
+    if formato == "pdf":
+        nome = f"relatorio_{relatorio['ano']}_{relatorio['mes']:02d}.pdf"
+        return Response(
+            servico_relatorio.para_pdf(relatorio),
+            mimetype="application/pdf",
+            headers={"Content-Disposition": f'attachment; filename="{nome}"'},
+        )
     if formato == "csv":
         nome = f"relatorio_{relatorio['ano']}_{relatorio['mes']:02d}.csv"
         return Response(

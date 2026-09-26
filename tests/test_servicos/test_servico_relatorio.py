@@ -134,3 +134,48 @@ def test_mes_mais_recente(cenario):
     from app.servicos.relatorio import mes_mais_recente
 
     assert mes_mais_recente() == (2026, 4)
+
+
+def _texto_do_pdf(conteudo: bytes) -> str:
+    """Junta os textos (operador Tj) de um PDF não comprimido, desfazendo os escapes."""
+    import re
+
+    trechos = re.findall(rb"\(((?:\\.|[^\\)])*)\) Tj", conteudo)
+    return " ".join(
+        re.sub(
+            rb"\\([0-7]{3}|.)", lambda m: bytes([int(m[1], 8)]) if len(m[1]) == 3 else m[1], t
+        ).decode("latin-1")
+        for t in trechos
+    )
+
+
+def test_pdf(cenario):
+    from app.servicos.relatorio import para_pdf, relatorio_mensal
+
+    conteudo = para_pdf(relatorio_mensal(2026, 3), comprimir=False)
+    texto = _texto_do_pdf(conteudo)
+
+    assert conteudo.startswith(b"%PDF-")
+    assert "Relatório mensal de anomalias em despesas" in texto
+    assert "Março de 2026 (despesas de 01/03/2026 a 31/03/2026)" in texto
+    assert "indícios estatísticos, não acusações" in texto  # RNF04 também no PDF
+    assert "4 (R$ 1.000,00)" in texto
+    assert "66,67%" in texto
+    assert "Necessita justificativa" in texto and "Isolation Forest" in texto
+    assert f"Última análise: nº {cenario.id}" in texto
+
+
+def test_pdf_sem_analise_e_taxa_indefinida(sessao):
+    from app.servicos.relatorio import para_pdf, relatorio_mensal
+
+    texto = _texto_do_pdf(para_pdf(relatorio_mensal(2026, 1), comprimir=False))
+
+    assert "indefinida" in texto
+    assert "Nenhuma análise foi executada ainda" in texto
+
+
+def test_pdf_comprimido_e_menor(cenario):
+    from app.servicos.relatorio import para_pdf, relatorio_mensal
+
+    relatorio = relatorio_mensal(2026, 3)
+    assert len(para_pdf(relatorio)) < len(para_pdf(relatorio, comprimir=False))
