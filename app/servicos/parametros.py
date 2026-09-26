@@ -123,7 +123,9 @@ def _texto(numero: float) -> str:
 
 
 def exibir(numero: float) -> str:
-    """Número para a tela, com vírgula decimal: 0.05 → "0,05"."""
+    """Número para a tela: 0.05 → "0,05"; 1000000000 → "1.000.000.000"."""
+    if float(numero).is_integer():
+        return f"{int(numero):,}".replace(",", ".")
     return _texto(numero).replace(".", ",")
 
 

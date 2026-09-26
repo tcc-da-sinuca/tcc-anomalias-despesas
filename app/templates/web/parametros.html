@@ -35,7 +35,7 @@
       <input class="form-control {{ 'is-invalid' if erros.get(regra.nome) }}" type="number"
              step="{{ '1' if regra.tipo.__name__ == 'int' else 'any' }}"
              id="{{ regra.nome }}" name="{{ regra.nome }}"
-             value="{{ enviados.get(regra.nome, item.valor) }}">
+             value="{{ enviados.get(regra.nome, item.valor | numero_campo) }}">
       {% if erros.get(regra.nome) %}<div class="invalid-feedback">{{ erros[regra.nome] }}</div>{% endif %}
       {% else %}
       <div class="form-control-plaintext fw-semibold" id="{{ regra.nome }}">{{ item.valor | numero }}</div>
@@ -54,7 +54,7 @@
   {% endfor %}
 
   {% if pode_editar %}
-  <div class="mt-3"><button type="submit" class="btn btn-primary">Salvar parâmetros</button></div>
+  <div class="mt-3"><button type="submit" class="btn btn-primary"><i class="bi bi-check2" aria-hidden="true"></i>Salvar parâmetros</button></div>
   {% endif %}
 </form>
 {% endblock %}

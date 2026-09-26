@@ -9,7 +9,7 @@
       {{ form.arquivo.label(class_='form-label') }}
       {{ form.arquivo(class_='form-control' ~ (' is-invalid' if form.arquivo.errors else ''), accept='.csv,.xlsx') }}
       {% for erro in form.arquivo.errors %}<div class="invalid-feedback">{{ erro }}</div>{% endfor %}
-      <button type="submit" class="btn btn-primary mt-3 align-self-start">Importar</button>
+      <button type="submit" class="btn btn-primary mt-3 align-self-start"><i class="bi bi-upload" aria-hidden="true"></i>Importar</button>
     </form>
   </div>
   <div class="col-lg-6 small">
@@ -22,12 +22,15 @@
       <li>Datas como <code>2026-09-23</code> ou <code>23/09/2026</code>. Datas futuras são recusadas.</li>
       <li>Linhas com erro não são importadas; as demais sim. Os erros aparecem por linha.</li>
     </ul>
+    <a class="btn btn-outline-primary btn-sm" href="{{ url_for('web.exemplo_importacao') }}">
+      <i class="bi bi-download" aria-hidden="true"></i>Baixar arquivo de exemplo (CSV)
+    </a>
   </div>
 </div>
 
 {% if lotes %}
 <h2 class="h6 mt-4">Últimas importações</h2>
-<div class="table-responsive">
+<div class="tabela-cartao table-responsive mb-3">
   <table class="table table-sm align-middle">
     <thead><tr><th>Arquivo</th><th>Importado em</th><th class="text-end">Linhas</th><th class="text-end">Válidas</th><th class="text-end">Com erro</th></tr></thead>
     <tbody>
@@ -35,9 +38,9 @@
       <tr>
         <td><a href="{{ url_for('web.lote', lote_id=lote.id) }}">{{ lote.nome_arquivo }}</a></td>
         <td class="text-nowrap">{{ lote.importado_em | data_hora_br }}</td>
-        <td class="text-end">{{ lote.total_linhas }}</td>
-        <td class="text-end">{{ lote.linhas_validas }}</td>
-        <td class="text-end">{{ lote.total_linhas - lote.linhas_validas }}</td>
+        <td class="text-end">{{ lote.total_linhas | inteiro }}</td>
+        <td class="text-end">{{ lote.linhas_validas | inteiro }}</td>
+        <td class="text-end">{{ (lote.total_linhas - lote.linhas_validas) | inteiro }}</td>
       </tr>
       {% endfor %}
     </tbody>

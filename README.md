@@ -68,12 +68,13 @@ banco. Detalhes em [`dados/README.md`](dados/README.md).
 
 ### Importar despesas
 
-Pela tela **Importar** (menu superior) ou pela API (`POST /api/despesas/importar`,
+Pela tela **Importar** (menu **Dados**) ou pela API (`POST /api/despesas/importar`,
 campo `arquivo`). Aceita CSV separado por `,` ou `;` e XLSX. A primeira linha precisa
 ter as colunas valor, data, categoria, conta contábil, centro de custo e funcionário;
 descrição é opcional. Linhas com erro não entram e aparecem listadas por número de
 linha; as demais são importadas. Após cada importação, as estatísticas de referência
-(tela **Estatísticas**) são recalculadas.
+(tela **Estatísticas**, também no menu **Dados**) são recalculadas. A tela de importação
+tem um botão para baixar um CSV de exemplo.
 
 ### Dashboard
 
@@ -109,7 +110,7 @@ do Excel brasileiro) e **Baixar PDF** exportam o relatório. Pela API:
 
 ### Parâmetros dos métodos
 
-A tela **Parâmetros** mostra os critérios de cada método (limiar do Z-score, fator do
+A tela **Parâmetros** (menu **Configuração**) mostra os critérios de cada método (limiar do Z-score, fator do
 IQR, frequência mínima da regra contextual, proporção, seed e limite de aprovação do
 Isolation Forest), com a faixa válida e o valor padrão. O auditor só consulta; o
 administrador altera. A mudança vale para as próximas análises. Pela API:
@@ -117,7 +118,7 @@ administrador altera. A mudança vale para as próximas análises. Pela API:
 
 ### Usuários
 
-O administrador gerencia os usuários na tela **Usuários**: cria (com senha inicial),
+O administrador gerencia os usuários na tela **Usuários** (menu **Configuração**): cria (com senha inicial),
 troca o perfil (`auditor` ou `administrador`), desativa e reativa. Usuários não são
 excluídos, porque os pareceres guardam quem os registrou; desativar tira o acesso na
 hora. Pela linha de comando também é possível criar: `flask criar-usuario`.

@@ -1,6 +1,8 @@
 """Blueprint das páginas web (Jinja2)."""
 
-from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
+from pathlib import Path
+
+from flask import Blueprint, abort, flash, redirect, render_template, request, send_file, url_for
 from flask_login import current_user
 
 from app.extensoes import db
@@ -15,7 +17,7 @@ from app.servicos import relatorio as servico_relatorio
 from app.servicos import usuarios as servico_usuarios
 from app.servicos.analise import executar_analise
 from app.servicos.dashboard import resumo as resumo_dashboard
-from app.servicos.estatisticas import listar_estatisticas
+from app.servicos.estatisticas import listar_estatisticas, obter_estatistica
 from app.servicos.importacao import (
     CAMPOS,
     CAMPOS_TEXTO,
@@ -90,6 +92,23 @@ def importar():
     status = 400 if request.method == "POST" else 200
     lotes = paginar_lotes(por_pagina=10).items
     return render_template("web/importar.html", form=form, lotes=lotes), status
+
+
+ARQUIVO_EXEMPLO = (
+    Path(__file__).resolve().parents[2] / "dados" / "exemplos" / "importacao_demonstracao.csv"
+)
+
+
+@bp.route("/despesas/importar/exemplo")
+@perfil_requerido(PERFIL_AUDITOR)
+def exemplo_importacao():
+    """CSV de exemplo (formato do Excel brasileiro), o mesmo do roteiro de demonstração."""
+    return send_file(
+        ARQUIVO_EXEMPLO,
+        mimetype="text/csv",
+        as_attachment=True,
+        download_name="exemplo_despesas.csv",
+    )
 
 
 @bp.route("/lotes/<int:lote_id>")
@@ -184,6 +203,7 @@ def alerta(alerta_id: int):
         "web/alerta.html",
         alerta=alerta,
         outros=repo_alertas.outros_alertas_da_despesa(alerta),
+        contexto=obter_estatistica("categoria", alerta.despesa.categoria),
         form=form,
     ), status
 

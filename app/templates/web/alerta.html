@@ -2,91 +2,133 @@
 {% block titulo %}Alerta #{{ alerta.id }} · {{ super() }}{% endblock %}
 {% block conteudo %}
 {% set despesa = alerta.despesa %}
-<p class="small mb-1"><a href="{{ url_for('web.alertas') }}">← Alertas</a></p>
+<p class="small mb-2"><a href="{{ url_for('web.alertas') }}"><i class="bi bi-arrow-left" aria-hidden="true"></i>Alertas</a></p>
 <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
   <h1 class="h4 m-0">Alerta #{{ alerta.id }}</h1>
   <span class="badge status-{{ alerta.status_revisao }}">{{ alerta.status_revisao | nome_status }}</span>
+  <span class="metodo">{{ alerta.metodo | nome_metodo }}</span>
 </div>
 
-<div class="card mb-4">
-  <div class="card-body">
-    <div class="small text-muted mb-1">
-      {{ alerta.metodo | nome_metodo }} · score {{ alerta.score | score }} ·
-      <a href="{{ url_for('web.analise', execucao_id=alerta.execucao_id) }}">análise #{{ alerta.execucao_id }}</a>
-      em {{ alerta.criado_em | data_hora_br }}
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="card motivo-destaque mb-4">
+      <div class="card-body">
+        <div class="titulo-secao mb-2">Por que esta despesa foi sinalizada</div>
+        <p class="texto mb-2">{{ alerta.motivo }}</p>
+        <div class="small text-muted">
+          Score {{ alerta.score | score }}
+          <span title="Quanto maior, mais incomum. A escala é própria de cada método."><i class="bi bi-question-circle" aria-hidden="true"></i></span>
+          · <a href="{{ url_for('web.analise', execucao_id=alerta.execucao_id) }}">análise #{{ alerta.execucao_id }}</a>
+          em {{ alerta.criado_em | data_hora_br }}
+        </div>
+      </div>
     </div>
-    <p class="fs-6 mb-0">{{ alerta.motivo }}</p>
+
+    <div class="card mb-4"><div class="card-body">
+      <h2 class="titulo-secao mb-3">Despesa</h2>
+      <dl class="row mb-0">
+        <dt class="col-sm-4 fw-normal text-muted">Valor</dt><dd class="col-sm-8 fw-semibold">{{ despesa.valor | moeda }}</dd>
+        <dt class="col-sm-4 fw-normal text-muted">Data</dt><dd class="col-sm-8">{{ despesa.data | data_br }}</dd>
+        <dt class="col-sm-4 fw-normal text-muted">Categoria</dt><dd class="col-sm-8">{{ despesa.categoria }}</dd>
+        <dt class="col-sm-4 fw-normal text-muted">Conta contábil</dt><dd class="col-sm-8">{{ despesa.conta_contabil }}</dd>
+        <dt class="col-sm-4 fw-normal text-muted">Centro de custo</dt><dd class="col-sm-8">{{ despesa.centro_custo }}</dd>
+        <dt class="col-sm-4 fw-normal text-muted">Funcionário</dt><dd class="col-sm-8">{{ despesa.funcionario }}</dd>
+        <dt class="col-sm-4 fw-normal text-muted">Descrição</dt><dd class="col-sm-8">{{ despesa.descricao or '—' }}</dd>
+        <dt class="col-sm-4 fw-normal text-muted">Origem</dt>
+        <dd class="col-sm-8 mb-0">
+          {% if despesa.lote_id %}<a href="{{ url_for('web.lote', lote_id=despesa.lote_id) }}">lote {{ despesa.lote_id }}</a>{% else %}cadastro manual{% endif %}
+        </dd>
+      </dl>
+    </div></div>
+
+    {% if contexto and contexto.media %}
+    <div class="card mb-4" data-contexto-categoria><div class="card-body">
+      <h2 class="titulo-secao mb-3">Contexto da categoria {{ despesa.categoria }}</h2>
+      <div class="row text-center g-2">
+        <div class="col-4">
+          <div class="small text-muted">Média</div>
+          <div class="fw-semibold">{{ contexto.media | moeda }}</div>
+        </div>
+        <div class="col-4">
+          <div class="small text-muted">Faixa típica (Q1–Q3)</div>
+          <div class="fw-semibold"><span class="text-nowrap">{{ contexto.q1 | moeda }}</span> – <span class="text-nowrap">{{ contexto.q3 | moeda }}</span></div>
+        </div>
+        <div class="col-4">
+          <div class="small text-muted">Despesas</div>
+          <div class="fw-semibold">{{ contexto.n | inteiro }}</div>
+        </div>
+      </div>
+      <p class="small text-muted mb-0 mt-3">
+        Esta despesa vale <strong class="text-body">{{ (despesa.valor / contexto.media) | score }}x</strong> a média da categoria.
+        Metade das despesas da categoria fica na faixa típica.
+      </p>
+    </div></div>
+    {% endif %}
+
+    {% if outros %}
+    <div class="card mb-4"><div class="card-body">
+      <h2 class="titulo-secao mb-3">Outros alertas desta despesa</h2>
+      <ul class="list-unstyled small mb-0">
+        {% for outro in outros %}
+        <li class="mb-2">
+          <a href="{{ url_for('web.alerta', alerta_id=outro.id) }}" class="metodo">{{ outro.metodo | nome_metodo }}</a>
+          <span class="badge status-{{ outro.status_revisao }}">{{ outro.status_revisao | nome_status }}</span>
+          <div class="mt-1">{{ outro.motivo }}</div>
+        </li>
+        {% endfor %}
+      </ul>
+    </div></div>
+    {% endif %}
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card mb-4"><div class="card-body">
+      <h2 class="h6 mb-3">{{ 'Registrar novo parecer' if alerta.pareceres else 'Registrar parecer' }}</h2>
+      <form method="post" novalidate>
+        {{ form.hidden_tag() }}
+        <fieldset class="mb-3">
+          <legend class="form-label fs-6">{{ form.status.label.text }}</legend>
+          {% for opcao in form.status %}
+          <div class="form-check mb-1">
+            {{ opcao(class_='form-check-input' ~ (' is-invalid' if form.status.errors else '')) }}
+            {{ opcao.label(class_='form-check-label') }}
+          </div>
+          {% endfor %}
+          {% for erro in form.status.errors %}
+          <div class="invalid-feedback d-block">{{ erro }}</div>
+          {% endfor %}
+        </fieldset>
+        <div class="mb-3">
+          {{ form.observacao.label(class_='form-label') }}
+          {{ form.observacao(class_='form-control' ~ (' is-invalid' if form.observacao.errors else '')) }}
+          {% for erro in form.observacao.errors %}
+          <div class="invalid-feedback">{{ erro }}</div>
+          {% endfor %}
+        </div>
+        <p class="small text-muted">
+          <i class="bi bi-lock" aria-hidden="true"></i>O parecer fica registrado com o seu nome e o horário e não pode ser alterado nem
+          apagado. Para rever a decisão, registre um novo parecer: o histórico é mantido.
+        </p>
+        <button type="submit" class="btn btn-primary w-100">Registrar parecer</button>
+      </form>
+    </div></div>
+
+    <div class="card"><div class="card-body">
+      <h2 class="titulo-secao mb-3">Histórico de pareceres</h2>
+      {% if alerta.pareceres %}
+      <div class="linha-do-tempo small">
+        {% for parecer in alerta.pareceres %}
+        <div class="evento">
+          <strong>{{ parecer.status | nome_status }}</strong> por {{ parecer.usuario.nome }}
+          <div class="text-muted">{{ parecer.criado_em | data_hora_br }}</div>
+          {% if parecer.observacao %}<div class="mt-1">{{ parecer.observacao }}</div>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="text-muted small mb-0">Nenhum parecer registrado. O alerta aguarda revisão humana.</p>
+      {% endif %}
+    </div></div>
   </div>
 </div>
-
-<h2 class="h6">Despesa</h2>
-<dl class="row small">
-  <dt class="col-sm-3">Valor</dt><dd class="col-sm-9">{{ despesa.valor | moeda }}</dd>
-  <dt class="col-sm-3">Data</dt><dd class="col-sm-9">{{ despesa.data | data_br }}</dd>
-  <dt class="col-sm-3">Categoria</dt><dd class="col-sm-9">{{ despesa.categoria }}</dd>
-  <dt class="col-sm-3">Conta contábil</dt><dd class="col-sm-9">{{ despesa.conta_contabil }}</dd>
-  <dt class="col-sm-3">Centro de custo</dt><dd class="col-sm-9">{{ despesa.centro_custo }}</dd>
-  <dt class="col-sm-3">Funcionário</dt><dd class="col-sm-9">{{ despesa.funcionario }}</dd>
-  <dt class="col-sm-3">Descrição</dt><dd class="col-sm-9">{{ despesa.descricao or '—' }}</dd>
-  <dt class="col-sm-3">Origem</dt>
-  <dd class="col-sm-9">
-    {% if despesa.lote_id %}<a href="{{ url_for('web.lote', lote_id=despesa.lote_id) }}">lote {{ despesa.lote_id }}</a>{% else %}cadastro manual{% endif %}
-  </dd>
-</dl>
-
-{% if outros %}
-<h2 class="h6 mt-4">Outros alertas desta despesa</h2>
-<ul class="small">
-  {% for outro in outros %}
-  <li>
-    <a href="{{ url_for('web.alerta', alerta_id=outro.id) }}">{{ outro.metodo | nome_metodo }}</a>
-    ({{ outro.status_revisao | nome_status | lower }}): {{ outro.motivo }}
-  </li>
-  {% endfor %}
-</ul>
-{% endif %}
-
-<h2 class="h6 mt-4">{{ 'Registrar novo parecer' if alerta.pareceres else 'Registrar parecer' }}</h2>
-<form method="post" class="card card-body mb-4" novalidate>
-  {{ form.hidden_tag() }}
-  <fieldset class="mb-3">
-    <legend class="form-label fs-6">{{ form.status.label.text }}</legend>
-    {% for opcao in form.status %}
-    <div class="form-check">
-      {{ opcao(class_='form-check-input' ~ (' is-invalid' if form.status.errors else '')) }}
-      {{ opcao.label(class_='form-check-label') }}
-    </div>
-    {% endfor %}
-    {% for erro in form.status.errors %}
-    <div class="invalid-feedback d-block">{{ erro }}</div>
-    {% endfor %}
-  </fieldset>
-  <div class="mb-3">
-    {{ form.observacao.label(class_='form-label') }}
-    {{ form.observacao(class_='form-control' ~ (' is-invalid' if form.observacao.errors else '')) }}
-    {% for erro in form.observacao.errors %}
-    <div class="invalid-feedback">{{ erro }}</div>
-    {% endfor %}
-  </div>
-  <p class="small text-muted">
-    O parecer fica registrado com o seu nome e o horário e não pode ser alterado nem
-    apagado. Para rever a decisão, registre um novo parecer: o histórico é mantido.
-  </p>
-  <div><button type="submit" class="btn btn-primary">Registrar parecer</button></div>
-</form>
-
-<h2 class="h6 mt-4">Histórico de pareceres</h2>
-{% if alerta.pareceres %}
-<ul class="list-group list-group-flush small">
-  {% for parecer in alerta.pareceres %}
-  <li class="list-group-item px-0">
-    <strong>{{ parecer.status | nome_status }}</strong> por {{ parecer.usuario.nome }}
-    em {{ parecer.criado_em | data_hora_br }}
-    {% if parecer.observacao %}<div class="text-muted">{{ parecer.observacao }}</div>{% endif %}
-  </li>
-  {% endfor %}
-</ul>
-{% else %}
-<p class="text-muted small">Nenhum parecer registrado. O alerta aguarda revisão humana.</p>
-{% endif %}
 {% endblock %}

@@ -350,3 +350,14 @@ def test_relatorio_mostra_a_amostra_da_taxa(client, entrar, auditor, alerta, ses
 
     assert re.search(r'data-indicador="taxa_confirmacao">\s*100,00%', html)
     assert "1 irregular(es) de 1 com conclusão" in html
+
+
+def test_detalhe_mostra_o_contexto_da_categoria(client, entrar, auditor, alerta):
+    from app.servicos.estatisticas import recalcular_estatisticas
+
+    recalcular_estatisticas()
+    entrar(auditor)
+    html = client.get(f"/alertas/{alerta.id}").get_data(as_text=True)
+
+    assert "Contexto da categoria Viagens" in html
+    assert "1,00x</strong> a média da categoria" in html  # única despesa: vale a própria média

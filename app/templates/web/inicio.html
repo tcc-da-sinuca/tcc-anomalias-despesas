@@ -1,89 +1,138 @@
 {% extends "base.html" %}
 {% block titulo %}Dashboard · {{ super() }}{% endblock %}
 {% block conteudo %}
-<div class="d-flex flex-wrap justify-content-between align-items-baseline gap-2 mb-3">
-  <h1 class="h4 m-0">Dashboard</h1>
-  <span class="small text-muted">
+{% set por_status = resumo.alertas_por_status %}
+{% set revisados = resumo.total_alertas - por_status.pendente %}
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-4">
+  <div>
+    <h1 class="h4 m-0">Dashboard</h1>
+    <div class="small text-muted">Visão geral das despesas e da revisão dos alertas</div>
+  </div>
+  <div class="small text-muted text-end">
     {% if resumo.ultima_analise %}
-    Última análise: <a href="{{ url_for('web.analise', execucao_id=resumo.ultima_analise.id) }}">#{{ resumo.ultima_analise.id }}</a>
+    <i class="bi bi-clock-history" aria-hidden="true"></i>Última análise:
+    <a href="{{ url_for('web.analise', execucao_id=resumo.ultima_analise.id) }}">#{{ resumo.ultima_analise.id }}</a>
     em {{ resumo.ultima_analise.iniciada_em | data_hora_br }}
     {% else %}
     Nenhuma análise executada ainda.
     {% endif %}
-  </span>
+  </div>
 </div>
 
 <div class="row g-3 mb-4">
-  <div class="col-sm-6 col-lg-3">
-    <div class="card h-100"><div class="card-body">
-      <div class="text-muted small">Despesas</div>
-      <div class="fs-3 fw-semibold" data-indicador="total_despesas">{{ resumo.total_despesas }}</div>
-      <div class="small text-muted">{{ resumo.valor_despesas | moeda }}</div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="card h-100 indicador"><div class="card-body d-flex gap-3">
+      <span class="icone"><i class="bi bi-receipt" aria-hidden="true"></i></span>
+      <div>
+        <div class="rotulo">Despesas</div>
+        <div class="valor" data-indicador="total_despesas">{{ resumo.total_despesas | inteiro }}</div>
+        <div class="small text-muted">{{ resumo.valor_despesas | moeda }}</div>
+      </div>
     </div></div>
   </div>
-  <div class="col-sm-6 col-lg-3">
-    <div class="card h-100"><div class="card-body">
-      <div class="text-muted small">Despesas sinalizadas</div>
-      <div class="fs-3 fw-semibold" data-indicador="despesas_sinalizadas">{{ resumo.despesas_sinalizadas }}</div>
-      <div class="small text-muted">{{ resumo.valor_sinalizado | moeda }}</div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="card h-100 indicador destaque"><div class="card-body d-flex gap-3">
+      <span class="icone"><i class="bi bi-flag" aria-hidden="true"></i></span>
+      <div>
+        <div class="rotulo">Despesas sinalizadas</div>
+        <div class="valor" data-indicador="despesas_sinalizadas">{{ resumo.despesas_sinalizadas | inteiro }}</div>
+        <div class="small text-muted">{{ resumo.valor_sinalizado | moeda }}</div>
+      </div>
     </div></div>
   </div>
-  <div class="col-sm-6 col-lg-3">
-    <div class="card h-100"><div class="card-body">
-      <div class="text-muted small">% sinalizado</div>
-      <div class="fs-3 fw-semibold" data-indicador="percentual_sinalizado">{{ resumo.percentual_sinalizado | score }}%</div>
-      <div class="small text-muted">das despesas têm ao menos um alerta</div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="card h-100 indicador"><div class="card-body d-flex gap-3">
+      <span class="icone"><i class="bi bi-percent" aria-hidden="true"></i></span>
+      <div>
+        <div class="rotulo">% sinalizado</div>
+        <div class="valor" data-indicador="percentual_sinalizado">{{ resumo.percentual_sinalizado | score }}%</div>
+        <div class="small text-muted">das despesas têm ao menos um alerta</div>
+      </div>
     </div></div>
   </div>
-  <div class="col-sm-6 col-lg-3">
-    <div class="card h-100"><div class="card-body">
-      <div class="text-muted small">Alertas pendentes</div>
-      <div class="fs-3 fw-semibold" data-indicador="pendentes">{{ resumo.alertas_por_status.pendente }}</div>
-      <div class="small text-muted">de {{ resumo.total_alertas }} alerta(s) no total</div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="card h-100 indicador"><div class="card-body d-flex gap-3">
+      <span class="icone"><i class="bi bi-hourglass-split" aria-hidden="true"></i></span>
+      <div>
+        <div class="rotulo">Alertas pendentes</div>
+        <div class="valor" data-indicador="pendentes">{{ por_status.pendente | inteiro }}</div>
+        <div class="small text-muted">de {{ resumo.total_alertas | inteiro }} alerta(s) no total</div>
+      </div>
     </div></div>
   </div>
 </div>
 
 {% if resumo.total_alertas %}
+<div class="card mb-4"><div class="card-body">
+  <div class="d-flex flex-wrap justify-content-between align-items-baseline gap-2 mb-2">
+    <h2 class="titulo-secao m-0">Andamento da revisão</h2>
+    <span class="small text-muted">
+      {{ revisados | inteiro }} de {{ resumo.total_alertas | inteiro }} alertas revisados
+      ({{ (100 * revisados / resumo.total_alertas) | score }}%)
+    </span>
+  </div>
+  <div class="progress-stacked andamento" role="img"
+       aria-label="{{ revisados }} de {{ resumo.total_alertas }} alertas revisados">
+    {% for status in ['aprovado', 'irregular', 'necessita_justificativa', 'pendente'] %}
+    {% set parte = 100 * por_status[status] / resumo.total_alertas %}
+    <div class="progress" style="width: {{ parte }}%">
+      <div class="progress-bar status-{{ status }}" title="{{ status | nome_status }}: {{ por_status[status] }}"></div>
+    </div>
+    {% endfor %}
+  </div>
+</div></div>
+
 <div class="row g-4">
   <div class="col-lg-6">
-    <h2 class="h6">Alertas por status</h2>
-    <div class="grafico-status mb-3"><canvas id="grafico-status" aria-label="Gráfico de alertas por status de revisão" role="img"></canvas></div>
-    <table class="table table-sm align-middle">
-      <tbody>
-        {% for status, quantidade in resumo.alertas_por_status.items() %}
-        <tr>
-          <td><span class="badge status-{{ status }}">{{ status | nome_status }}</span></td>
-          <td class="text-end"><a href="{{ url_for('web.alertas', status=status) }}">{{ quantidade }}</a></td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    <div class="card h-100"><div class="card-body">
+      <h2 class="titulo-secao mb-3">Alertas por status</h2>
+      <div class="grafico-status mb-3"><canvas id="grafico-status" aria-label="Gráfico de alertas por status de revisão" role="img"></canvas></div>
+      <table class="table table-sm align-middle mb-0">
+        <tbody>
+          {% for status, quantidade in por_status.items() %}
+          <tr>
+            <td><span class="badge status-{{ status }}">{{ status | nome_status }}</span></td>
+            <td class="text-end"><a href="{{ url_for('web.alertas', status=status) }}">{{ quantidade | inteiro }}</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div></div>
   </div>
   <div class="col-lg-6">
-    <h2 class="h6">Alertas por método</h2>
-    <table class="table table-sm align-middle">
-      <tbody>
-        {% for metodo, quantidade in resumo.alertas_por_metodo.items() %}
-        <tr>
-          <td>{{ metodo | nome_metodo }}</td>
-          <td class="text-end"><a href="{{ url_for('web.alertas', metodo=metodo) }}">{{ quantidade }}</a></td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    <p class="small text-muted">
-      Uma despesa pode ter alertas de mais de um método, por isso o total de alertas
-      é maior que o de despesas sinalizadas.
-    </p>
+    <div class="card h-100"><div class="card-body">
+      <h2 class="titulo-secao mb-3">Alertas por método</h2>
+      {% set maior = resumo.alertas_por_metodo.values() | max %}
+      {% for metodo, quantidade in resumo.alertas_por_metodo.items() %}
+      <div class="mb-3">
+        <div class="d-flex justify-content-between small mb-1">
+          <span class="fw-semibold">{{ metodo | nome_metodo }}</span>
+          <a href="{{ url_for('web.alertas', metodo=metodo) }}">{{ quantidade | inteiro }}</a>
+        </div>
+        <div class="barra-metodo"><span style="width: {{ (100 * quantidade / maior) if maior else 0 }}%"></span></div>
+      </div>
+      {% endfor %}
+      <p class="small text-muted mb-0 mt-4">
+        <i class="bi bi-info-circle" aria-hidden="true"></i>Uma despesa pode ter alertas de mais de um método,
+        por isso o total de alertas é maior que o de despesas sinalizadas.
+      </p>
+    </div></div>
   </div>
 </div>
 {% else %}
-<p class="text-muted">
-  Ainda não há alertas.
-  {% if resumo.total_despesas %}<a href="{{ url_for('web.analises') }}">Execute uma análise</a>{% else %}<a href="{{ url_for('web.importar') }}">Importe despesas</a> e execute uma análise{% endif %}
-  para ver os indicadores.
-</p>
+<div class="card"><div class="card-body text-center py-5">
+  <i class="bi bi-inbox fs-1 text-muted d-block mb-2" aria-hidden="true"></i>
+  <p class="text-muted mb-3">
+    Ainda não há alertas.
+    {% if resumo.total_despesas %}Execute uma análise{% else %}Importe despesas e execute uma análise{% endif %}
+    para ver os indicadores.
+  </p>
+  {% if resumo.total_despesas %}
+  <a class="btn btn-primary" href="{{ url_for('web.analises') }}"><i class="bi bi-cpu" aria-hidden="true"></i>Ir para Análises</a>
+  {% else %}
+  <a class="btn btn-primary" href="{{ url_for('web.importar') }}"><i class="bi bi-upload" aria-hidden="true"></i>Importar despesas</a>
+  {% endif %}
+</div></div>
 {% endif %}
 {% endblock %}
 
@@ -107,10 +156,11 @@
       type: 'doughnut',
       data: {
         labels: nomes,
-        datasets: [{ data: valores, backgroundColor: status.map((s) => cores[s]) }],
+        datasets: [{ data: valores, backgroundColor: status.map((s) => cores[s]), borderWidth: 2 }],
       },
       options: {
         maintainAspectRatio: false,
+        cutout: '62%',
         plugins: { legend: { position: 'right' } },
         onClick: (_evento, elementos) => {
           if (elementos.length) {

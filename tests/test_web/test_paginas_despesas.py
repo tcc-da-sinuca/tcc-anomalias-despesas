@@ -138,3 +138,15 @@ def test_estatisticas(client, entrar, auditor):
 def test_lote_inexistente(client, entrar, auditor):
     entrar(auditor)
     assert client.get("/lotes/999").status_code == 404
+
+
+def test_baixar_arquivo_de_exemplo(client, entrar, auditor):
+    entrar(auditor)
+    assert "Baixar arquivo de exemplo" in client.get("/despesas/importar").get_data(as_text=True)
+
+    resposta = client.get("/despesas/importar/exemplo")
+
+    assert resposta.status_code == 200
+    assert "exemplo_despesas.csv" in resposta.headers["Content-Disposition"]
+    assert resposta.get_data(as_text=True).startswith("Valor;Data;Categoria")
+    resposta.close()

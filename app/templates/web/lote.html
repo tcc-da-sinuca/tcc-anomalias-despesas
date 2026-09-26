@@ -8,11 +8,11 @@
 <div class="row g-3 mb-3">
   <div class="col-sm-4"><div class="card"><div class="card-body">
     <div class="text-muted small">Linhas no arquivo</div>
-    <div class="fs-3 fw-semibold">{{ lote.total_linhas }}</div>
+    <div class="fs-3 fw-semibold">{{ lote.total_linhas | inteiro }}</div>
   </div></div></div>
   <div class="col-sm-4"><div class="card border-success"><div class="card-body">
     <div class="text-muted small">Importadas</div>
-    <div class="fs-3 fw-semibold text-success">{{ lote.linhas_validas }}</div>
+    <div class="fs-3 fw-semibold text-success">{{ lote.linhas_validas | inteiro }}</div>
   </div></div></div>
   <div class="col-sm-4"><div class="card {{ 'border-danger' if com_erro }}"><div class="card-body">
     <div class="text-muted small">Com erro (não importadas)</div>
@@ -27,7 +27,7 @@
 {% if lote.erros %}
 <h2 class="h6">Erros por linha</h2>
 <p class="small text-muted">Corrija as linhas no arquivo e importe só elas novamente.</p>
-<div class="table-responsive">
+<div class="tabela-cartao table-responsive mb-3">
   <table class="table table-sm align-middle">
     <thead><tr><th>Linha</th><th>Campo</th><th>Problema</th></tr></thead>
     <tbody>

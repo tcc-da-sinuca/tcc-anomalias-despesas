@@ -60,9 +60,19 @@ def score(valor: float | None) -> str:
     return "—" if valor is None else f"{valor:.2f}".replace(".", ",")
 
 
+def inteiro(valor) -> str:
+    """5000 → "5.000"."""
+    return "—" if valor is None else f"{int(valor):,}".replace(",", ".")
+
+
 def numero(valor) -> str:
     """0.05 → "0,05"; 1000.0 → "1000" (sem zeros inúteis, vírgula decimal)."""
     return "—" if valor is None else format(valor, ".12g").replace(".", ",")
+
+
+def numero_campo(valor) -> str:
+    """Valor para um <input type="number">: ponto decimal, sem zeros inúteis (3.0 → "3")."""
+    return format(valor, ".12g")
 
 
 def registrar_filtros(app: Flask) -> None:
@@ -73,3 +83,5 @@ def registrar_filtros(app: Flask) -> None:
     app.add_template_filter(nome_status)
     app.add_template_filter(score)
     app.add_template_filter(numero)
+    app.add_template_filter(inteiro)
+    app.add_template_filter(numero_campo)

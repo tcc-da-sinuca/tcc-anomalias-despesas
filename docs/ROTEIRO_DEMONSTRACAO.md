@@ -37,19 +37,22 @@ login da auditora) e o arquivo `dados/exemplos/importacao_demonstracao.csv`.
 
 ### 2.1 Login e dashboard (US09) — 1 min
 - Entrar como administrador (`ADMIN_EMAIL` / `ADMIN_SENHA` do `.env`).
-- Mostrar a **faixa amarela** (RNF04) e o dashboard: 5.000 despesas, 433 sinalizadas
-  (8,66%), 596 alertas, todos pendentes, e os alertas por método.
+- Mostrar a tela de login (o que o sistema faz e o aviso de indício), a **faixa amarela**
+  (RNF04) e o dashboard: 5.000 despesas, 433 sinalizadas
+  (8,66%), 596 alertas, todos pendentes (a barra **Andamento da revisão** começa em 0%), e os
+  alertas por método.
 - **Falar:** "uma despesa pode ter alertas de vários métodos, por isso há mais alertas
   que despesas sinalizadas".
 
 ### 2.2 Importação com erros por linha (US01) — 2 min
-- Menu **Importar** → enviar `dados/exemplos/importacao_demonstracao.csv`.
+- Menu **Dados → Importar** → enviar `dados/exemplos/importacao_demonstracao.csv` (o mesmo arquivo
+  sai do botão **Baixar arquivo de exemplo (CSV)** da própria tela).
 - **Mostrar:** 11 linhas, **9 importadas, 2 com erro**, listadas por linha:
   - linha 11: "valor é obrigatório";
   - linha 12: "data inválida: '31/02/2026' (use AAAA-MM-DD ou DD/MM/AAAA)".
 - **Falar:** o arquivo está no formato do Excel brasileiro (`;` e vírgula decimal); as
   linhas válidas entram mesmo com erros em outras; as estatísticas de referência (US02,
-  menu **Estatísticas**) foram recalculadas.
+  menu **Dados → Estatísticas**) foram recalculadas.
 
 ### 2.3 Análise (US03, US04, US05) — 1 min
 - Menu **Análises** → **Executar análise**.
@@ -80,7 +83,8 @@ login da auditora) e o arquivo `dados/exemplos/importacao_demonstracao.csv`.
 - Tentar registrar **Irregular sem observação** → a tela recusa (observação obrigatória).
 - Registrar **Necessita justificativa** com "Pedir a autorização da viagem ao gestor".
 - Registrar um **novo parecer**: **Aprovado**, "Viagem autorizada pela diretoria".
-- **Mostrar** o histórico com os dois pareceres, autor e horário.
+- **Mostrar** o quadro **Contexto da categoria Viagens** (média, faixa típica e quantas vezes a
+  média vale esta despesa) e o histórico com os dois pareceres, autor e horário.
 - **Falar:** "aprovado" quer dizer que a **despesa** é regular (o alerta foi um falso
   positivo). Pareceres não podem ser alterados nem apagados, nem direto no banco
   (trigger no PostgreSQL, RNF02): uma nova decisão é um novo parecer.
@@ -96,11 +100,11 @@ login da auditora) e o arquivo `dados/exemplos/importacao_demonstracao.csv`.
 
 ### 2.7 Perfis, parâmetros e usuários (US12, RNF03) — 2 min
 - Na janela anônima, entrar como **auditora@exemplo.com**: o menu não tem
-  **Usuários**, e **Parâmetros** aparece só para consulta.
-- Como administrador, em **Parâmetros**, tentar o limiar do Z-score **0,5** → recusado
+  **Configuração → Usuários**, e **Configuração → Parâmetros** aparece só para consulta.
+- Como administrador, em **Configuração → Parâmetros**, tentar o limiar do Z-score **0,5** → recusado
   ("use um valor de 1 a 10"). Não é preciso salvar um valor válido; se salvar, volte
   ao padrão (3) depois.
-- Em **Usuários**, **desativar** a auditora e recarregar a janela anônima: ela perde o
+- Em **Configuração → Usuários**, **desativar** a auditora e recarregar a janela anônima: ela perde o
   acesso na hora. Reativar em seguida.
 
 ### 2.8 Reprocessamento automático e experimento — 2 min

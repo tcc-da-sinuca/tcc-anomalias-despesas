@@ -5,8 +5,8 @@
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
   <h1 class="h4 m-0">Despesas</h1>
   <div class="d-flex gap-2">
-    <a class="btn btn-outline-primary btn-sm" href="{{ url_for('web.importar') }}">Importar arquivo</a>
-    <a class="btn btn-primary btn-sm" href="{{ url_for('web.nova_despesa') }}">Nova despesa</a>
+    <a class="btn btn-outline-primary btn-sm" href="{{ url_for('web.importar') }}"><i class="bi bi-upload" aria-hidden="true"></i>Importar arquivo</a>
+    <a class="btn btn-primary btn-sm" href="{{ url_for('web.nova_despesa') }}"><i class="bi bi-plus-lg" aria-hidden="true"></i>Nova despesa</a>
   </div>
 </div>
 
@@ -19,7 +19,7 @@
 
 {% if pagina.total %}
 <p class="text-muted small">{{ pagina.total }} despesa(s).</p>
-<div class="table-responsive">
+<div class="tabela-cartao table-responsive mb-3">
   <table class="table table-sm table-hover align-middle">
     <thead>
       <tr>

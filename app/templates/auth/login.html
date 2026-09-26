@@ -1,21 +1,43 @@
 {% extends "base.html" %}
 {% block titulo %}Entrar · Anomalias em Despesas{% endblock %}
+{% block classe_corpo %}pagina-login{% endblock %}
 {% block conteudo %}
-<div class="row justify-content-center">
-  <div class="col-sm-8 col-md-5 col-lg-4">
-    <h1 class="h4 mb-3">Entrar</h1>
-    <form method="post" novalidate>
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <div class="mb-3">
-        <label for="email" class="form-label">E-mail</label>
-        <input type="email" class="form-control" id="email" name="email" value="{{ email or '' }}" required autofocus>
-      </div>
-      <div class="mb-3">
-        <label for="senha" class="form-label">Senha</label>
-        <input type="password" class="form-control" id="senha" name="senha" required>
-      </div>
-      <button type="submit" class="btn btn-primary w-100">Entrar</button>
-    </form>
+<div class="card overflow-hidden mx-auto" style="max-width: 960px">
+  <div class="row g-0">
+    <div class="col-md-6 painel-apresentacao p-4 p-lg-5">
+      <h1 class="h3 fw-semibold mb-2">Detecção de anomalias em despesas corporativas</h1>
+      <p class="mb-4 opacity-75">
+        Apoio à auditoria interna: o sistema aponta despesas incomuns e explica por quê;
+        a decisão é sempre do auditor.
+      </p>
+      <ul class="list-unstyled mb-4">
+        <li class="mb-2"><i class="bi bi-upload" aria-hidden="true"></i>Importa lançamentos de despesas (CSV ou XLSX)</li>
+        <li class="mb-2"><i class="bi bi-cpu" aria-hidden="true"></i>Aplica Z-score, IQR, Isolation Forest e regras contextuais</li>
+        <li class="mb-2"><i class="bi bi-chat-left-text" aria-hidden="true"></i>Gera alertas com um motivo em linguagem simples</li>
+        <li><i class="bi bi-clipboard-check" aria-hidden="true"></i>Registra a revisão e o parecer do auditor</li>
+      </ul>
+      <p class="small mb-0 border-top border-light border-opacity-25 pt-3">
+        <i class="bi bi-info-circle" aria-hidden="true"></i>Os alertas são <strong>indícios estatísticos, não acusações</strong>.
+      </p>
+    </div>
+    <div class="col-md-6 p-4 p-lg-5 bg-white">
+      <h2 class="h4 mb-4">Entrar</h2>
+      <form method="post" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="mb-3">
+          <label for="email" class="form-label">E-mail</label>
+          <input type="email" class="form-control form-control-lg" id="email" name="email" value="{{ email or '' }}" required autofocus autocomplete="username">
+        </div>
+        <div class="mb-4">
+          <label for="senha" class="form-label">Senha</label>
+          <input type="password" class="form-control form-control-lg" id="senha" name="senha" required autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn btn-primary btn-lg w-100">Entrar</button>
+      </form>
+      <p class="small text-muted mt-4 mb-0">
+        Acesso restrito a usuários cadastrados. Peça ao administrador do sistema para criar a sua conta.
+      </p>
+    </div>
   </div>
 </div>
 {% endblock %}

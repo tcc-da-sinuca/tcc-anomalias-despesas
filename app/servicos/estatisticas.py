@@ -62,3 +62,12 @@ def listar_estatisticas() -> dict[str, list[EstatisticaReferencia]]:
     for estatistica in db.session.scalars(consulta):
         por_dimensao.setdefault(estatistica.dimensao, []).append(estatistica)
     return por_dimensao
+
+
+def obter_estatistica(dimensao: str, chave: str) -> EstatisticaReferencia | None:
+    """Estatística de um grupo, por exemplo ("categoria", "Viagens")."""
+    return db.session.scalar(
+        select(EstatisticaReferencia).where(
+            EstatisticaReferencia.dimensao == dimensao, EstatisticaReferencia.chave == chave
+        )
+    )

@@ -2,11 +2,19 @@
 {% from "_macros.html" import paginacao %}
 {% block titulo %}Alertas · {{ super() }}{% endblock %}
 {% block conteudo %}
-<h1 class="h4 mb-1">Alertas</h1>
-<p class="text-muted small">
-  Cada alerta indica que um método considerou a despesa incomum. É um ponto de
-  partida para a revisão, não uma conclusão. O score tem escala própria em cada método.
-</p>
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+  <div>
+    <h1 class="h4 m-0">Alertas</h1>
+    <div class="small text-muted">
+      Cada alerta indica que um método considerou a despesa incomum. É um ponto de partida
+      para a revisão, não uma conclusão.
+    </div>
+  </div>
+  <button class="btn btn-outline-primary btn-sm d-lg-none" type="button" data-bs-toggle="collapse"
+          data-bs-target="#filtros" aria-expanded="{{ 'true' if filtros.ativos else 'false' }}" aria-controls="filtros">
+    <i class="bi bi-funnel" aria-hidden="true"></i>Filtros{% if filtros.ativos %} ({{ filtros.ativos }}){% endif %}
+  </button>
+</div>
 
 {% set nomes_campos = {
   'categoria': 'Categoria',
@@ -14,6 +22,7 @@
   'centro_custo': 'Centro de custo',
   'funcionario': 'Funcionário',
 } %}
+<div class="collapse d-lg-block {{ 'show' if filtros.ativos or erro_filtro }}" id="filtros">
 <form method="get" class="card card-body mb-3" aria-label="Filtros de alertas" data-aplicar-ao-mudar>
   <div class="row g-2 align-items-end">
     <div class="col-6 col-md-3 col-lg-2">
@@ -61,13 +70,14 @@
     {% endif %}
     <div class="col-12 col-lg-auto d-flex gap-2">
       <noscript><button type="submit" class="btn btn-primary btn-sm">Filtrar</button></noscript>
-      <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('web.alertas') }}">Limpar filtros</a>
+      <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('web.alertas') }}"><i class="bi bi-x-circle" aria-hidden="true"></i>Limpar filtros</a>
     </div>
   </div>
   {% if erro_filtro %}
   <div class="alert alert-danger small mt-2 mb-0" role="alert">{{ erro_filtro }} Os filtros não foram aplicados.</div>
   {% endif %}
 </form>
+</div>
 
 {% if filtros.execucao_id %}
 <div class="alert alert-light border small">
@@ -80,13 +90,17 @@
   {{ pagina.total }} alerta(s){% if filtros.ativos %} com {{ filtros.ativos }} filtro(s) ativo(s){% endif %}.
   Pendentes primeiro, depois maior score.
 </p>
-<div class="table-responsive">
-  <table class="table table-sm table-hover align-middle">
+
+{# Telas grandes: tabela #}
+<div class="tabela-cartao table-responsive d-none d-lg-block mb-3">
+  <table class="table table-hover align-middle">
     <thead>
       <tr>
         <th>Status</th>
         <th>Método</th>
-        <th class="text-end">Score</th>
+        <th class="text-end" title="Quanto maior, mais incomum. A escala é própria de cada método: não compare scores de métodos diferentes.">
+          Score <i class="bi bi-question-circle me-0" aria-hidden="true"></i>
+        </th>
         <th>Motivo</th>
         <th>Data</th>
         <th class="text-end">Valor</th>
@@ -99,26 +113,51 @@
       {% for alerta in pagina.items %}
       <tr>
         <td><span class="badge status-{{ alerta.status_revisao }}">{{ alerta.status_revisao | nome_status }}</span></td>
-        <td class="text-nowrap">{{ alerta.metodo | nome_metodo }}</td>
-        <td class="text-end">{{ alerta.score | score }}</td>
-        <td class="small">{{ alerta.motivo }}</td>
+        <td><span class="metodo">{{ alerta.metodo | nome_metodo }}</span></td>
+        <td class="text-end fw-semibold">{{ alerta.score | score }}</td>
+        <td class="small" style="min-width: 18rem">{{ alerta.motivo }}</td>
         <td class="text-nowrap">{{ alerta.despesa.data | data_br }}</td>
         <td class="text-end text-nowrap">{{ alerta.despesa.valor | moeda }}</td>
         <td>{{ alerta.despesa.categoria }}</td>
         <td>{{ alerta.despesa.funcionario }}</td>
-        <td><a href="{{ url_for('web.alerta', alerta_id=alerta.id) }}">Detalhes</a></td>
+        <td class="text-end">
+          <a class="btn btn-sm btn-outline-primary text-nowrap" href="{{ url_for('web.alerta', alerta_id=alerta.id) }}">Revisar</a>
+        </td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
 </div>
+
+{# Telas pequenas: cartões #}
+<div class="d-lg-none mb-3">
+  {% for alerta in pagina.items %}
+  <a class="card cartao-alerta status-borda-{{ alerta.status_revisao }} mb-2 text-reset text-decoration-none"
+     href="{{ url_for('web.alerta', alerta_id=alerta.id) }}">
+    <div class="card-body py-2">
+      <div class="d-flex justify-content-between align-items-center mb-1">
+        <span class="metodo">{{ alerta.metodo | nome_metodo }}</span>
+        <span class="badge status-{{ alerta.status_revisao }}">{{ alerta.status_revisao | nome_status }}</span>
+      </div>
+      <div class="small mb-1">{{ alerta.motivo }}</div>
+      <div class="small text-muted">
+        {{ alerta.despesa.data | data_br }} · <strong class="text-body">{{ alerta.despesa.valor | moeda }}</strong>
+        · {{ alerta.despesa.categoria }} · {{ alerta.despesa.funcionario }}
+      </div>
+    </div>
+  </a>
+  {% endfor %}
+</div>
 {{ paginacao(pagina, 'web.alertas', **filtros.como_parametros()) }}
 {% else %}
-<p class="text-muted">
-  Nenhum alerta {{ 'com esses filtros' if filtros.ativos else 'ainda' }}.
-  {% if not filtros.ativos %}
-  <a href="{{ url_for('web.analises') }}">Execute uma análise</a> para gerar alertas.
-  {% endif %}
-</p>
+<div class="card"><div class="card-body text-center py-5">
+  <i class="bi bi-search fs-1 text-muted d-block mb-2" aria-hidden="true"></i>
+  <p class="text-muted mb-0">
+    Nenhum alerta {{ 'com esses filtros' if filtros.ativos else 'ainda' }}.
+    {% if not filtros.ativos %}
+    <a href="{{ url_for('web.analises') }}">Execute uma análise</a> para gerar alertas.
+    {% endif %}
+  </p>
+</div></div>
 {% endif %}
 {% endblock %}

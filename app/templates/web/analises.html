@@ -6,7 +6,7 @@
   <h1 class="h4 m-0">Análises</h1>
   <form method="post" action="{{ url_for('web.executar') }}" class="m-0">
     {{ form.hidden_tag() }}
-    <button type="submit" class="btn btn-primary btn-sm">Executar análise</button>
+    <button type="submit" class="btn btn-primary"><i class="bi bi-play-circle" aria-hidden="true"></i>Executar análise</button>
   </form>
 </div>
 <p class="text-muted small">
@@ -16,7 +16,7 @@
 </p>
 
 {% if pagina.total %}
-<div class="table-responsive">
+<div class="tabela-cartao table-responsive mb-3">
   <table class="table table-sm table-hover align-middle">
     <thead>
       <tr>

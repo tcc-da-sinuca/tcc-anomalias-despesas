@@ -21,9 +21,9 @@
     <noscript><button type="submit" class="btn btn-primary btn-sm">Ver relatório</button></noscript>
     {% if relatorio %}
     <a class="btn btn-outline-secondary btn-sm"
-       href="{{ url_for('api.relatorio_mensal', ano=relatorio.ano, mes=relatorio.mes, formato='csv') }}">Baixar CSV</a>
+       href="{{ url_for('api.relatorio_mensal', ano=relatorio.ano, mes=relatorio.mes, formato='csv') }}"><i class="bi bi-filetype-csv" aria-hidden="true"></i>Baixar CSV</a>
     <a class="btn btn-outline-secondary btn-sm"
-       href="{{ url_for('api.relatorio_mensal', ano=relatorio.ano, mes=relatorio.mes, formato='pdf') }}">Baixar PDF</a>
+       href="{{ url_for('api.relatorio_mensal', ano=relatorio.ano, mes=relatorio.mes, formato='pdf') }}"><i class="bi bi-filetype-pdf" aria-hidden="true"></i>Baixar PDF</a>
     {% endif %}
   </div>
 </form>
@@ -39,30 +39,30 @@
 {% else %}
 <div class="row g-3 mb-4">
   <div class="col-sm-6 col-lg-3">
-    <div class="card h-100"><div class="card-body">
-      <div class="text-muted small">Despesas analisadas</div>
-      <div class="fs-3 fw-semibold" data-indicador="total_despesas">{{ r.total_despesas }}</div>
+    <div class="card h-100 indicador"><div class="card-body">
+      <div class="rotulo">Despesas analisadas</div>
+      <div class="valor" data-indicador="total_despesas">{{ r.total_despesas }}</div>
       <div class="small text-muted">{{ r.valor_despesas | moeda }}</div>
     </div></div>
   </div>
   <div class="col-sm-6 col-lg-3">
-    <div class="card h-100"><div class="card-body">
-      <div class="text-muted small">Despesas sinalizadas</div>
-      <div class="fs-3 fw-semibold" data-indicador="despesas_sinalizadas">{{ r.despesas_sinalizadas }}</div>
+    <div class="card h-100 indicador"><div class="card-body">
+      <div class="rotulo">Despesas sinalizadas</div>
+      <div class="valor" data-indicador="despesas_sinalizadas">{{ r.despesas_sinalizadas }}</div>
       <div class="small text-muted">{{ r.percentual_sinalizado | score }}% · {{ r.valor_sinalizado | moeda }}</div>
     </div></div>
   </div>
   <div class="col-sm-6 col-lg-3">
-    <div class="card h-100"><div class="card-body">
-      <div class="text-muted small">Alertas</div>
-      <div class="fs-3 fw-semibold" data-indicador="total_alertas">{{ r.total_alertas }}</div>
+    <div class="card h-100 indicador"><div class="card-body">
+      <div class="rotulo">Alertas</div>
+      <div class="valor" data-indicador="total_alertas">{{ r.total_alertas }}</div>
       <div class="small text-muted">{{ r.alertas_concluidos }} com conclusão (aprovado ou irregular)</div>
     </div></div>
   </div>
   <div class="col-sm-6 col-lg-3">
-    <div class="card h-100"><div class="card-body">
-      <div class="text-muted small">Taxa de confirmação de irregularidade</div>
-      <div class="fs-3 fw-semibold" data-indicador="taxa_confirmacao">
+    <div class="card h-100 indicador"><div class="card-body">
+      <div class="rotulo">Taxa de confirmação de irregularidade</div>
+      <div class="valor" data-indicador="taxa_confirmacao">
         {{ (r.taxa_confirmacao | score ~ '%') if r.taxa_confirmacao is not none else 'indefinida' }}
       </div>
       <div class="small text-muted" data-indicador="taxa_amostra">
@@ -75,8 +75,9 @@
 
 <div class="row g-4">
   <div class="col-md-6">
-    <h3 class="h6">Alertas por status</h3>
-    <table class="table table-sm">
+    <div class="card h-100"><div class="card-body">
+    <h3 class="titulo-secao mb-3">Alertas por status</h3>
+    <table class="table table-sm mb-0">
       <tbody>
         {% for status, quantidade in r.alertas_por_status.items() %}
         <tr>
@@ -88,14 +89,16 @@
         {% endfor %}
       </tbody>
     </table>
+    </div></div>
   </div>
   <div class="col-md-6">
-    <h3 class="h6">Alertas por método</h3>
-    <table class="table table-sm">
+    <div class="card h-100"><div class="card-body">
+    <h3 class="titulo-secao mb-3">Alertas por método</h3>
+    <table class="table table-sm mb-0">
       <tbody>
         {% for metodo, quantidade in r.alertas_por_metodo.items() %}
         <tr>
-          <td>{{ metodo | nome_metodo }}</td>
+          <td><span class="metodo">{{ metodo | nome_metodo }}</span></td>
           <td class="text-end">
             <a href="{{ url_for('web.alertas', metodo=metodo, data_inicio=r.inicio.isoformat(), data_fim=r.fim.isoformat()) }}">{{ quantidade }}</a>
           </td>
@@ -103,6 +106,7 @@
         {% endfor %}
       </tbody>
     </table>
+    </div></div>
   </div>
 </div>
 {% endif %}

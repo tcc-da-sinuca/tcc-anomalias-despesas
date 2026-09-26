@@ -1,15 +1,144 @@
-/* Estilos próprios da aplicação. O restante vem do Bootstrap. */
+/* Identidade visual: azul-petróleo sóbrio sobre cinza claro. O resto vem do Bootstrap. */
 
-.aviso-indicio {
-  border-left: 0;
-  border-right: 0;
+:root {
+  --marca: #0f4c5c;
+  --marca-escura: #0a3642;
+  --marca-clara: #e3eff2;
+  --fundo: #f4f6f8;
+  --bs-primary: #0f4c5c;
+  --bs-primary-rgb: 15, 76, 92;
+  --bs-link-color: #0f6b80;
+  --bs-link-color-rgb: 15, 107, 128;
+  --bs-link-hover-color: #0a3642;
 }
 
-/* Status de revisão dos alertas. */
+body {
+  background-color: var(--fundo);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main { flex: 1 0 auto; }
+
+a { text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* Ícones ao lado do texto: o espaço vem do CSS, não do HTML. */
+.bi { margin-right: 0.35rem; }
+
+/* Barra superior */
+.navbar-marca { background-color: var(--marca); }
+.navbar-marca .navbar-brand { font-weight: 600; letter-spacing: 0.01em; }
+.navbar-marca .nav-link.active { font-weight: 600; }
+.dropdown-item.active, .dropdown-item:active { background-color: var(--marca); }
+
+/* Botões na cor da marca */
+.btn-primary {
+  --bs-btn-bg: var(--marca);
+  --bs-btn-border-color: var(--marca);
+  --bs-btn-hover-bg: var(--marca-escura);
+  --bs-btn-hover-border-color: var(--marca-escura);
+  --bs-btn-active-bg: var(--marca-escura);
+  --bs-btn-active-border-color: var(--marca-escura);
+  --bs-btn-disabled-bg: var(--marca);
+  --bs-btn-disabled-border-color: var(--marca);
+}
+.btn-outline-primary {
+  --bs-btn-color: var(--marca);
+  --bs-btn-border-color: var(--marca);
+  --bs-btn-hover-bg: var(--marca);
+  --bs-btn-hover-border-color: var(--marca);
+  --bs-btn-active-bg: var(--marca);
+  --bs-btn-active-border-color: var(--marca);
+}
+.form-control:focus, .form-select:focus, .form-check-input:focus {
+  border-color: #6aa7b5;
+  box-shadow: 0 0 0 0.2rem rgba(15, 76, 92, 0.2);
+}
+.form-check-input:checked { background-color: var(--marca); border-color: var(--marca); }
+.page-link { color: var(--marca); }
+.active > .page-link, .page-link.active { background-color: var(--marca); border-color: var(--marca); }
+
+/* Aviso de indício (RNF04) */
+.aviso-indicio { border-left: 0; border-right: 0; }
+
+/* Cartões e tabelas */
+.card { border: 0; box-shadow: 0 1px 3px rgba(16, 24, 40, 0.08), 0 1px 2px rgba(16, 24, 40, 0.04); }
+.tabela-cartao { background: #fff; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(16, 24, 40, 0.08); }
+.tabela-cartao > .table { margin-bottom: 0; }
+.table > thead th {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #5b6b73;
+  font-weight: 600;
+  background-color: #f8fafb;
+  white-space: nowrap;
+}
+.titulo-pagina { font-weight: 600; color: #1d2b31; }
+.titulo-secao {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #5b6b73;
+  font-weight: 600;
+}
+
+/* Indicadores (dashboard, relatório, análise) */
+.indicador .rotulo { color: #5b6b73; font-size: 0.875rem; }
+.indicador .valor { font-size: 1.9rem; font-weight: 700; color: #1d2b31; line-height: 1.2; }
+.indicador .icone {
+  width: 2.5rem; height: 2.5rem; border-radius: 0.6rem;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--marca-clara); color: var(--marca); font-size: 1.2rem;
+}
+.indicador .icone .bi { margin-right: 0; }
+.indicador.destaque .icone { background: #fdf0d5; color: #9a6700; }
+
+/* Status de revisão dos alertas */
 .status-pendente { background-color: var(--bs-secondary); }
 .status-aprovado { background-color: var(--bs-success); }
 .status-irregular { background-color: var(--bs-danger); }
 .status-necessita_justificativa { background-color: var(--bs-warning); color: var(--bs-dark); }
 
+/* Barra de andamento da revisão, segmentada por status */
+.andamento { height: 0.9rem; border-radius: 0.5rem; }
+.andamento .progress-bar.status-necessita_justificativa { color: var(--bs-dark); }
+
+/* Métodos de detecção */
+.metodo {
+  display: inline-block; padding: 0.15rem 0.5rem; border-radius: 1rem;
+  font-size: 0.78rem; font-weight: 600; white-space: nowrap;
+  background: var(--marca-clara); color: var(--marca);
+}
+.barra-metodo { height: 0.45rem; background: var(--marca-clara); border-radius: 1rem; }
+.barra-metodo > span { display: block; height: 100%; border-radius: 1rem; background: var(--marca); }
+
+/* Motivo do alerta em destaque */
+.motivo-destaque { border-left: 4px solid var(--marca); }
+.motivo-destaque .texto { font-size: 1.1rem; color: #1d2b31; }
+
+/* Lista de alertas em cartões no celular */
+.cartao-alerta { border-left: 4px solid var(--bs-secondary); }
+.cartao-alerta.status-borda-aprovado { border-left-color: var(--bs-success); }
+.cartao-alerta.status-borda-irregular { border-left-color: var(--bs-danger); }
+.cartao-alerta.status-borda-necessita_justificativa { border-left-color: var(--bs-warning); }
+
+/* Histórico de pareceres */
+.linha-do-tempo { border-left: 2px solid #d5dee2; padding-left: 1rem; margin-left: 0.4rem; }
+.linha-do-tempo .evento { position: relative; padding-bottom: 0.9rem; }
+.linha-do-tempo .evento::before {
+  content: ""; position: absolute; left: calc(-1rem - 6px); top: 0.35rem;
+  width: 10px; height: 10px; border-radius: 50%; background: var(--marca);
+}
+
+/* Tela de login */
+.pagina-login main { display: flex; align-items: center; }
+.painel-apresentacao { background: linear-gradient(145deg, var(--marca) 0%, var(--marca-escura) 100%); color: #e8f3f5; }
+.painel-apresentacao .bi { color: #f5b942; }
+
 /* Gráfico do dashboard: altura fixa para o Chart.js não crescer sem limite. */
 .grafico-status { position: relative; height: 220px; }
+
+.rodape { border-top: 1px solid #e3e8eb; }

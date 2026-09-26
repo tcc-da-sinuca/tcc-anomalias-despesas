@@ -1,26 +1,26 @@
 {% extends "base.html" %}
 {% block titulo %}Análise #{{ execucao.id }} · {{ super() }}{% endblock %}
 {% block conteudo %}
-<p class="small mb-1"><a href="{{ url_for('web.analises') }}">← Análises</a></p>
+<p class="small mb-2"><a href="{{ url_for('web.analises') }}"><i class="bi bi-arrow-left" aria-hidden="true"></i>Análises</a></p>
 <h1 class="h4 mb-3">Análise #{{ execucao.id }}</h1>
 
 <div class="row g-3 mb-4">
   <div class="col-sm-4">
-    <div class="card"><div class="card-body">
-      <div class="text-muted small">Despesas analisadas</div>
-      <div class="fs-3 fw-semibold">{{ execucao.total_despesas }}</div>
+    <div class="card h-100 indicador"><div class="card-body">
+      <div class="rotulo">Despesas analisadas</div>
+      <div class="valor">{{ execucao.total_despesas | inteiro }}</div>
     </div></div>
   </div>
   <div class="col-sm-4">
-    <div class="card"><div class="card-body">
-      <div class="text-muted small">Alertas novos</div>
-      <div class="fs-3 fw-semibold">{{ execucao.total_alertas }}</div>
+    <div class="card h-100 indicador"><div class="card-body">
+      <div class="rotulo">Alertas novos</div>
+      <div class="valor">{{ execucao.total_alertas | inteiro }}</div>
     </div></div>
   </div>
   <div class="col-sm-4">
-    <div class="card"><div class="card-body">
-      <div class="text-muted small">Iniciada em</div>
-      <div class="fs-5 fw-semibold">{{ execucao.iniciada_em | data_hora_br }}</div>
+    <div class="card h-100 indicador"><div class="card-body">
+      <div class="rotulo">Iniciada em</div>
+      <div class="valor fs-5">{{ execucao.iniciada_em | data_hora_br }}</div>
       <div class="small text-muted">
         {{ execucao.usuario.nome if execucao.usuario else 'job agendado' }}
         {% if execucao.duracao_s is not none %}· {{ execucao.duracao_s | score }} s{% endif %}
@@ -29,20 +29,24 @@
   </div>
 </div>
 
-<h2 class="h6">Alertas novos por método</h2>
+<div class="card mb-4"><div class="card-body">
+<h2 class="titulo-secao mb-3">Alertas novos por método</h2>
 {% if por_metodo %}
-<ul class="list-unstyled">
-  {% for metodo, quantidade in por_metodo.items() %}
-  <li>
-    <a href="{{ url_for('web.alertas', execucao_id=execucao.id, metodo=metodo) }}">{{ metodo | nome_metodo }}</a>:
-    {{ quantidade }}
-  </li>
-  {% endfor %}
-</ul>
-<a class="btn btn-primary btn-sm" href="{{ url_for('web.alertas', execucao_id=execucao.id) }}">Ver os alertas desta análise</a>
+{% set maior = por_metodo.values() | max %}
+{% for metodo, quantidade in por_metodo.items() %}
+<div class="mb-3">
+  <div class="d-flex justify-content-between small mb-1">
+    <a class="fw-semibold" href="{{ url_for('web.alertas', execucao_id=execucao.id, metodo=metodo) }}">{{ metodo | nome_metodo }}</a>
+    <span>{{ quantidade | inteiro }}</span>
+  </div>
+  <div class="barra-metodo"><span style="width: {{ 100 * quantidade / maior }}%"></span></div>
+</div>
+{% endfor %}
+<a class="btn btn-primary btn-sm" href="{{ url_for('web.alertas', execucao_id=execucao.id) }}"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i>Ver os alertas desta análise</a>
 {% else %}
-<p class="text-muted">Esta análise não gerou alertas novos.</p>
+<p class="text-muted mb-0">Esta análise não gerou alertas novos.</p>
 {% endif %}
+</div></div>
 
 <h2 class="h6 mt-4">Parâmetros usados</h2>
 <p class="small text-muted mb-1">Registrados para que a análise possa ser reproduzida. Seed: {{ execucao.seed }}.</p>
