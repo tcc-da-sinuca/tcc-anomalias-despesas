@@ -99,7 +99,8 @@ def _travar_analise() -> None:
     """Impede duas análises ao mesmo tempo (botão e job, por exemplo) no PostgreSQL.
 
     Sem isso, as duas poderiam ver os mesmos pares (despesa, método) como novos e
-    duplicar alertas. A trava vale até o fim da transação (commit ou rollback).
+    duplicar alertas. A trava vale até o fim da transação (commit ou rollback) e pode
+    ser obtida de novo na mesma transação (o job a obtém antes de chamar a análise).
     """
     if db.session.get_bind().dialect.name == "postgresql":
         db.session.execute(text("SELECT pg_advisory_xact_lock(:chave)"), {"chave": CHAVE_TRAVA})

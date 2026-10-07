@@ -43,6 +43,12 @@ Na subida, o container da aplicação:
 
 O `agendador` só sobe depois que a aplicação responde, ou seja, com as migrations já aplicadas.
 
+### Produção (VPS)
+
+Para colocar o sistema no ar numa VPS com Nginx e HTTPS, use o
+`docker-compose.prod.yml` (gunicorn, sem modo debug, banco sem porta exposta) e siga
+[`docs/IMPLANTACAO.md`](docs/IMPLANTACAO.md). Os arquivos de apoio estão em `deploy/`.
+
 ### Carga da base sintética
 
 A base sintética tem 5.000 despesas de 12 meses (set/2025 a ago/2026), com anomalias

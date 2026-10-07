@@ -36,7 +36,7 @@ concluídos em 25/09 (seeds 42 e 7). **A S3 está concluída.**
 | Motor de detecção | ✅ Z-score, IQR, contextual, Isolation Forest e consolidador |
 | Telas de alertas, revisão e dashboard | ✅ Análises, lista de alertas com filtros combináveis, detalhe, parecer com histórico, dashboard |
 | Experimento | ✅ `metricas.csv` com os quatro métodos, seeds 42 e 7 |
-| Testes | 386 passando (SQLite + PostgreSQL) |
+| Testes | 398 passando (SQLite + PostgreSQL) |
 
 **Próximo passo:** recriar o banco limpo antes da apresentação e testar com Docker Desktop. O restante do Fechamento está pronto.
 
@@ -175,3 +175,4 @@ concluídos em 25/09 (seeds 42 e 7). **A S3 está concluída.**
 | 27/09/2026 | Taxa de confirmação passa a mostrar a amostra, ex.: "66,67% (2 de 3)" (item 26 de `MUDANCAS_PARA_DOCUMENTACAO.md`). 383 testes. |
 | 27/09/2026 | Fechamento: clone limpo validado (e corrigida a ordem de subida do `agendador`), README revisado, credenciais e diagrama de classes conferidos, roteiro de demonstração escrito. Pendentes: banco limpo e teste com Docker Desktop. 384 testes. |
 | 28/09/2026 | Nova aparência da interface (identidade visual, login, menu agrupado, dashboard, alertas no celular, detalhe em duas colunas com contexto da categoria), conferida com capturas de tela; item 29 de `MUDANCAS_PARA_DOCUMENTACAO.md`. 386 testes. |
+| 07/10/2026 | Configuração de produção para VPS (Nginx + HTTPS + gunicorn) e guia `docs/IMPLANTACAO.md`, testados no Docker com proxy simulado; item 30 de `MUDANCAS_PARA_DOCUMENTACAO.md`. Corrigida uma corrida entre o job e a análise manual (o job criava uma análise vazia). 398 testes. |

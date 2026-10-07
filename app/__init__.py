@@ -1,14 +1,25 @@
 """Aplicação Flask: detecção de anomalias em despesas corporativas."""
 
 from flask import Flask, jsonify, render_template, request
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from app.config import Config
 from app.extensoes import csrf, db, login_manager, migrate
+
+# Valores de exemplo que nunca podem chegar à produção.
+CHAVES_INSEGURAS = {"troque-esta-chave", "chave-de-desenvolvimento-insegura", "chave-de-teste"}
+TAMANHO_MINIMO_CHAVE = 32
+
+
+class ConfiguracaoInseguraError(RuntimeError):
+    """Configuração de produção com valores de exemplo ou fracos."""
 
 
 def create_app(config_class=Config) -> Flask:
     app = Flask(__name__)
     app.config.from_object(config_class)
+    if app.config.get("PRODUCAO"):
+        _configurar_producao(app)
 
     db.init_app(app)
     migrate.init_app(app, db, compare_type=True)
@@ -35,6 +46,23 @@ def create_app(config_class=Config) -> Flask:
     registrar_filtros(app)
 
     return app
+
+
+def _configurar_producao(app: Flask) -> None:
+    """Ajustes para rodar atrás do proxy HTTPS da VPS (docs/IMPLANTACAO.md)."""
+    chave = app.config.get("SECRET_KEY") or ""
+    if chave in CHAVES_INSEGURAS or len(chave) < TAMANHO_MINIMO_CHAVE:
+        raise ConfiguracaoInseguraError(
+            f"SECRET_KEY de exemplo ou curta demais (mínimo {TAMANHO_MINIMO_CHAVE} caracteres). "
+            'Gere uma com: python3 -c "import secrets; print(secrets.token_urlsafe(48))"'
+        )
+    # O Nginx informa o esquema (https), o host e o IP do cliente nos cabeçalhos X-Forwarded-*.
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+    app.config.update(
+        SESSION_COOKIE_SECURE=True,
+        REMEMBER_COOKIE_SECURE=True,
+        PREFERRED_URL_SCHEME="https",
+    )
 
 
 def _configurar_login(app: Flask) -> None:
@@ -81,3 +109,8 @@ def _registrar_erros(app: Flask) -> None:
     @app.errorhandler(413)
     def arquivo_grande(_erro):
         return _responder(413, "Arquivo grande demais. O limite é de 16 MB.")
+
+    @app.errorhandler(500)
+    def erro_interno(_erro):
+        db.session.rollback()
+        return _responder(500, "Erro interno. Tente de novo; se persistir, avise o administrador.")

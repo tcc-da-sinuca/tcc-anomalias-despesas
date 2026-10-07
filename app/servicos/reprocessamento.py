@@ -12,7 +12,7 @@ from sqlalchemy import func, select
 
 from app.extensoes import db
 from app.models import Despesa, ExecucaoAnalise
-from app.servicos.analise import executar_analise
+from app.servicos.analise import _travar_analise, executar_analise
 from motor.consolidador import DETECTORES
 
 # Quantas análises recentes olhar para achar a última completa.
@@ -43,7 +43,13 @@ def ha_despesas_novas() -> bool:
 
 
 def reprocessar() -> ExecucaoAnalise | None:
-    """Executa a análise se houver despesas novas; senão, devolve ``None``. Não faz commit."""
+    """Executa a análise se houver despesas novas; senão, devolve ``None``. Não faz commit.
+
+    A verificação acontece depois de obter a trava de análise: se outra análise (o
+    botão, por exemplo) estiver rodando, o job espera e decide com o resultado dela.
+    Sem isso, o job decidia antes, esperava a trava e analisava de novo à toa.
+    """
+    _travar_analise()
     if not ha_despesas_novas():
         return None
     return executar_analise(None)

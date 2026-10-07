@@ -183,3 +183,46 @@ def test_analise_com_trava_no_postgres(app_pg):
 
     assert execucao.total_despesas == 20
     assert trava_livre_em_outra_conexao() is True  # liberada no commit
+
+
+def test_job_espera_a_analise_em_andamento_e_nao_repete(app_pg):
+    """Job e análise manual ao mesmo tempo: o job espera a trava e não cria análise vazia."""
+    import threading
+
+    from app.extensoes import db
+    from app.models import Despesa, ExecucaoAnalise
+    from app.servicos.analise import executar_analise
+    from app.servicos.reprocessamento import reprocessar
+
+    db.session.add_all(
+        Despesa(
+            valor=Decimal("100.00"),
+            data=date(2026, 3, 2),
+            categoria="Viagens",
+            conta_contabil="3.1.01",
+            centro_custo="CC-ADM",
+            funcionario="F001",
+        )
+        for _ in range(20)
+    )
+    db.session.commit()
+
+    executar_analise(None)  # análise "manual" em andamento: segura a trava, sem commit
+    resultado = {}
+
+    def job():
+        with app_pg.app_context():
+            resultado["execucao"] = reprocessar()
+            db.session.commit()
+
+    thread = threading.Thread(target=job)
+    thread.start()
+    thread.join(timeout=1)
+    assert thread.is_alive()  # o job está esperando a trava
+
+    db.session.commit()  # termina a análise manual e libera a trava
+    thread.join(timeout=10)
+
+    assert not thread.is_alive()
+    assert resultado["execucao"] is None  # viu a análise recém-gravada e não repetiu
+    assert db.session.query(ExecucaoAnalise).count() == 1

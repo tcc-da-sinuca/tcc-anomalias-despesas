@@ -1,0 +1,89 @@
+# Produção (VPS atrás de Nginx com HTTPS). Guia completo em docs/IMPLANTACAO.md.
+#
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Diferenças em relação ao docker-compose.yml (desenvolvimento):
+# - o app roda com gunicorn, sem modo debug, e só escuta em 127.0.0.1 (o Nginx faz o proxy);
+# - o banco não expõe porta; o código vai dentro da imagem (sem montar a pasta);
+# - PRODUCAO=1 liga o ProxyFix, os cookies só por HTTPS e a recusa de senhas de exemplo;
+# - os serviços reiniciam sozinhos e os logs têm tamanho limitado.
+#
+# As variáveis vêm do arquivo .env da VPS (modelo em deploy/env.producao.exemplo).
+
+name: anomalias-despesas
+
+x-logs: &logs
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+x-ambiente-app: &ambiente-app
+  PRODUCAO: "1"
+  FLASK_APP: wsgi.py
+  FLASK_DEBUG: "0"
+  SECRET_KEY: ${SECRET_KEY:?defina SECRET_KEY no .env}
+  DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-tcc}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-despesas}
+  ADMIN_NOME: ${ADMIN_NOME:-Administrador}
+  ADMIN_EMAIL: ${ADMIN_EMAIL:?defina ADMIN_EMAIL no .env}
+  ADMIN_SENHA: ${ADMIN_SENHA:?defina ADMIN_SENHA no .env}
+  SEED_BASE_SINTETICA: ${SEED_BASE_SINTETICA:-0}
+  REPROCESSAMENTO_INTERVALO_MIN: ${REPROCESSAMENTO_INTERVALO_MIN:-15}
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-tcc}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
+      POSTGRES_DB: ${POSTGRES_DB:-despesas}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    <<: *logs
+
+  app:
+    build: .
+    environment: *ambiente-app
+    # O entrypoint aplica as migrations e cria o administrador antes de iniciar o gunicorn.
+    command:
+      - gunicorn
+      - --workers=${GUNICORN_WORKERS:-3}
+      - --bind=0.0.0.0:8000
+      - --timeout=120
+      - --access-logfile=-
+      - wsgi:app
+    ports:
+      - "127.0.0.1:${PORTA_APP:-8000}:8000"  # só o Nginx da própria VPS alcança
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/saude', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    restart: unless-stopped
+    <<: *logs
+
+  agendador:
+    build: .
+    entrypoint: ["flask", "agendador"]
+    environment: *ambiente-app
+    depends_on:
+      db:
+        condition: service_healthy
+      app:
+        condition: service_healthy
+    restart: on-failure  # com REPROCESSAMENTO_INTERVALO_MIN=0 ele termina e fica parado
+    <<: *logs
+
+volumes:
+  pgdata:

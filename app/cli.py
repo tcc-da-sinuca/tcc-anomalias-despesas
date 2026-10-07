@@ -25,6 +25,10 @@ def registrar_comandos(app: Flask) -> None:
         nome = os.environ.get("ADMIN_NOME", "Administrador")
         if not email or not senha:
             raise click.ClickException("Defina ADMIN_EMAIL e ADMIN_SENHA no .env.")
+        if app.config.get("PRODUCAO") and (senha == "troque-esta-senha" or len(senha) < 12):
+            raise click.ClickException(
+                "Em produção, ADMIN_SENHA precisa ser trocada e ter pelo menos 12 caracteres."
+            )
 
         if buscar_por_email(email) is None:
             criar_usuario(nome, email, senha, PERFIL_ADMINISTRADOR)

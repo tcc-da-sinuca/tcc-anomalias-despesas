@@ -25,6 +25,10 @@ class Config:
     # Job de reprocessamento (container "agendador"): intervalo em minutos; 0 desliga.
     REPROCESSAMENTO_INTERVALO_MIN = int(os.environ.get("REPROCESSAMENTO_INTERVALO_MIN", "15"))
 
+    # Produção (docker-compose.prod.yml): atrás de um proxy HTTPS (Nginx). Liga o
+    # ProxyFix, os cookies só por HTTPS e a verificação das senhas (docs/IMPLANTACAO.md).
+    PRODUCAO = os.environ.get("PRODUCAO") == "1"
+
 
 class TestConfig(Config):
     """Configuração dos testes: SQLite em memória, sem CSRF."""
