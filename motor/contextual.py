@@ -45,4 +45,6 @@ def detectar(despesas: pd.DataFrame, frequencia_minima: float = 0.01) -> pd.Data
                 f"{categoria} ({na_combinacao[i]} de {texto.numero(na_categoria[i], 0)}); "
                 f"mínimo {texto.percentual(frequencia_minima)}."
             )
-    return montar_resultado(despesas, 1 - frequencia, sinalizado, motivos)
+    # excesso: quantas vezes a combinação é mais rara que o mínimo (0,2% com mínimo 1% = 5x)
+    excesso = frequencia_minima / frequencia
+    return montar_resultado(despesas, 1 - frequencia, sinalizado, motivos, excesso)

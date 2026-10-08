@@ -23,6 +23,13 @@ enum MetodoDeteccao <<enumeration>> {
   contextual
 }
 
+enum Gravidade <<enumeration>> {
+  leve
+  moderada
+  alta
+  critica
+}
+
 enum StatusRevisao <<enumeration>> {
   pendente
   aprovado
@@ -101,6 +108,8 @@ class AlertaAnomalia {
   - metodo : MetodoDeteccao
   - score : Float
   - motivo : String
+  - excesso : Float [0..1]
+  - gravidade : Gravidade [0..1]
   - status_revisao : StatusRevisao = pendente
   - criado_em : DateTime
 }
@@ -139,6 +148,7 @@ Usuario "0..1" -- "0..*" ParametroMetodo : altera >
 Usuario ..> Perfil
 AlertaAnomalia ..> MetodoDeteccao
 AlertaAnomalia ..> StatusRevisao
+AlertaAnomalia ..> Gravidade
 ParametroMetodo ..> MetodoDeteccao
 
 @enduml

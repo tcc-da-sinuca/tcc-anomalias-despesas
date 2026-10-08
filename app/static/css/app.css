@@ -142,3 +142,13 @@ a:hover { text-decoration: underline; }
 .grafico-status { position: relative; height: 220px; }
 
 .rodape { border-top: 1px solid #e3e8eb; }
+
+/* Gravidade do alerta: cor conforme quanto o score passou do limite do método */
+.gravidade {
+  display: inline-block; padding: 0.1rem 0.55rem; border-radius: 0.4rem;
+  font-weight: 700; font-size: 0.85rem; white-space: nowrap;
+}
+.gravidade-leve { background: #eef1f3; color: #4b5a62; }
+.gravidade-moderada { background: #fff1c2; color: #7a5a00; }
+.gravidade-alta { background: #ffd8b0; color: #8a3f00; }
+.gravidade-critica { background: #c9252f; color: #fff; box-shadow: 0 0 0 2px rgba(201, 37, 47, 0.25); }

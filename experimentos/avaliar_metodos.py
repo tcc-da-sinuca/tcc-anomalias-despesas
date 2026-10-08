@@ -45,6 +45,7 @@ import sklearn
 from dados.gerar_base_sintetica import ConfiguracaoBase, gerar_base, metadados
 from motor.consolidador import DETECTORES, parametros_padrao
 from motor.estatisticas import DIMENSAO_DETECCAO, DIMENSAO_RECUO, N_MINIMO_GRUPO
+from motor.gravidade import NIVEIS, NIVEL_REJEICAO_AUTOMATICA, classificar
 
 PASTA_RESULTADOS = Path(__file__).resolve().parent / "resultados"
 VOTOS_MINIMOS = 2
@@ -67,6 +68,9 @@ COLUNAS_METRICAS = (
     "parametros",
 )
 COLUNAS_POR_TIPO = ("avaliacao", "nome", "tipo_anomalia", "linhas", "sinalizadas", "taxa")
+COLUNAS_POR_GRAVIDADE = ("metodo", "gravidade", "sinalizadas", "anomalas", "normais", "precisao")
+REJEICAO_AUTOMATICA = "rejeicao_automatica"
+REJEICAO_NO_LANCAMENTO = "rejeicao_automatica_no_lancamento"
 
 
 # --- Métricas -------------------------------------------------------------------
@@ -174,6 +178,56 @@ def avaliar(
     )
 
 
+def por_gravidade(base: pd.DataFrame, resultados: dict[str, pd.DataFrame]) -> pd.DataFrame:
+    """Precisão de cada método por nível de gravidade, mais a rejeição automática.
+
+    A linha ``rejeicao_automatica`` conta as despesas com algum alerta no nível de
+    rejeição automática (``crítica``) em qualquer método, avaliando a base inteira de uma
+    vez. A linha ``rejeicao_automatica_no_lancamento`` desconta as despesas originais de
+    uma duplicata: no lançamento, a original entra antes da cópia existir e passa; só a
+    cópia é avaliada como repetição. É uma aproximação da ordem cronológica, que a
+    avaliação em lote não reproduz.
+    """
+    real = base.set_index("despesa_id")["anomalia_real"].astype(int) == 1
+    linhas, criticas = [], set()
+    for metodo, resultado in resultados.items():
+        sinalizadas = resultado[resultado["sinalizado"]]
+        niveis = [classificar(metodo, e) for e in sinalizadas["excesso"]]
+        for nivel in NIVEIS:
+            ids = sinalizadas.loc[[n == nivel for n in niveis], "despesa_id"]
+            if nivel == NIVEL_REJEICAO_AUTOMATICA:
+                criticas.update(ids)
+            anomalas = int(real.loc[ids].sum())
+            linhas.append(_linha_gravidade(metodo, nivel, len(ids), anomalas))
+    anomalas = int(real.loc[list(criticas)].sum())
+    linhas.append(
+        _linha_gravidade(REJEICAO_AUTOMATICA, NIVEL_REJEICAO_AUTOMATICA, len(criticas), anomalas)
+    )
+    grupos = base.set_index("despesa_id")["grupo_anomalia"].fillna("")
+    originais = {i for i in criticas if not real.loc[i] and grupos.loc[i].startswith("DUP")}
+    no_lancamento = criticas - originais
+    linhas.append(
+        _linha_gravidade(
+            REJEICAO_NO_LANCAMENTO,
+            NIVEL_REJEICAO_AUTOMATICA,
+            len(no_lancamento),
+            int(real.loc[list(no_lancamento)].sum()),
+        )
+    )
+    return pd.DataFrame(linhas, columns=list(COLUNAS_POR_GRAVIDADE))
+
+
+def _linha_gravidade(metodo: str, nivel: str, sinalizadas: int, anomalas: int) -> dict:
+    return {
+        "metodo": metodo,
+        "gravidade": nivel,
+        "sinalizadas": sinalizadas,
+        "anomalas": anomalas,
+        "normais": sinalizadas - anomalas,
+        "precisao": _razao(anomalas, sinalizadas),
+    }
+
+
 def executar(
     base: pd.DataFrame, parametros: dict[str, dict], metodos: list[str]
 ) -> tuple[dict[str, pd.DataFrame], dict[str, float]]:
@@ -221,7 +275,11 @@ def ler_parametros(atribuicoes: list[str], metodos: list[str]) -> dict[str, dict
 
 
 def salvar(
-    pasta: Path, metricas_gerais: pd.DataFrame, por_tipo: pd.DataFrame, execucao: dict
+    pasta: Path,
+    metricas_gerais: pd.DataFrame,
+    por_tipo: pd.DataFrame,
+    execucao: dict,
+    gravidade: pd.DataFrame | None = None,
 ) -> dict[str, Path]:
     pasta.mkdir(parents=True, exist_ok=True)
     caminhos = {
@@ -229,6 +287,11 @@ def salvar(
         "por_tipo": pasta / "metricas_por_tipo.csv",
         "execucao": pasta / "execucao.json",
     }
+    if gravidade is not None:
+        caminhos["por_gravidade"] = pasta / "metricas_por_gravidade.csv"
+        gravidade.to_csv(
+            caminhos["por_gravidade"], index=False, float_format="%.4f", lineterminator="\n"
+        )
     metricas_gerais.to_csv(
         caminhos["metricas"], index=False, float_format="%.4f", lineterminator="\n"
     )
@@ -288,7 +351,8 @@ def main(argv: list[str] | None = None) -> dict[str, Path]:
         },
         "metadados_base": info_base,
     }
-    caminhos = salvar(args.saida, metricas_gerais, por_tipo, execucao)
+    gravidade = por_gravidade(base, resultados)
+    caminhos = salvar(args.saida, metricas_gerais, por_tipo, execucao, gravidade)
 
     colunas = ["nome", "precisao", "recall", "f1", "taxa_fp", "sinalizadas"]
     print(metricas_gerais[colunas].to_string(index=False, float_format=lambda v: f"{v:.3f}"))

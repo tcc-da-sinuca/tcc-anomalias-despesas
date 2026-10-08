@@ -33,3 +33,33 @@
   {% endfor %}
 </div>
 {% endmacro %}
+
+
+{# Score formatado pela gravidade (motor/gravidade.py): cor do nível e quantas vezes passou do limite. #}
+{% macro score_gravidade(alerta, detalhado=false) %}
+{% if alerta.gravidade %}
+<span class="gravidade gravidade-{{ alerta.gravidade }}"
+      title="Gravidade {{ alerta.gravidade | nome_gravidade | lower }}: score {{ alerta.score | score }}, {{ alerta.excesso | score }}x o limite do método">
+  {{ alerta.score | score }}
+</span>
+<div class="small text-muted text-nowrap">{{ alerta.excesso | score }}x o limite{% if detalhado %} · {{ alerta.gravidade | nome_gravidade | lower }}{% endif %}</div>
+{% else %}
+<span class="fw-semibold">{{ alerta.score | score }}</span>
+{% endif %}
+{% endmacro %}
+
+{% macro acoes_alerta(alerta) %}
+<div class="d-inline-flex gap-1">
+  <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#decisao-rapida"
+          data-acao="{{ url_for('web.decidir_alerta', alerta_id=alerta.id) }}"
+          data-resumo="Alerta #{{ alerta.id }} · {{ alerta.metodo | nome_metodo }} · {{ alerta.despesa.valor | moeda }} · {{ alerta.despesa.categoria }}"
+          data-motivo="{{ alerta.motivo }}"
+          title="Aprovar ou rejeitar" aria-label="Aprovar ou rejeitar o alerta {{ alerta.id }}">
+    <i class="bi bi-check2-square me-0" aria-hidden="true"></i>
+  </button>
+  <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('web.alerta', alerta_id=alerta.id) }}"
+     title="Ver detalhes" aria-label="Ver detalhes do alerta {{ alerta.id }}">
+    <i class="bi bi-info-lg me-0" aria-hidden="true"></i>
+  </a>
+</div>
+{% endmacro %}

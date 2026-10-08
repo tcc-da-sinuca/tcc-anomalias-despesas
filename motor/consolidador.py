@@ -11,6 +11,7 @@ from collections.abc import Iterable
 import pandas as pd
 
 from motor import contextual, iqr, isolation_forest, zscore
+from motor.gravidade import classificar
 
 DETECTORES = {
     "zscore": zscore.detectar,
@@ -18,7 +19,7 @@ DETECTORES = {
     "contextual": contextual.detectar,
     "isolation_forest": isolation_forest.detectar,
 }
-COLUNAS_ALERTA = ("despesa_id", "metodo", "score", "motivo")
+COLUNAS_ALERTA = ("despesa_id", "metodo", "score", "motivo", "excesso", "gravidade")
 
 
 class MetodoDesconhecidoError(ValueError):
@@ -64,13 +65,18 @@ def parametros_padrao(metodos: Iterable[str] | None = None) -> dict[str, dict[st
 
 
 def consolidar(resultados: dict[str, pd.DataFrame]) -> pd.DataFrame:
-    """Só as linhas sinalizadas: DataFrame[despesa_id, metodo, score, motivo]."""
-    partes = [
-        resultado.loc[resultado["sinalizado"], ["despesa_id", "score", "motivo"]].assign(
-            metodo=metodo
+    """Só as linhas sinalizadas, com a gravidade de cada uma (``COLUNAS_ALERTA``)."""
+    partes = []
+    for metodo, resultado in resultados.items():
+        sinalizadas = resultado.loc[
+            resultado["sinalizado"], ["despesa_id", "score", "motivo", "excesso"]
+        ]
+        partes.append(
+            sinalizadas.assign(
+                metodo=metodo,
+                gravidade=[classificar(metodo, e) for e in sinalizadas["excesso"]],
+            )
         )
-        for metodo, resultado in resultados.items()
-    ]
     partes = [p for p in partes if not p.empty]
     if not partes:
         return pd.DataFrame({c: pd.Series(dtype=object) for c in COLUNAS_ALERTA})

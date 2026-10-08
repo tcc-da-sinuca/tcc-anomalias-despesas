@@ -15,11 +15,15 @@
       <div class="card-body">
         <div class="titulo-secao mb-2">Por que esta despesa foi sinalizada</div>
         <p class="texto mb-2">{{ alerta.motivo }}</p>
-        <div class="small text-muted">
-          Score {{ alerta.score | score }}
-          <span title="Quanto maior, mais incomum. A escala é própria de cada método."><i class="bi bi-question-circle" aria-hidden="true"></i></span>
-          · <a href="{{ url_for('web.analise', execucao_id=alerta.execucao_id) }}">análise #{{ alerta.execucao_id }}</a>
-          em {{ alerta.criado_em | data_hora_br }}
+        <div class="small text-muted d-flex flex-wrap align-items-center gap-2">
+          {% if alerta.gravidade %}
+          <span class="gravidade gravidade-{{ alerta.gravidade }}">{{ alerta.gravidade | nome_gravidade }}</span>
+          <span>score {{ alerta.score | score }} · {{ alerta.excesso | score }}x o limite do método</span>
+          {% else %}
+          <span>Score {{ alerta.score | score }}</span>
+          {% endif %}
+          <span>· <a href="{{ url_for('web.analise', execucao_id=alerta.execucao_id) }}">análise #{{ alerta.execucao_id }}</a>
+          em {{ alerta.criado_em | data_hora_br }}</span>
         </div>
       </div>
     </div>

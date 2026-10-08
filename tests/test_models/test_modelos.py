@@ -236,3 +236,16 @@ def test_parametros_padrao_sao_inseridos_uma_unica_vez(sessao):
     assert garantir_parametros_padrao() == 0
     assert sessao.get(ParametroMetodo, ("zscore", "limiar")).valor == "3"
     assert sessao.get(ParametroMetodo, ("isolation_forest", "random_state")).valor == "42"
+
+
+def test_gravidade_do_alerta_aceita_so_os_niveis(sessao, alerta):
+    import pytest
+    from sqlalchemy.exc import IntegrityError
+
+    alerta.excesso, alerta.gravidade = 4.8, "critica"
+    sessao.commit()
+
+    alerta.gravidade = "gravissima"
+    with pytest.raises(IntegrityError):
+        sessao.commit()
+    sessao.rollback()

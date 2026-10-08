@@ -342,3 +342,34 @@ def relatorios():
         ano_escolhido=ano,
         mes_escolhido=mes,
     ), (400 if erro else 200)
+
+
+def _voltar_para(destino: str | None, padrao: str) -> str:
+    """Só aceita caminhos internos (evita redirecionar para outro site)."""
+    if destino and destino.startswith("/") and not destino.startswith("//"):
+        return destino
+    return padrao
+
+
+@bp.route("/alertas/<int:alerta_id>/decisao-rapida", methods=["POST"])
+@perfil_requerido(PERFIL_AUDITOR)
+def decidir_alerta(alerta_id: int):
+    """Aprovar ou rejeitar um alerta direto da lista (registra um parecer, como no detalhe)."""
+    alerta = repo_alertas.obter_alerta(alerta_id)
+    if alerta is None:
+        abort(404)
+    voltar = _voltar_para(request.form.get("voltar"), url_for("web.alertas"))
+    status = request.form.get("status")
+    if status not in ("aprovado", "irregular"):
+        flash("Escolha aprovar ou rejeitar.", "danger")
+        return redirect(voltar)
+    try:
+        registrar_parecer(alerta, current_user, status, request.form.get("observacao"))
+    except ParecerInvalidoError as erro:
+        db.session.rollback()
+        flash(f"Alerta #{alerta.id}: {erro}", "danger")
+    else:
+        db.session.commit()
+        acao = "aprovado (despesa regular)" if status == "aprovado" else "rejeitado (irregular)"
+        flash(f"Alerta #{alerta.id} {acao}.", "success")
+    return redirect(voltar)

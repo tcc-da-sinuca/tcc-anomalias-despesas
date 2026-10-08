@@ -156,3 +156,16 @@ def test_sem_despesas(sessao, auditor):
 
     assert (execucao.total_despesas, execucao.total_alertas) == (0, 0)
     assert _alertas(sessao) == []
+
+
+def test_alertas_gravados_com_gravidade(sessao, auditor, despesas):
+    from app.servicos.analise import executar_analise
+    from motor.gravidade import NIVEIS, classificar
+
+    executar_analise(auditor, ESTATISTICOS)
+    sessao.commit()
+
+    for alerta in _alertas(sessao):
+        assert alerta.excesso >= 1
+        assert alerta.gravidade in NIVEIS
+        assert alerta.gravidade == classificar(alerta.metodo, alerta.excesso)

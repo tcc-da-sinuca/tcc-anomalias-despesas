@@ -100,3 +100,19 @@ def test_resultado_e_reproduzivel(saida, tmp_path):
 
     for arquivo in ("metricas.csv", "metricas_por_tipo.csv"):
         assert (tmp_path / arquivo).read_text() == (saida / arquivo).read_text()
+
+
+def test_metricas_por_gravidade(saida):
+    gravidade = pd.read_csv(saida / "metricas_por_gravidade.csv")
+
+    assert tuple(gravidade.columns) == exp.COLUNAS_POR_GRAVIDADE
+    assert set(gravidade["metodo"]) >= {"zscore", "iqr", "contextual", "isolation_forest"}
+    por_metodo = gravidade[gravidade["metodo"] == "zscore"].set_index("gravidade")
+    metricas = pd.read_csv(saida / "metricas.csv").set_index("nome")
+    assert por_metodo["sinalizadas"].sum() == metricas.loc["zscore", "sinalizadas"]
+
+    rejeicao = gravidade.set_index("metodo")
+    no_lancamento = rejeicao.loc[exp.REJEICAO_NO_LANCAMENTO]
+    em_lote = rejeicao.loc[exp.REJEICAO_AUTOMATICA]
+    assert no_lancamento["sinalizadas"] <= em_lote["sinalizadas"]
+    assert no_lancamento["anomalas"] == em_lote["anomalas"]  # só saem as originais (normais)

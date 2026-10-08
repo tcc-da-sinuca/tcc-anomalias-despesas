@@ -39,7 +39,7 @@ def detectar(
     for i in despesas.index[sinalizado]:
         nome_grupo = descrever_grupo(despesas.loc[i], dimensao, recuo, grupo.at[i, "usa_recuo"])
         motivos[i] = _motivo(valores[i], grupo.at[i, "media"], z[i], limiar, nome_grupo)
-    return montar_resultado(despesas, score, sinalizado, motivos)
+    return montar_resultado(despesas, score, sinalizado, motivos, score / limiar)
 
 
 def _motivo(valor, media, z, limiar, nome_grupo) -> str:

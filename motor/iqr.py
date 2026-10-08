@@ -49,4 +49,4 @@ def detectar(
             limite = grupo.at[i, "q1"] - fator * iqr[i]
             descricao = f"abaixo do limite inferior {nome_grupo} (Q1 − {f} × IQR"
         motivos[i] = f"Valor {texto.moeda(valores[i])} {descricao} = {texto.moeda(limite)})."
-    return montar_resultado(despesas, score, sinalizado, motivos)
+    return montar_resultado(despesas, score, sinalizado, motivos, score / fator)

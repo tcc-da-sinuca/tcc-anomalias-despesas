@@ -85,6 +85,8 @@ def executar_analise(
                     "metodo": alerta.metodo,
                     "score": float(alerta.score),
                     "motivo": alerta.motivo,
+                    "excesso": float(alerta.excesso),
+                    "gravidade": alerta.gravidade,
                     "status_revisao": STATUS_PENDENTE,
                     "criado_em": iniciada_em,
                 }

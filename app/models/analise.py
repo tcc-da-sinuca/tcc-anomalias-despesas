@@ -19,7 +19,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.extensoes import db
 from app.models.base import agora_utc
-from app.models.dominio import SQL_METODOS, SQL_STATUS_REVISAO, STATUS_PENDENTE
+from app.models.dominio import SQL_GRAVIDADES, SQL_METODOS, SQL_STATUS_REVISAO, STATUS_PENDENTE
 
 
 class EstatisticaReferencia(db.Model):
@@ -90,6 +90,9 @@ class AlertaAnomalia(db.Model):
     __table_args__ = (
         CheckConstraint(f"metodo IN {SQL_METODOS}", name="metodo_valido"),
         CheckConstraint(f"status_revisao IN {SQL_STATUS_REVISAO}", name="status_revisao_valido"),
+        CheckConstraint(
+            f"gravidade IS NULL OR gravidade IN {SQL_GRAVIDADES}", name="gravidade_valida"
+        ),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -100,6 +103,10 @@ class AlertaAnomalia(db.Model):
     metodo: Mapped[str] = mapped_column(String(20), nullable=False, index=True)
     score: Mapped[float] = mapped_column(Float, nullable=False)
     motivo: Mapped[str] = mapped_column(Text, nullable=False)
+    # Quantas vezes o score passou do limite do método e o nível correspondente
+    # (motor/gravidade.py). Vazios em alertas criados antes de 08/10/2026.
+    excesso: Mapped[float | None] = mapped_column(Float, nullable=True)
+    gravidade: Mapped[str | None] = mapped_column(String(10), nullable=True, index=True)
     status_revisao: Mapped[str] = mapped_column(
         String(30), nullable=False, default=STATUS_PENDENTE, index=True
     )

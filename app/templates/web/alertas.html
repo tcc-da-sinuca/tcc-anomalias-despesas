@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import paginacao %}
+{% from "_macros.html" import paginacao, score_gravidade, acoes_alerta %}
 {% block titulo %}Alertas · {{ super() }}{% endblock %}
 {% block conteudo %}
 <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
@@ -106,7 +106,7 @@
       <tr>
         <th>Status</th>
         <th>Método</th>
-        <th class="text-end" title="Quanto maior, mais incomum. A escala é própria de cada método: não compare scores de métodos diferentes.">
+        <th class="text-end" title="Cor = gravidade: quantas vezes o score passou do limite do próprio método (leve, moderada, alta, crítica). Não compare scores de métodos diferentes.">
           Score <i class="bi bi-question-circle me-0" aria-hidden="true"></i>
         </th>
         <th>Motivo</th>
@@ -122,15 +122,13 @@
       <tr>
         <td><span class="badge status-{{ alerta.status_revisao }}">{{ alerta.status_revisao | nome_status }}</span></td>
         <td><span class="metodo">{{ alerta.metodo | nome_metodo }}</span></td>
-        <td class="text-end fw-semibold">{{ alerta.score | score }}</td>
+        <td class="text-end">{{ score_gravidade(alerta) }}</td>
         <td class="small" style="min-width: 18rem">{{ alerta.motivo }}</td>
         <td class="text-nowrap">{{ alerta.despesa.data | data_br }}</td>
         <td class="text-end text-nowrap">{{ alerta.despesa.valor | moeda }}</td>
         <td>{{ alerta.despesa.categoria }}</td>
         <td>{{ alerta.despesa.funcionario }}</td>
-        <td class="text-end">
-          <a class="btn btn-sm btn-outline-primary text-nowrap" href="{{ url_for('web.alerta', alerta_id=alerta.id) }}">Revisar</a>
-        </td>
+        <td class="text-end">{{ acoes_alerta(alerta) }}</td>
       </tr>
       {% endfor %}
     </tbody>
@@ -140,23 +138,59 @@
 {# Telas pequenas: cartões #}
 <div class="d-lg-none mb-3">
   {% for alerta in pagina.items %}
-  <a class="card cartao-alerta status-borda-{{ alerta.status_revisao }} mb-2 text-reset text-decoration-none"
-     href="{{ url_for('web.alerta', alerta_id=alerta.id) }}">
+  <div class="card cartao-alerta status-borda-{{ alerta.status_revisao }} mb-2">
     <div class="card-body py-2">
       <div class="d-flex justify-content-between align-items-center mb-1">
         <span class="metodo">{{ alerta.metodo | nome_metodo }}</span>
         <span class="badge status-{{ alerta.status_revisao }}">{{ alerta.status_revisao | nome_status }}</span>
       </div>
+      {% if alerta.gravidade %}<span class="gravidade gravidade-{{ alerta.gravidade }} mb-1">{{ alerta.gravidade | nome_gravidade }} · {{ alerta.excesso | score }}x o limite</span>{% endif %}
       <div class="small mb-1">{{ alerta.motivo }}</div>
       <div class="small text-muted">
         {{ alerta.despesa.data | data_br }} · <strong class="text-body">{{ alerta.despesa.valor | moeda }}</strong>
         · {{ alerta.despesa.categoria }} · {{ alerta.despesa.funcionario }}
       </div>
+      <div class="text-end mt-2">{{ acoes_alerta(alerta) }}</div>
     </div>
-  </a>
+  </div>
   {% endfor %}
 </div>
 {{ paginacao(pagina, 'web.alertas', ordem=(ordem if ordem != ordem_padrao else none), **filtros.como_parametros()) }}
+
+<div class="modal fade" id="decisao-rapida" tabindex="-1" aria-labelledby="decisao-rapida-titulo" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form method="post" class="modal-content" id="form-decisao-rapida">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="voltar" value="{{ request.full_path if request.query_string else request.path }}">
+      <div class="modal-header">
+        <h2 class="modal-title fs-5" id="decisao-rapida-titulo">Decisão rápida</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body">
+        <p class="small fw-semibold mb-1" data-campo="resumo"></p>
+        <p class="small text-muted" data-campo="motivo"></p>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="status" id="rapida-aprovado" value="aprovado" required>
+          <label class="form-check-label" for="rapida-aprovado">Aprovar: a despesa é regular</label>
+        </div>
+        <div class="form-check mb-3">
+          <input class="form-check-input" type="radio" name="status" id="rapida-irregular" value="irregular">
+          <label class="form-check-label" for="rapida-irregular">Rejeitar: a despesa é irregular</label>
+        </div>
+        <label class="form-label small" for="rapida-observacao">Observação (obrigatória para rejeitar)</label>
+        <textarea class="form-control" id="rapida-observacao" name="observacao" rows="2"></textarea>
+        <p class="small text-muted mt-2 mb-0">
+          O parecer fica registrado com o seu nome e não pode ser alterado. Para "necessita
+          justificativa", use o detalhe do alerta (botão <i class="bi bi-info-lg me-0" aria-hidden="true"></i>).
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-link" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Registrar</button>
+      </div>
+    </form>
+  </div>
+</div>
 {% else %}
 <div class="card"><div class="card-body text-center py-5">
   <i class="bi bi-search fs-1 text-muted d-block mb-2" aria-hidden="true"></i>

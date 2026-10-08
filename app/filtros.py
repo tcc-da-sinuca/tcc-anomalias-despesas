@@ -75,6 +75,12 @@ def numero_campo(valor) -> str:
     return format(valor, ".12g")
 
 
+def nome_gravidade(nivel: str | None) -> str:
+    from motor.gravidade import NOMES_NIVEIS
+
+    return NOMES_NIVEIS.get(nivel, "—") if nivel else "—"
+
+
 def registrar_filtros(app: Flask) -> None:
     app.add_template_filter(moeda)
     app.add_template_filter(data_br)
@@ -85,3 +91,4 @@ def registrar_filtros(app: Flask) -> None:
     app.add_template_filter(numero)
     app.add_template_filter(inteiro)
     app.add_template_filter(numero_campo)
+    app.add_template_filter(nome_gravidade)

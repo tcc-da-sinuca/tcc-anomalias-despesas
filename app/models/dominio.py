@@ -22,6 +22,10 @@ METODO_ISOLATION_FOREST = "isolation_forest"
 METODO_CONTEXTUAL = "contextual"
 METODOS = (METODO_ZSCORE, METODO_IQR, METODO_ISOLATION_FOREST, METODO_CONTEXTUAL)
 
+# --- Gravidade de um alerta (quanto o score passou do limite do método) ---
+# Os níveis e as faixas ficam no motor (motor/gravidade.py).
+from motor.gravidade import NIVEIS as GRAVIDADES  # noqa: E402
+
 # --- Status de revisão de um alerta (RF06/RF07) ---
 STATUS_PENDENTE = "pendente"
 STATUS_APROVADO = "aprovado"
@@ -58,5 +62,6 @@ PARAMETROS_PADRAO = {
 SQL_PERFIS = _sql_in(PERFIS)
 SQL_METODOS = _sql_in(METODOS)
 SQL_STATUS_REVISAO = _sql_in(STATUS_REVISAO)
+SQL_GRAVIDADES = _sql_in(GRAVIDADES)
 SQL_STATUS_PARECER = _sql_in(STATUS_PARECER)
 SQL_STATUS_EXIGEM_OBSERVACAO = _sql_in(STATUS_EXIGEM_OBSERVACAO)

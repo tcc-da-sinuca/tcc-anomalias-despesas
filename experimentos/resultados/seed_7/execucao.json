@@ -1,5 +1,5 @@
 {
-  "executado_em": "2026-10-08T22:54:45+00:00",
+  "executado_em": "2026-10-08T23:05:01+00:00",
   "base": "gerada com seed 7",
   "seed_base": 7,
   "metodos": [
@@ -29,10 +29,10 @@
   "n_minimo_grupo": 10,
   "votos_minimos": 2,
   "tempo_s_por_metodo": {
-    "zscore": 0.0724,
-    "iqr": 0.1158,
-    "contextual": 0.0038,
-    "isolation_forest": 0.3049
+    "zscore": 0.0697,
+    "iqr": 0.0817,
+    "contextual": 0.0035,
+    "isolation_forest": 0.4138
   },
   "linhas": 5000,
   "versoes": {

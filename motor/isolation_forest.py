@@ -120,19 +120,20 @@ def detectar(
     tabela = atributos(despesas, limite_aprovacao)
     if len(despesas) < N_MINIMO_GRUPO:
         zeros = pd.Series(0.0, index=despesas.index)
-        return montar_resultado(despesas, zeros, zeros.astype(bool), zeros.astype(str))
+        return montar_resultado(despesas, zeros, zeros.astype(bool), zeros.astype(str), zeros)
 
     matriz = tabela[list(ATRIBUTOS)].to_numpy(dtype=float)
     modelo = IsolationForest(
         n_estimators=N_ARVORES, contamination=contamination, random_state=int(random_state)
     ).fit(matriz)
     score = pd.Series(-modelo.score_samples(matriz), index=despesas.index)
+    limite = -modelo.offset_  # score a partir do qual o modelo sinaliza
     sinalizado = pd.Series(modelo.predict(matriz) == -1, index=despesas.index)
 
     motivos = pd.Series("", index=despesas.index, dtype=object)
     for i in despesas.index[sinalizado]:
         motivos[i] = _motivo(despesas.loc[i], tabela.loc[i], limite_aprovacao)
-    return montar_resultado(despesas, score, sinalizado, motivos)
+    return montar_resultado(despesas, score, sinalizado, motivos, score / limite)
 
 
 def _vezes(quantidade: int, singular: str, plural: str) -> str:

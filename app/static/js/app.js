@@ -20,3 +20,17 @@ document.querySelectorAll('form[data-aplicar-ao-mudar]').forEach((formulario) =>
     }
   });
 });
+
+// Decisão rápida na lista de alertas: a janela é uma só; o botão de cada linha informa
+// para onde enviar (data-acao) e o resumo do alerta.
+const janelaDecisao = document.getElementById('decisao-rapida');
+if (janelaDecisao) {
+  janelaDecisao.addEventListener('show.bs.modal', (evento) => {
+    const botao = evento.relatedTarget;
+    const formulario = janelaDecisao.querySelector('form');
+    formulario.action = botao.dataset.acao;
+    formulario.reset();
+    janelaDecisao.querySelector('[data-campo="resumo"]').textContent = botao.dataset.resumo;
+    janelaDecisao.querySelector('[data-campo="motivo"]').textContent = botao.dataset.motivo;
+  });
+}

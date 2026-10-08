@@ -42,6 +42,7 @@ saem idênticos.
 |---|---|
 | `metricas.csv` | Uma linha por avaliação: VP, FP, FN, VN, precisão, recall, F1, taxa de FP, total sinalizado, seed da base e parâmetros (JSON) |
 | `metricas_por_tipo.csv` | Para cada avaliação e tipo de anomalia (e para as linhas normais): linhas, sinalizadas e taxa. Na linha `normal`, a taxa é a de falsos positivos |
+| `metricas_por_gravidade.csv` | Para cada método e nível de gravidade (leve, moderada, alta, crítica): sinalizadas, anômalas, normais e precisão. As linhas `rejeicao_automatica` (base inteira de uma vez) e `rejeicao_automatica_no_lancamento` (descontando as originais de duplicatas, que no lançamento entram antes da cópia) estimam a rejeição automática por alerta crítico |
 | `execucao.json` | Data, versões do Python e das bibliotecas, tempo de cada método e metadados da base. Muda a cada execução |
 
 Os arquivos em `resultados/` são versionados, para que a equipe do artigo use
