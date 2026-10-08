@@ -27,7 +27,8 @@ saem idênticos.
   F1 = 2·VP / (2·VP + FP + FN); taxa de FP = FP / (FP + VN). Métrica sem denominador
   fica vazia.
 - **Parâmetros:** os padrões do motor (os mesmos da aplicação), salvo `--param`.
-  Z-score e IQR agrupam por categoria e ignoram grupos com menos de 10 despesas. O
+  Z-score e IQR usam como referência o grupo centro de custo × conta contábil; grupo com
+  menos de 10 despesas usa a categoria e, se ela também for pequena, não é avaliado. O
   Isolation Forest usa `contamination=0.05`, `random_state=42` e limite de aprovação de
   R$ 1.000 (atributos em [`docs/ISOLATION_FOREST.md`](../docs/ISOLATION_FOREST.md)).
 - **Seeds:** o resultado principal usa a base com seed 42 (`resultados/`); a seed 7

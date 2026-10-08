@@ -30,7 +30,8 @@ def test_motivo_com_o_limite_do_grupo():
 
     # limite superior = 9,25 + 1,5 × 5,5 = 17,50
     assert motivo == (
-        "Valor R$ 40,00 acima do limite superior da categoria Viagens (Q3 + 1,5 × IQR = R$ 17,50)."
+        "Valor R$ 40,00 acima do limite superior do centro de custo CC-ADM na conta contábil "
+        "3.1.01 (Q3 + 1,5 × IQR = R$ 17,50)."
     )
 
 

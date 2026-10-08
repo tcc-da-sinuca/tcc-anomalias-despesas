@@ -231,6 +231,10 @@ motivo (US06, S2); detalhe do alerta com o formulário de parecer e o histórico
 
 ## 6. Decisões (aprovadas em 23/09/2026)
 
+> **Atualização (08/10/2026):** a equipe trocou a referência para o grupo **centro de custo ×
+> conta contábil**, com recuo para a categoria quando o grupo tem menos de 10 despesas
+> (item 32 de `MUDANCAS_PARA_DOCUMENTACAO.md`). O texto abaixo registra a decisão original.
+
 **D1. Grupo do Z-score e do IQR: categoria (recomendado) ou as três dimensões?**
 O RF02 calcula estatísticas por categoria, conta e centro de custo, mas as
 categorias têm escalas muito diferentes: a mediana vai de R$ 55 (Alimentação) a

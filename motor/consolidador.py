@@ -58,7 +58,7 @@ def parametros_padrao(metodos: Iterable[str] | None = None) -> dict[str, dict[st
         padroes[metodo] = {
             nome: p.default
             for nome, p in list(assinatura.parameters.items())[1:]
-            if nome != "dimensao"
+            if nome not in ("dimensao", "recuo")
         }
     return padroes
 

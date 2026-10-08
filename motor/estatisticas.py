@@ -10,10 +10,12 @@ import pandas as pd
 DIMENSOES_PADRAO = ("categoria", "conta_contabil", "centro_custo")
 COLUNAS_RESULTADO = ("dimensao", "chave", "media", "desvio", "q1", "q3", "n")
 
-# Grupo usado pelo Z-score e pelo IQR (decisão D1 de docs/FLUXO_ANALISE.md): as
-# categorias têm escalas de valor muito diferentes, por isso não se misturam.
-DIMENSAO_DETECCAO = "categoria"
-# Grupos menores que isso não são avaliados pelo Z-score e pelo IQR (decisão D4).
+# Referência do Z-score, do IQR e do desvio de valor do Isolation Forest: o histórico
+# do centro de custo × conta contábil (decisão da equipe em 08/10/2026, item 32 de
+# MUDANCAS_PARA_DOCUMENTACAO.md). Grupo com menos de N_MINIMO_GRUPO despesas usa a
+# categoria como recuo; se ela também for pequena, a despesa não é avaliada (decisão D4).
+DIMENSAO_DETECCAO = ("centro_custo", "conta_contabil")
+DIMENSAO_RECUO = "categoria"
 N_MINIMO_GRUPO = 10
 
 
@@ -53,14 +55,13 @@ def calcular_estatisticas(
     return estatisticas[list(COLUNAS_RESULTADO)]
 
 
-def estatisticas_por_despesa(despesas: pd.DataFrame, dimensao: str) -> pd.DataFrame:
-    """Estatísticas do grupo de cada despesa, alinhadas ao índice de ``despesas``.
+def colunas_da_dimensao(dimensao: str | tuple[str, ...]) -> list[str]:
+    """ "categoria" → ["categoria"]; ("centro_custo", "conta_contabil") → as duas colunas."""
+    return [dimensao] if isinstance(dimensao, str) else list(dimensao)
 
-    Devolve as colunas ``media``, ``desvio``, ``q1``, ``q3`` e ``n`` com as
-    mesmas regras de ``calcular_estatisticas``. O desvio fica ``NaN`` quando o
-    grupo tem uma única despesa.
-    """
-    grupos = despesas["valor"].astype(float).groupby(despesas[dimensao])
+
+def _estatisticas_do_grupo(despesas: pd.DataFrame, colunas: list[str]) -> pd.DataFrame:
+    grupos = despesas["valor"].astype(float).groupby([despesas[c] for c in colunas])
     return pd.DataFrame(
         {
             "media": grupos.transform("mean"),
@@ -71,3 +72,36 @@ def estatisticas_por_despesa(despesas: pd.DataFrame, dimensao: str) -> pd.DataFr
         },
         index=despesas.index,
     )
+
+
+def estatisticas_por_despesa(
+    despesas: pd.DataFrame,
+    dimensao: str | tuple[str, ...],
+    recuo: str | tuple[str, ...] | None = None,
+) -> pd.DataFrame:
+    """Estatísticas do grupo de cada despesa, alinhadas ao índice de ``despesas``.
+
+    Devolve ``media``, ``desvio``, ``q1``, ``q3`` e ``n`` (mesmas regras de
+    ``calcular_estatisticas``; desvio ``NaN`` em grupo de uma despesa) e ``usa_recuo``.
+    Com ``recuo``, a despesa cujo grupo tem menos de ``N_MINIMO_GRUPO`` despesas usa as
+    estatísticas do grupo de recuo (``usa_recuo`` verdadeiro).
+    """
+    estatisticas = _estatisticas_do_grupo(despesas, colunas_da_dimensao(dimensao))
+    estatisticas["usa_recuo"] = False
+    if recuo is not None:
+        pequeno = estatisticas["n"] < N_MINIMO_GRUPO
+        if pequeno.any():
+            do_recuo = _estatisticas_do_grupo(despesas, colunas_da_dimensao(recuo))
+            colunas = ["media", "desvio", "q1", "q3", "n"]
+            estatisticas.loc[pequeno, colunas] = do_recuo.loc[pequeno, colunas]
+            estatisticas.loc[pequeno, "usa_recuo"] = True
+    return estatisticas
+
+
+def descrever_grupo(despesa: pd.Series, dimensao, recuo, usa_recuo: bool) -> str:
+    """Texto do grupo de referência de uma despesa, para o motivo."""
+    from motor import texto
+
+    escolhida = recuo if usa_recuo and recuo is not None else dimensao
+    colunas = colunas_da_dimensao(escolhida)
+    return texto.grupo(tuple(colunas), tuple(despesa[c] for c in colunas))

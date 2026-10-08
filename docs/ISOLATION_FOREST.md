@@ -26,7 +26,7 @@ Todos são calculados no motor, a partir das próprias despesas, sem banco.
 
 | Atributo | Cálculo | Anomalia que mira |
 |---|---|---|
-| `desvio_valor` | \|z\| do **logaritmo** do valor dentro da categoria | valor extremo (em log, porque os valores são assimétricos e as categorias têm escalas diferentes) |
+| `desvio_valor` | \|z\| do **logaritmo** do valor dentro do grupo centro de custo × conta (recuo para a categoria se o grupo tiver menos de 10 despesas; mudança de 08/10/2026) | valor extremo (em log, porque os valores são assimétricos e as categorias têm escalas diferentes) |
 | `fim_semana_feriado` | 1 se sábado, domingo ou feriado nacional (`motor/calendario.py`), 0 se não | lançamento em dia não útil |
 | `repeticoes_valor` | outras despesas do **mesmo funcionário, categoria e valor** em até 7 dias corridos, para antes ou para depois | duplicidade |
 | `fracionamento` | se o valor está entre 85% e 100% do limite de aprovação: outras despesas do mesmo funcionário, também nessa faixa, em até 5 dias corridos; senão, 0 | fracionamento |
@@ -72,7 +72,7 @@ a partir dos atributos ativos da despesa sinalizada, uma frase por atributo:
 - "Lançada num domingo (14/06/2026)." / "Lançada em feriado nacional (21/04/2026)."
 - "O funcionário F012 lançou o mesmo valor (R$ 350,00) na categoria Software mais 1 vez em até 7 dias."
 - "Valor R$ 950,00 entre 85% e 100% do limite de R$ 1.000,00, com mais 2 lançamentos do funcionário F007 na mesma faixa em até 5 dias (possível fracionamento)."
-- "Valor R$ 4.800,00 muito acima do habitual da categoria Viagens." (quando `desvio_valor` > 2,5)
+- "Valor R$ 4.800,00 muito acima do habitual do centro de custo CC-COM na conta contábil 3.1.01.001." (quando `desvio_valor` > 2,5)
 
 Se nenhum atributo estiver ativo, o motivo diz isso com honestidade: "Combinação
 incomum de valor, data e frequência de lançamentos, sem um fator isolado que

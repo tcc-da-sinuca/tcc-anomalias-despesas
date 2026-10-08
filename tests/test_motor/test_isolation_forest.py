@@ -21,6 +21,7 @@ def _normais(quantidade=200):
                 "data": SEGUNDA + pd.offsets.BDay(i % 60),
                 "funcionario": f"F{i % 40:03d}",
                 "categoria": "Viagens" if i % 2 else "Software",
+                "conta_contabil": "3.1.01" if i % 2 else "3.5.01",
             }
         )
     return linhas
@@ -99,7 +100,7 @@ def despesas_com_anomalias():
         {**duplicada, "data": SEGUNDA},
         {**duplicada, "data": SEGUNDA + pd.DateOffset(days=1)},
     ]
-    fracionada = {"funcionario": "F098", "categoria": "Software"}
+    fracionada = {"funcionario": "F098", "categoria": "Software", "conta_contabil": "3.5.01"}
     linhas += [
         {**fracionada, "valor": v, "data": SEGUNDA + pd.DateOffset(days=d)}
         for v, d in [(955.0, 0), (962.0, 1), (971.0, 2)]

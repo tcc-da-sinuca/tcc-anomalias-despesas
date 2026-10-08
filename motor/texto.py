@@ -23,13 +23,20 @@ def percentual(fracao: float) -> str:
     return f"{numero(fracao * 100, 2)}%"
 
 
-# "da categoria Viagens", "do centro de custo CC-TI"
+# "da categoria Viagens", "do centro de custo CC-TI na conta contábil 3.1.05.002"
 NOMES_GRUPOS = {
-    "categoria": "da categoria",
-    "conta_contabil": "da conta contábil",
-    "centro_custo": "do centro de custo",
+    "categoria": ("da categoria", "na categoria"),
+    "conta_contabil": ("da conta contábil", "na conta contábil"),
+    "centro_custo": ("do centro de custo", "no centro de custo"),
 }
 
 
-def grupo(dimensao: str, chave) -> str:
-    return f"{NOMES_GRUPOS.get(dimensao, 'do grupo ' + dimensao)} {chave}"
+def grupo(dimensao, chave) -> str:
+    """Nome do grupo. Aceita uma coluna ("categoria", "Viagens") ou várias em tupla."""
+    colunas = (dimensao,) if isinstance(dimensao, str) else tuple(dimensao)
+    chaves = (chave,) if isinstance(dimensao, str) else tuple(chave)
+    partes = []
+    for posicao, (coluna, valor) in enumerate(zip(colunas, chaves, strict=True)):
+        formas = NOMES_GRUPOS.get(coluna, (f"do grupo {coluna}", f"no grupo {coluna}"))
+        partes.append(f"{formas[0 if posicao == 0 else 1]} {valor}")
+    return " ".join(partes)

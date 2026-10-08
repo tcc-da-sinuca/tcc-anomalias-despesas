@@ -44,7 +44,7 @@ import sklearn
 
 from dados.gerar_base_sintetica import ConfiguracaoBase, gerar_base, metadados
 from motor.consolidador import DETECTORES, parametros_padrao
-from motor.estatisticas import DIMENSAO_DETECCAO, N_MINIMO_GRUPO
+from motor.estatisticas import DIMENSAO_DETECCAO, DIMENSAO_RECUO, N_MINIMO_GRUPO
 
 PASTA_RESULTADOS = Path(__file__).resolve().parent / "resultados"
 VOTOS_MINIMOS = 2
@@ -274,7 +274,8 @@ def main(argv: list[str] | None = None) -> dict[str, Path]:
         "seed_base": seed_base,
         "metodos": metodos,
         "parametros": parametros,
-        "dimensao_valor": DIMENSAO_DETECCAO,
+        "dimensao_valor": "+".join(DIMENSAO_DETECCAO),
+        "dimensao_recuo": DIMENSAO_RECUO,
         "n_minimo_grupo": N_MINIMO_GRUPO,
         "votos_minimos": VOTOS_MINIMOS,
         "tempo_s_por_metodo": tempos,

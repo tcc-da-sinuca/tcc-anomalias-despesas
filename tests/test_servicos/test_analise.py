@@ -71,7 +71,8 @@ def test_registra_parametros_e_seed(sessao, auditor, despesas):
         "iqr": {"fator": 1.5},
         "contextual": {"frequencia_minima": 0.01},
         "isolation_forest": {"contamination": 0.05, "random_state": 42, "limite_aprovacao": 1000.0},
-        "dimensao_valor": "categoria",
+        "dimensao_valor": "centro_custo+conta_contabil",
+        "dimensao_recuo": "categoria",
         "n_minimo_grupo": 10,
     }
 

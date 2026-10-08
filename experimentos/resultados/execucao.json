@@ -1,5 +1,5 @@
 {
-  "executado_em": "2026-09-25T03:13:55+00:00",
+  "executado_em": "2026-10-08T22:54:42+00:00",
   "base": "gerada com seed 42",
   "seed_base": 42,
   "metodos": [
@@ -24,14 +24,15 @@
       "limite_aprovacao": 1000.0
     }
   },
-  "dimensao_valor": "categoria",
+  "dimensao_valor": "centro_custo+conta_contabil",
+  "dimensao_recuo": "categoria",
   "n_minimo_grupo": 10,
   "votos_minimos": 2,
   "tempo_s_por_metodo": {
-    "zscore": 0.0785,
-    "iqr": 0.0159,
-    "contextual": 0.0038,
-    "isolation_forest": 0.2621
+    "zscore": 0.0711,
+    "iqr": 0.0785,
+    "contextual": 0.0046,
+    "isolation_forest": 0.4556
   },
   "linhas": 5000,
   "versoes": {

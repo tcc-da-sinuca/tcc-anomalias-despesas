@@ -24,7 +24,13 @@ from sklearn.ensemble import IsolationForest
 from motor import texto
 from motor.calendario import eh_feriado
 from motor.contrato import montar_resultado, resultado_vazio
-from motor.estatisticas import N_MINIMO_GRUPO
+from motor.estatisticas import (
+    DIMENSAO_DETECCAO,
+    DIMENSAO_RECUO,
+    N_MINIMO_GRUPO,
+    descrever_grupo,
+    estatisticas_por_despesa,
+)
 
 # Constantes fixadas pela definição das anomalias, não ajustadas pelo experimento.
 JANELA_REPETICAO_DIAS = 7
@@ -52,17 +58,17 @@ def _vizinhos_na_janela(datas: np.ndarray, grupos: np.ndarray, janela: int) -> n
 def atributos(despesas: pd.DataFrame, limite_aprovacao: float = 1000.0) -> pd.DataFrame:
     """Tabela com os ``ATRIBUTOS`` de cada despesa, alinhada ao índice de ``despesas``.
 
-    Inclui também ``z_log_valor`` (com sinal), usado no motivo.
+    Inclui também ``z_log_valor`` (com sinal) e ``usa_recuo``, usados no motivo. O
+    desvio do valor é medido no grupo centro de custo × conta, com recuo para a categoria.
     """
     valores = despesas["valor"].astype(float)
     datas = pd.to_datetime(despesas["data"])
     dias = datas.to_numpy().astype("datetime64[D]").astype(np.int64)
 
     logs = np.log(valores.clip(lower=0.01))
-    grupo = logs.groupby(despesas["categoria"])
-    desvio = grupo.transform("std")
-    avaliavel = (grupo.transform("size") >= N_MINIMO_GRUPO) & (desvio > 0)
-    z_log = ((logs - grupo.transform("mean")) / desvio).where(avaliavel, 0.0)
+    grupo = estatisticas_por_despesa(despesas.assign(valor=logs), DIMENSAO_DETECCAO, DIMENSAO_RECUO)
+    avaliavel = (grupo["n"] >= N_MINIMO_GRUPO) & (grupo["desvio"] > 0)
+    z_log = ((logs - grupo["media"]) / grupo["desvio"]).where(avaliavel, 0.0)
 
     fim_semana_feriado = (datas.dt.dayofweek >= 5) | datas.dt.date.map(eh_feriado)
 
@@ -93,6 +99,7 @@ def atributos(despesas: pd.DataFrame, limite_aprovacao: float = 1000.0) -> pd.Da
             "repeticoes_valor": repeticoes,
             "fracionamento": fracionamento,
             "z_log_valor": z_log.to_numpy(),
+            "usa_recuo": grupo["usa_recuo"].to_numpy(),
         },
         index=despesas.index,
     )
@@ -141,8 +148,8 @@ def _motivo(despesa: pd.Series, atributo: pd.Series, limite_aprovacao: float) ->
     if atributo["desvio_valor"] > DESVIO_VALOR_MOTIVO:
         direcao = "acima" if atributo["z_log_valor"] > 0 else "abaixo"
         frases.append(
-            f"Valor {texto.moeda(valor)} muito {direcao} do habitual da categoria "
-            f"{despesa['categoria']}."
+            f"Valor {texto.moeda(valor)} muito {direcao} do habitual "
+            f"{descrever_grupo(despesa, DIMENSAO_DETECCAO, DIMENSAO_RECUO, atributo['usa_recuo'])}."
         )
     if atributo["fim_semana_feriado"]:
         dia = data.strftime("%d/%m/%Y")

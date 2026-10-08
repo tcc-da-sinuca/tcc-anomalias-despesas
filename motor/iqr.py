@@ -10,18 +10,27 @@ import pandas as pd
 
 from motor import texto
 from motor.contrato import montar_resultado, resultado_vazio
-from motor.estatisticas import DIMENSAO_DETECCAO, N_MINIMO_GRUPO, estatisticas_por_despesa
+from motor.estatisticas import (
+    DIMENSAO_DETECCAO,
+    DIMENSAO_RECUO,
+    N_MINIMO_GRUPO,
+    descrever_grupo,
+    estatisticas_por_despesa,
+)
 
 
 def detectar(
-    despesas: pd.DataFrame, fator: float = 1.5, dimensao: str = DIMENSAO_DETECCAO
+    despesas: pd.DataFrame,
+    fator: float = 1.5,
+    dimensao: str | tuple[str, ...] = DIMENSAO_DETECCAO,
+    recuo: str | tuple[str, ...] | None = DIMENSAO_RECUO,
 ) -> pd.DataFrame:
     """Distância de cada despesa além dos quartis do seu grupo, em IQRs. Ver ``motor.contrato``."""
     if despesas.empty:
         return resultado_vazio()
 
     valores = despesas["valor"].astype(float)
-    grupo = estatisticas_por_despesa(despesas, dimensao)
+    grupo = estatisticas_por_despesa(despesas, dimensao, recuo)
     iqr = grupo["q3"] - grupo["q1"]
     avaliavel = (grupo["n"] >= N_MINIMO_GRUPO) & (iqr > 0)
     acima = (valores - grupo["q3"]) / iqr
@@ -31,7 +40,7 @@ def detectar(
 
     motivos = pd.Series("", index=despesas.index, dtype=object)
     for i in despesas.index[sinalizado]:
-        nome_grupo = texto.grupo(dimensao, despesas.at[i, dimensao])
+        nome_grupo = descrever_grupo(despesas.loc[i], dimensao, recuo, grupo.at[i, "usa_recuo"])
         f = texto.numero(fator)
         if acima[i] > 0:
             limite = grupo.at[i, "q3"] + fator * iqr[i]

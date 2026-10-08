@@ -26,7 +26,7 @@ from app.models.dominio import METODO_ISOLATION_FOREST, STATUS_PENDENTE
 from app.servicos.parametros import obter_parametros
 from motor.consolidador import DETECTORES, MetodoDesconhecidoError, consolidar, executar_detectores
 from motor.contrato import COLUNAS_ENTRADA
-from motor.estatisticas import DIMENSAO_DETECCAO, N_MINIMO_GRUPO
+from motor.estatisticas import DIMENSAO_DETECCAO, DIMENSAO_RECUO, N_MINIMO_GRUPO
 
 __all__ = ["MetodoDesconhecidoError", "carregar_despesas", "executar_analise"]
 
@@ -131,6 +131,7 @@ def _parametros_registrados(parametros: dict, metodos: list[str]) -> dict:
     return {
         "metodos": metodos,
         **{metodo: parametros.get(metodo, {}) for metodo in metodos},
-        "dimensao_valor": DIMENSAO_DETECCAO,
+        "dimensao_valor": "+".join(DIMENSAO_DETECCAO),
+        "dimensao_recuo": DIMENSAO_RECUO,
         "n_minimo_grupo": N_MINIMO_GRUPO,
     }

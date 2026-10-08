@@ -9,18 +9,27 @@ import pandas as pd
 
 from motor import texto
 from motor.contrato import montar_resultado, resultado_vazio
-from motor.estatisticas import DIMENSAO_DETECCAO, N_MINIMO_GRUPO, estatisticas_por_despesa
+from motor.estatisticas import (
+    DIMENSAO_DETECCAO,
+    DIMENSAO_RECUO,
+    N_MINIMO_GRUPO,
+    descrever_grupo,
+    estatisticas_por_despesa,
+)
 
 
 def detectar(
-    despesas: pd.DataFrame, limiar: float = 3.0, dimensao: str = DIMENSAO_DETECCAO
+    despesas: pd.DataFrame,
+    limiar: float = 3.0,
+    dimensao: str | tuple[str, ...] = DIMENSAO_DETECCAO,
+    recuo: str | tuple[str, ...] | None = DIMENSAO_RECUO,
 ) -> pd.DataFrame:
     """Score |z| de cada despesa no seu grupo. Ver ``motor.contrato``."""
     if despesas.empty:
         return resultado_vazio()
 
     valores = despesas["valor"].astype(float)
-    grupo = estatisticas_por_despesa(despesas, dimensao)
+    grupo = estatisticas_por_despesa(despesas, dimensao, recuo)
     avaliavel = (grupo["n"] >= N_MINIMO_GRUPO) & (grupo["desvio"] > 0)
     z = ((valores - grupo["media"]) / grupo["desvio"]).where(avaliavel, 0.0)
     score = z.abs()
@@ -28,14 +37,13 @@ def detectar(
 
     motivos = pd.Series("", index=despesas.index, dtype=object)
     for i in despesas.index[sinalizado]:
-        motivos[i] = _motivo(
-            valores[i], grupo.at[i, "media"], z[i], limiar, dimensao, despesas.at[i, dimensao]
-        )
+        nome_grupo = descrever_grupo(despesas.loc[i], dimensao, recuo, grupo.at[i, "usa_recuo"])
+        motivos[i] = _motivo(valores[i], grupo.at[i, "media"], z[i], limiar, nome_grupo)
     return montar_resultado(despesas, score, sinalizado, motivos)
 
 
-def _motivo(valor, media, z, limiar, dimensao, chave) -> str:
-    referencia = f"média {texto.grupo(dimensao, chave)} ({texto.moeda(media)})"
+def _motivo(valor, media, z, limiar, nome_grupo) -> str:
+    referencia = f"média {nome_grupo} ({texto.moeda(media)})"
     if z > 0:
         comparacao = f"é {texto.numero(valor / media)}x a {referencia}"
     else:

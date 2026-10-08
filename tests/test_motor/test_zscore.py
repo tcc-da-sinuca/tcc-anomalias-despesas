@@ -34,7 +34,7 @@ def test_motivo_legivel():
     motivo = zscore.detectar(despesas)["motivo"].iloc[-1]
 
     assert motivo.startswith("Valor R$ 1.000,00 é ")
-    assert "x a média da categoria Viagens (R$ " in motivo
+    assert "x a média do centro de custo CC-ADM na conta contábil 3.1.01 (R$ " in motivo
     assert motivo.endswith("limiar 3.")
 
 
@@ -53,17 +53,36 @@ def test_limiar_configuravel():
     assert not zscore.detectar(despesas, limiar=score_extremo + 0.1)["sinalizado"].any()
 
 
-def test_grupos_por_categoria_sao_independentes():
-    # O mesmo valor é extremo em Alimentação e normal em Viagens.
-    linhas = (
-        grupo_com_extremo(extremo=500.0, categoria="Alimentação")
-        + [{"valor": 450.0 + i * 10, "categoria": "Viagens"} for i in range(12)]
-        + [{"valor": 500.0, "categoria": "Viagens"}]
-    )
+def test_referencia_e_o_centro_de_custo_e_a_conta():
+    # O mesmo valor é extremo no CC-ADM e normal no CC-TI, dentro da mesma conta.
+    linhas = [{"valor": 95.0 + (i % 11), "centro_custo": "CC-ADM"} for i in range(20)]
+    linhas += [{"valor": 450.0 + i * 10, "centro_custo": "CC-TI"} for i in range(12)]
+    linhas += [
+        {"valor": 500.0, "centro_custo": "CC-ADM"},
+        {"valor": 500.0, "centro_custo": "CC-TI"},
+    ]
     resultado = zscore.detectar(montar_despesas(linhas))
 
-    assert resultado["sinalizado"].sum() == 1
-    assert resultado["sinalizado"].iloc[20]
+    assert resultado["sinalizado"].tolist() == [False] * 32 + [True, False]
+    assert "do centro de custo CC-ADM na conta contábil 3.1.01" in resultado["motivo"].iloc[32]
+
+
+def test_grupo_pequeno_usa_a_categoria_como_recuo():
+    # 20 despesas de Viagens no CC-ADM; uma no CC-TI (grupo de 1) com valor extremo.
+    linhas = [{"valor": 95.0 + (i % 11)} for i in range(20)]
+    linhas.append({"valor": 1000.0, "centro_custo": "CC-TI"})
+    resultado = zscore.detectar(montar_despesas(linhas))
+
+    assert resultado["sinalizado"].iloc[-1]
+    assert "a média da categoria Viagens" in resultado["motivo"].iloc[-1]
+
+
+def test_sem_recuo_grupo_pequeno_nao_e_avaliado():
+    linhas = [{"valor": 95.0 + (i % 11)} for i in range(20)]
+    linhas.append({"valor": 1000.0, "centro_custo": "CC-TI"})
+    resultado = zscore.detectar(montar_despesas(linhas), recuo=None)
+
+    assert not resultado["sinalizado"].iloc[-1]
 
 
 def test_grupo_pequeno_nao_e_avaliado():
