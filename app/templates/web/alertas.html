@@ -65,6 +65,14 @@
         {% endfor %}
       </select>
     </div>
+    <div class="col-12 col-md-6 col-lg-4">
+      <label class="form-label small" for="ordem"><i class="bi bi-sort-down" aria-hidden="true"></i>Ordenar por</label>
+      <select class="form-select form-select-sm" id="ordem" name="ordem">
+        {% for chave, rotulo in ordenacoes.items() %}
+        <option value="{{ chave }}" {{ 'selected' if ordem == chave }}>{{ rotulo }}</option>
+        {% endfor %}
+      </select>
+    </div>
     {% if filtros.execucao_id %}
     <input type="hidden" name="execucao_id" value="{{ filtros.execucao_id }}">
     {% endif %}
@@ -88,7 +96,7 @@
 {% if pagina.total %}
 <p class="text-muted small">
   {{ pagina.total }} alerta(s){% if filtros.ativos %} com {{ filtros.ativos }} filtro(s) ativo(s){% endif %}.
-  Pendentes primeiro, depois maior score.
+  Ordenados por: {{ ordenacoes[ordem] | lower }}.
 </p>
 
 {# Telas grandes: tabela #}
@@ -148,7 +156,7 @@
   </a>
   {% endfor %}
 </div>
-{{ paginacao(pagina, 'web.alertas', **filtros.como_parametros()) }}
+{{ paginacao(pagina, 'web.alertas', ordem=(ordem if ordem != ordem_padrao else none), **filtros.como_parametros()) }}
 {% else %}
 <div class="card"><div class="card-body text-center py-5">
   <i class="bi bi-search fs-1 text-muted d-block mb-2" aria-hidden="true"></i>

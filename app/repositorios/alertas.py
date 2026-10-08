@@ -17,6 +17,16 @@ POR_PAGINA_MAXIMO = 200
 # Filtros de texto da US10: comparação exata com o campo da despesa.
 CAMPOS_DESPESA = ("categoria", "conta_contabil", "centro_custo", "funcionario")
 
+# Ordenações da lista de alertas: chave do parâmetro "ordem" → rótulo na tela.
+ORDEM_PADRAO = "padrao"
+ORDENACOES = {
+    ORDEM_PADRAO: "Pendentes primeiro, maior score",
+    "data_desc": "Data da despesa (mais recente primeiro)",
+    "data_asc": "Data da despesa (mais antiga primeiro)",
+    "valor_desc": "Valor (maior primeiro)",
+    "valor_asc": "Valor (menor primeiro)",
+}
+
 
 class FiltroInvalidoError(ValueError):
     """Valor de filtro inválido. ``campo`` indica o parâmetro com problema."""
@@ -101,14 +111,38 @@ class FiltrosAlertas:
         return len(self.como_parametros())
 
 
+def ler_ordem(valor: str | None) -> str:
+    """Valida o parâmetro ``ordem``. Vazio = ordem padrão. Levanta ``FiltroInvalidoError``."""
+    ordem = (valor or "").strip() or ORDEM_PADRAO
+    if ordem not in ORDENACOES:
+        raise FiltroInvalidoError("ordem", f"ordem inválida. Use uma de: {', '.join(ORDENACOES)}.")
+    return ordem
+
+
+def _criterios_de_ordem(ordem: str) -> list:
+    """Colunas de ORDER BY. O id no fim desempata, para a paginação não pular nem repetir."""
+    if ordem == "data_desc":
+        return [Despesa.data.desc(), AlertaAnomalia.id.desc()]
+    if ordem == "data_asc":
+        return [Despesa.data.asc(), AlertaAnomalia.id.asc()]
+    if ordem == "valor_desc":
+        return [Despesa.valor.desc(), AlertaAnomalia.id.desc()]
+    if ordem == "valor_asc":
+        return [Despesa.valor.asc(), AlertaAnomalia.id.asc()]
+    pendente_primeiro = case((AlertaAnomalia.status_revisao == STATUS_PENDENTE, 0), else_=1)
+    return [pendente_primeiro, AlertaAnomalia.score.desc(), AlertaAnomalia.id]
+
+
 def paginar_alertas(
     pagina: int = 1,
     por_pagina: int = POR_PAGINA_PADRAO,
     filtros: FiltrosAlertas | None = None,
+    ordem: str = ORDEM_PADRAO,
 ):
     """Alertas que atendem a todos os filtros ao mesmo tempo. Retorna um ``Pagination``.
 
-    Pendentes primeiro e, dentro de cada status, maior score primeiro.
+    ``ordem`` é uma das chaves de ``ORDENACOES``; a padrão põe os pendentes primeiro e,
+    dentro de cada status, o maior score primeiro.
     """
     filtros = filtros or FiltrosAlertas()
     por_pagina = max(1, min(por_pagina, POR_PAGINA_MAXIMO))
@@ -131,8 +165,7 @@ def paginar_alertas(
         valor = getattr(filtros, campo)
         if valor:
             consulta = consulta.where(getattr(Despesa, campo) == valor)
-    pendente_primeiro = case((AlertaAnomalia.status_revisao == STATUS_PENDENTE, 0), else_=1)
-    consulta = consulta.order_by(pendente_primeiro, AlertaAnomalia.score.desc(), AlertaAnomalia.id)
+    consulta = consulta.order_by(*_criterios_de_ordem(ordem))
     return db.paginate(consulta, page=max(pagina, 1), per_page=por_pagina, error_out=False)
 
 

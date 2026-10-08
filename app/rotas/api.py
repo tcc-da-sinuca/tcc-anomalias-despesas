@@ -182,16 +182,19 @@ def listar_alertas():
 
     ``?data_inicio=2026-03-01&data_fim=2026-03-31&categoria=Viagens&conta_contabil=3.1.01``
     ``&centro_custo=CC-ADM&funcionario=F001&status=pendente&metodo=zscore&execucao_id=3``
-    ``&pagina=1&por_pagina=50``. O período se refere à data da despesa.
+    ``&pagina=1&por_pagina=50&ordem=valor_desc``. O período se refere à data da despesa.
+    ``ordem``: padrao, data_desc, data_asc, valor_desc ou valor_asc.
     """
     try:
         filtros = repo_alertas.FiltrosAlertas.de_parametros(request.args)
+        ordem = repo_alertas.ler_ordem(request.args.get("ordem"))
     except repo_alertas.FiltroInvalidoError as erro:
         return jsonify(erro=str(erro), campo=erro.campo), 400
     pagina = repo_alertas.paginar_alertas(
         request.args.get("pagina", 1, type=int),
         request.args.get("por_pagina", repo_alertas.POR_PAGINA_PADRAO, type=int),
         filtros,
+        ordem,
     )
     return jsonify(
         _pagina_json(pagina, lambda a: {**_alerta_json(a), "despesa": _despesa_json(a.despesa)})

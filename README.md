@@ -98,7 +98,8 @@ ser repetida após cada importação.
 
 A tela **Alertas** lista cada alerta com score, método e motivo, com filtros
 combináveis (aplicados ao escolher): período (data da despesa), categoria, conta
-contábil, centro de custo, funcionário, status e método. No detalhe do alerta, o
+contábil, centro de custo, funcionário, status e método, e pode ser ordenada por data ou valor, em ordem
+crescente ou decrescente. No detalhe do alerta, o
 auditor classifica a despesa (aprovado, irregular ou necessita justificativa) e
 registra um parecer; a observação é obrigatória nos dois últimos casos. Pareceres não
 podem ser alterados: uma nova revisão gera um novo parecer e o histórico fica visível.

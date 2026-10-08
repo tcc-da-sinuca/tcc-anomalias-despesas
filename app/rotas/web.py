@@ -168,7 +168,13 @@ def alertas():
         erro_filtro = None
     except repo_alertas.FiltroInvalidoError as erro:
         filtros, erro_filtro = repo_alertas.FiltrosAlertas(), erro
-    pagina = repo_alertas.paginar_alertas(request.args.get("pagina", 1, type=int), filtros=filtros)
+    try:
+        ordem = repo_alertas.ler_ordem(request.args.get("ordem"))
+    except repo_alertas.FiltroInvalidoError:
+        ordem = repo_alertas.ORDEM_PADRAO  # ordem desconhecida na URL: usa a padrão
+    pagina = repo_alertas.paginar_alertas(
+        request.args.get("pagina", 1, type=int), filtros=filtros, ordem=ordem
+    )
     return render_template(
         "web/alertas.html",
         pagina=pagina,
@@ -177,6 +183,9 @@ def alertas():
         opcoes={campo: valores_distintos(campo) for campo in repo_alertas.CAMPOS_DESPESA},
         metodos=METODOS,
         status_revisao=STATUS_REVISAO,
+        ordem=ordem,
+        ordenacoes=repo_alertas.ORDENACOES,
+        ordem_padrao=repo_alertas.ORDEM_PADRAO,
     ), (400 if erro_filtro else 200)
 
 
