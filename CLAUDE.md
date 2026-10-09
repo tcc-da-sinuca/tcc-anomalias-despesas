@@ -17,6 +17,10 @@ Uma aplicação web que:
 
 **Princípio inegociável:** o alerta é um **indício estatístico, não uma acusação**. A
 interface deve deixar isso claro e sempre exigir revisão humana.
+**Exceção decidida pela equipe (08/10/2026):** na aprovação prévia, uma despesa com alerta
+de gravidade crítica (Z-score ou IQR) é rejeitada automaticamente; quem lançou pode
+encaminhar o pedido, que volta como prioritário para decisão humana (item 34 de
+`docs/MUDANCAS_PARA_DOCUMENTACAO.md`).
 
 **Prazo final:** software funcionando, com código e base de dados, até **02/11/2026**.
 
@@ -55,6 +59,7 @@ interface deve deixar isso claro e sempre exigir revisão humana.
 | RF11 / US11 | Relatório mensal exportável: total analisado, anomalias e taxa de confirmação de irregularidade. | Could | 4 |
 | RF12 | Histórico completo de análises e pareceres. | Must | 2–4 |
 | RF13 / US12 | Administrador configura os parâmetros dos métodos, com validação dos valores. | Could | 4 |
+| Novo (08/10) | Aprovação prévia: despesa lançada fora do padrão vira pedido para o administrador; crítica é rejeitada automaticamente e pode ser encaminhada com prioridade. Fora dos RFs entregues. | — | pós-S4 |
 
 **Sprints:** S1 14/09–27/09 · S2 28/09–11/10 · S3 12/10–25/10 · S4 26/10–02/11.
 A S4 tem só uma semana e muitas histórias. **Antecipe a tela de alertas e o fluxo de revisão sempre que possível.**
@@ -90,12 +95,14 @@ Implementado em `app/models/` e refletido em `docs/diagramas/classes.puml`.
 
 - `Usuario`: id, nome, email, senha_hash, perfil, ativo
 - `LoteImportacao`: id, nome_arquivo, importado_por, importado_em, total_linhas, linhas_validas, erros (JSON)
-- `Despesa`: id, valor (Numeric), data, categoria, conta_contabil, centro_custo, funcionario, descricao, lote_id (opcional: cadastro manual)
+- `Despesa`: id, valor (Numeric), data, categoria, conta_contabil, centro_custo, funcionario, descricao, lote_id (opcional: cadastro manual), situacao (`valida`|`pendente`|`rejeitada`; só válidas são histórico)
 - `EstatisticaReferencia`: id, dimensao, chave, media, desvio, q1, q3, n, calculada_em (única por dimensao + chave)
 - `ExecucaoAnalise`: id, iniciada_em, duracao_s, parametros (JSON), seed, total_despesas, total_alertas, executada_por (opcional: job agendado)
-- `AlertaAnomalia`: id, despesa_id, execucao_id, metodo (`zscore`|`iqr`|`isolation_forest`|`contextual`), score, motivo, status_revisao (padrão `pendente`), criado_em
+- `AlertaAnomalia`: id, despesa_id, execucao_id, metodo (`zscore`|`iqr`|`isolation_forest`|`contextual`), score, motivo, excesso, gravidade (`leve`|`moderada`|`alta`|`critica`), status_revisao (padrão `pendente`), criado_em
 - `Parecer`: id, alerta_id, usuario_id, status, observacao, criado_em (**somente inserção**: eventos do SQLAlchemy + trigger no PostgreSQL)
 - `ParametroMetodo`: metodo, chave (chave primária composta), valor, alterado_por, alterado_em
+- `SolicitacaoAprovacao`: id, despesa_id (única), solicitada_por, criada_em, status (`pendente`|`aprovada`|`rejeitada`|`rejeitada_automaticamente`), gravidade, prioritaria, decidida_por, decidida_em, justificativa
+- `EventoSolicitacao`: id, solicitacao_id, tipo, usuario_id (vazio = sistema), observacao, criado_em (**somente inserção**, como o parecer)
 
 Valores de domínio (perfis, métodos, status, parâmetros padrão) ficam em `app/models/dominio.py`.
 
@@ -118,6 +125,9 @@ Apresentação (Jinja2)  →  Rotas Flask / API REST  →  Serviços  →  Motor
   que recebe um `DataFrame` e retorna `DataFrame[despesa_id, score, sinalizado, motivo]`.
 - Um `consolidador` junta os resultados dos detectores e gera os `AlertaAnomalia`.
 - Os serviços orquestram: carregar despesas → rodar o motor → persistir a execução e os alertas.
+- **Referência dos métodos:** histórico do centro de custo × conta contábil, com recuo para a
+  categoria quando o grupo tem menos de 10 despesas. A gravidade de cada alerta (`motor/gravidade.py`)
+  mede quanto o score passou do limite do método.
 - **Tipos de anomalia × métodos:** duplicidade, fracionamento e lançamento em fim de semana/feriado
   são cobertos pelo Isolation Forest com atributos derivados (dia da semana, feriado, repetições por
   funcionário). O método contextual trata só de categoria × conta × centro de custo.
@@ -130,6 +140,8 @@ GET  /api/alertas?filtros...     GET  /api/alertas/{id}
 POST /api/alertas/{id}/parecer   GET  /api/dashboard
 GET  /api/relatorios/mensal?ano=&mes=&formato=csv|pdf
 GET  /api/parametros             PUT  /api/parametros   (admin)
+GET  /api/solicitacoes           GET  /api/solicitacoes/{id}
+POST /api/solicitacoes/{id}/aprovar|rejeitar (admin)    POST /api/solicitacoes/{id}/encaminhar
 ```
 Já existem: `GET /api/saude` (verificação de saúde) e `GET /api/usuario-atual`.
 

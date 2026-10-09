@@ -26,7 +26,11 @@ docker compose exec app flask criar-usuario --nome "Auditora Demo" \
   --email auditora@exemplo.com --perfil auditor --senha senha-da-demo
 ```
 
-Resultado esperado da análise: **5.000 despesas, 596 alertas**.
+Resultado esperado da análise: **5.000 despesas, 599 alertas**.
+
+Para os números não mudarem durante a apresentação, deixe o job de reprocessamento
+parado (`REPROCESSAMENTO_INTERVALO_MIN=0` no `.env` antes de subir); depois da importação ele
+analisaria a base de novo sozinho.
 
 Deixe abertos: o navegador em <http://localhost:5000>, uma janela anônima (para o
 login da auditora) e o arquivo `dados/exemplos/importacao_demonstracao.csv`.
@@ -36,67 +40,70 @@ login da auditora) e o arquivo `dados/exemplos/importacao_demonstracao.csv`.
 ## 2. Apresentação
 
 ### 2.1 Login e dashboard (US09) — 1 min
-- Entrar como administrador (`ADMIN_EMAIL` / `ADMIN_SENHA` do `.env`).
-- Mostrar a tela de login (o que o sistema faz e o aviso de indício), a **faixa amarela**
-  (RNF04) e o dashboard: 5.000 despesas, 433 sinalizadas
-  (8,66%), 596 alertas, todos pendentes (a barra **Andamento da revisão** começa em 0%), e os
-  alertas por método.
-- **Falar:** "uma despesa pode ter alertas de vários métodos, por isso há mais alertas
-  que despesas sinalizadas".
+- Mostrar a tela de login (o que o sistema faz e o aviso de indício). Entrar como
+  administrador (`ADMIN_EMAIL` / `ADMIN_SENHA` do `.env`).
+- Mostrar a **faixa amarela** (RNF04) e o dashboard: 5.000 despesas, 431 sinalizadas
+  (8,62%), 599 alertas, todos pendentes (a barra **Andamento da revisão** começa em 0%).
+- **Falar:** a referência de cada despesa é o histórico do mesmo **centro de custo e conta**;
+  uma despesa pode ter alertas de vários métodos, por isso há mais alertas que despesas
+  sinalizadas.
 
-### 2.2 Importação com erros por linha (US01) — 2 min
-- Menu **Dados → Importar** → enviar `dados/exemplos/importacao_demonstracao.csv` (o mesmo arquivo
-  sai do botão **Baixar arquivo de exemplo (CSV)** da própria tela).
-- **Mostrar:** 11 linhas, **9 importadas, 2 com erro**, listadas por linha:
-  - linha 11: "valor é obrigatório";
-  - linha 12: "data inválida: '31/02/2026' (use AAAA-MM-DD ou DD/MM/AAAA)".
-- **Falar:** o arquivo está no formato do Excel brasileiro (`;` e vírgula decimal); as
-  linhas válidas entram mesmo com erros em outras; as estatísticas de referência (US02,
-  menu **Dados → Estatísticas**) foram recalculadas.
+### 2.2 Lançamento com aprovação prévia (US01 + aprovação prévia) — 3 min
+- Na janela anônima, entrar como **auditora@exemplo.com**. Menu **Dados → Importar** →
+  enviar `dados/exemplos/importacao_demonstracao.csv` (também sai do botão **Baixar arquivo
+  de exemplo (CSV)**).
+- **Mostrar** o resultado do lote: 11 linhas, **9 importadas, 2 com erro** (linha 11: "valor é
+  obrigatório"; linha 12: "data inválida: '31/02/2026'"), e a **verificação no lançamento**:
+  **3 dentro do padrão**, **5 aguardando aprovação**, **1 rejeitada automaticamente**.
+- **Falar:** os quatro métodos rodaram na hora contra o histórico; o que está fora do padrão
+  não entra como válido e vira pedido para o administrador. O selo amarelo no menu
+  **Pedidos** mostra 5 pendentes.
 
-### 2.3 Análise (US03, US04, US05) — 1 min
-- Menu **Análises** → **Executar análise**.
-- **Mostrar:** "5.009 despesa(s) analisada(s), 8 alerta(s) novo(s)" e, no detalhe,
-  os alertas por método (Z-score 1, IQR 1, Isolation Forest 5, contextual 1) e os
-  **parâmetros e a seed registrados** (RNF06).
-- **Falar:** os 596 alertas anteriores não foram duplicados; só as despesas novas
-  geraram alertas.
+### 2.3 Rejeição automática e encaminhamento — 2 min
+- Ainda como auditora: **Pedidos → Rejeitados automaticamente** → pedido da **Passagem aérea
+  internacional** (R$ 14.900,00).
+- **Mostrar** os motivos com o score colorido pela gravidade:
 
-### 2.4 Alertas e filtros (US06, US10) — 2 min
-- Menu **Alertas** → filtrar **Despesas de 24/08/2026 até 30/08/2026** (o filtro aplica
-  sozinho) e depois **Funcionário F019**.
-- **Mostrar os motivos em linguagem simples** (RNF05):
-
-| Despesa do exemplo | Método | Motivo exibido |
+| Método | Score | Motivo exibido |
 |---|---|---|
-| Passagem aérea internacional | Z-score | "Valor R$ 14.900,00 é 14,5x a média da categoria Viagens (R$ 1.030,39); z = 14,5, limiar 3." |
-| | IQR | "Valor R$ 14.900,00 acima do limite superior da categoria Viagens (Q3 + 1,5 × IQR = R$ 2.187,50)." |
-| | Isolation Forest | "Valor R$ 14.900,00 muito acima do habitual da categoria Viagens." |
-| Licença de software (3 partes: R$ 955, 962 e 971) | Isolation Forest | "Valor R$ 955,00 entre 85% e 100% do limite de R$ 1.000,00, com mais 2 lançamentos do funcionário F019 na mesma faixa em até 5 dias (possível fracionamento)." |
-| Abastecimento | Isolation Forest | "Lançada num domingo (30/08/2026)." |
-| Diária de hotel | Contextual | "A combinação conta 3.1.06.001 × centro de custo CC-COM não aparece em nenhuma outra despesa da categoria Hospedagem (506 despesas)." |
+| IQR | 21,67 · **14,45x o limite** (crítica) | "Valor R$ 14.900,00 acima do limite superior do centro de custo CC-COM na conta contábil 3.1.01.001 (Q3 + 1,5 × IQR = R$ 2.153,90)." |
+| Z-score | 13,17 · **4,39x o limite** (crítica) | "Valor R$ 14.900,00 é 14,4x a média do centro de custo CC-COM na conta contábil 3.1.01.001 (R$ 1.036,32); z = 13,2, limiar 3." |
+| Isolation Forest | 0,74 · 1,27x o limite (alta) | "Valor R$ 14.900,00 muito acima do habitual do centro de custo CC-COM na conta contábil 3.1.01.001." |
 
-- **Falar:** as três despesas "normais" do arquivo não geraram alerta.
+- Encaminhar com a justificativa "Viagem internacional autorizada pela diretoria; anexo a
+  autorização." → o pedido volta como **pendente prioritário**.
+- **Falar:** só o Z-score e o IQR chegam a "crítica"; no experimento, toda rejeição automática
+  foi de uma anomalia de verdade (13 de 13 e 8 de 8, seeds 42 e 7). O encaminhamento garante
+  que uma despesa legítima chegue a um humano.
 
-### 2.5 Revisão e parecer (US07, US08, RF12) — 3 min
-- Abrir o alerta da **Passagem aérea internacional** (Z-score).
-- Tentar registrar **Irregular sem observação** → a tela recusa (observação obrigatória).
-- Registrar **Necessita justificativa** com "Pedir a autorização da viagem ao gestor".
-- Registrar um **novo parecer**: **Aprovado**, "Viagem autorizada pela diretoria".
-- **Mostrar** o quadro **Contexto da categoria Viagens** (média, faixa típica e quantas vezes a
-  média vale esta despesa) e o histórico com os dois pareceres, autor e horário.
-- **Falar:** "aprovado" quer dizer que a **despesa** é regular (o alerta foi um falso
-  positivo). Pareceres não podem ser alterados nem apagados, nem direto no banco
-  (trigger no PostgreSQL, RNF02): uma nova decisão é um novo parecer.
-- Abrir o alerta do **Abastecimento no domingo** e registrar **Irregular** com uma
-  observação (será usado no relatório).
+### 2.4 Decisão do administrador — 2 min
+- Na janela do administrador: o selo do menu fica **vermelho** (há prioritário) e o
+  dashboard mostra "6 pedido(s) de aprovação pendente(s), 1 prioritário(s)".
+- **Pedidos**: o #1 (passagem) aparece **no topo, em destaque**, seguido por gravidade
+  (diária de hotel "alta", abastecimento "moderada", três parcelas de software "leve").
+- Abrir o #1 → **Aprovar** com "Autorização da diretoria conferida." → mostrar o histórico do
+  pedido (aberto, rejeitado pelo sistema, encaminhado, aprovado) e a despesa **Válida**.
+- Abrir o **Abastecimento** (domingo) → **Rejeitar** sem justificativa (recusado) e depois com
+  "Abastecimento em domingo sem viagem registrada."
+- **Falar:** só o administrador decide, e nunca uma despesa que ele mesmo lançou
+  (segregação de funções); o histórico dos pedidos não pode ser alterado nem no banco.
+
+### 2.5 Alertas: gravidade e decisão rápida (US06, US07, US10) — 2 min
+- Menu **Alertas** → filtrar **Despesas de 01/08/2026 até 31/08/2026** (aplica sozinho).
+- **Mostrar** o score colorido: o primeiro alerta (IQR, R$ 2.167,52, Treinamentos) está em
+  vermelho, **27,37x o limite**; os de Z-score logo abaixo, em laranja (alta).
+- No primeiro, botão de **decisão rápida** → **Rejeitar** com "Valor sem comprovante." → volta
+  para a lista com os filtros e a mensagem "Alerta #… rejeitado (irregular)".
+- Botão **"i"** de outro alerta → detalhe com o **contexto do grupo** e o histórico de pareceres.
+- **Falar:** "aprovado" quer dizer que a **despesa** é regular; os pareceres não podem ser
+  alterados nem apagados (RNF02).
 
 ### 2.6 Relatório mensal (US11) — 2 min
 - Menu **Relatório** → **agosto de 2026**.
-- **Mostrar** a taxa de confirmação com a amostra, "50,00% (1 de 2)": a passagem foi
-  aprovada e o abastecimento, irregular. Explicar a fórmula irregular ÷ (aprovado + irregular).
-- **Baixar PDF** e abrir: mesmo conteúdo, com o aviso de indício no topo.
-- **Baixar CSV** e abrir no Excel (formato brasileiro).
+- **Mostrar** a taxa de confirmação com a amostra, **"25,00% (1 de 4)"**: os 3 alertas da
+  passagem aprovada contam como "aprovado" e o alerta rejeitado na decisão rápida, como
+  "irregular". Despesas pendentes e rejeitadas não entram no relatório.
+- **Baixar PDF** (com o aviso de indício no topo) e **Baixar CSV** (formato do Excel brasileiro).
 
 ### 2.7 Perfis, parâmetros e usuários (US12, RNF03) — 2 min
 - Na janela anônima, entrar como **auditora@exemplo.com**: o menu não tem
@@ -114,9 +121,9 @@ login da auditora) e o arquivo `dados/exemplos/importacao_demonstracao.csv`.
 
 | Avaliação | Precisão | Recall | F1 | Taxa de FP |
 |---|---|---|---|---|
-| Isolation Forest | 0,708 | 0,819 | 0,760 | 0,015 |
-| Contextual + Isolation Forest | 0,738 | 0,954 | 0,832 | 0,015 |
-| Z-score + contextual + Isolation Forest | 0,716 | 0,958 | 0,820 | 0,017 |
+| Isolation Forest | 0,756 | 0,875 | 0,811 | 0,013 |
+| Contextual + Isolation Forest | 0,774 | 0,968 | 0,860 | 0,013 |
+| Z-score + contextual + Isolation Forest | 0,715 | 0,977 | 0,826 | 0,018 |
 
 - **Falar:** cada método cobre um tipo de anomalia (valores extremos, combinações
   incompatíveis, duplicidade, fracionamento, fim de semana); combinados, pegam quase
@@ -128,9 +135,11 @@ login da auditora) e o arquivo `dados/exemplos/importacao_demonstracao.csv`.
 
 | Pergunta | Resposta |
 |---|---|
-| O sistema acusa funcionários? | Não. Todo alerta é um indício que exige revisão humana; a interface e o PDF deixam isso explícito (RNF04). |
-| Por que o Isolation Forest sinaliza a despesa original de uma duplicata? | Porque as duas têm o mesmo valor repetido; o motivo aponta o par, e o auditor aprova a original. No experimento isso conta como falso positivo (30 dos 73 do método). |
-| Fracionamento em só 2 parcelas é detectado? | Nem sempre: o sinal é fraco. Com 3 parcelas, como no exemplo, é detectado. É uma limitação a relatar. |
+| O sistema acusa funcionários? | Não. Todo alerta é um indício; a interface e o PDF deixam isso explícito (RNF04). A única decisão automática é a rejeição de lançamentos com gravidade crítica, e quem lançou pode encaminhar o pedido para um humano decidir, com prioridade. |
+| A rejeição automática não contradiz "sempre exige revisão humana"? | É uma exceção decidida pela equipe e registrada (item 34). Ela só vale para gravidade crítica no Z-score ou no IQR, que no experimento acertou em 13 de 13 e 8 de 8 casos (seeds 42 e 7), e o encaminhamento devolve o caso a um humano. |
+| Por que o administrador não aprova a própria despesa? | Segregação de funções: quem lança não decide sobre o próprio lançamento. |
+| Por que o Isolation Forest sinaliza a despesa original de uma duplicata? | Na análise da base inteira, as duas têm o mesmo valor repetido; o motivo aponta o par, e o auditor aprova a original. No experimento, isso conta como falso positivo. No lançamento isso não acontece: a original entra antes de a cópia existir. |
+| Por que o Isolation Forest nunca chega a "crítica"? | A escala dele depende do tamanho de cada base, e no experimento os alertas mais extremos dele acertavam só metade das vezes. Por isso, ele gera pedidos para revisão, mas não rejeita sozinho. |
 | A base sintética não favorece os métodos? | Os atributos vêm da definição das anomalias, e as janelas e faixas foram fixadas antes do experimento; o resultado se mantém com outra seed. Em dados reais, lançamentos legítimos em fim de semana existem e reduziriam o desempenho desse atributo. |
 | Uma taxa de confirmação de 100% é confiável? | Depende da amostra, por isso ela aparece ao lado ("1 de 1"). |
 | E se mudarem os parâmetros? | Vale para as próximas análises; cada análise registra os parâmetros e a seed que usou, então é possível reproduzi-la. |

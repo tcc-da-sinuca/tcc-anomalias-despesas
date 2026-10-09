@@ -23,6 +23,7 @@
       </button>
       {% set principais = [
         ('web.inicio', 'Dashboard', 'speedometer2'),
+        ('web.pedidos', 'Pedidos', 'inbox'),
         ('web.alertas', 'Alertas', 'exclamation-triangle'),
         ('web.analises', 'Análises', 'cpu'),
         ('web.relatorios', 'Relatório', 'file-earmark-bar-graph'),
@@ -42,7 +43,11 @@
           <li class="nav-item">
             <a class="nav-link {{ 'active' if request.endpoint == endpoint }}"
                {{ 'aria-current=page' if request.endpoint == endpoint }}
-               href="{{ url_for(endpoint) }}"><i class="bi bi-{{ icone }}" aria-hidden="true"></i>{{ rotulo }}</a>
+               href="{{ url_for(endpoint) }}"><i class="bi bi-{{ icone }}" aria-hidden="true"></i>{{ rotulo }}
+              {%- if endpoint == 'web.pedidos' and pedidos_por_status and pedidos_por_status.pendente %}
+              <span class="badge rounded-pill {{ 'text-bg-danger' if pedidos_por_status.prioritarios else 'text-bg-warning' }} selo-menu"
+                    title="{{ pedidos_por_status.pendente }} pedido(s) pendente(s)">{{ pedidos_por_status.pendente }}</span>
+              {%- endif %}</a>
           </li>
           {% endfor %}
           {% for rotulo, icone, itens in grupos %}

@@ -226,3 +226,40 @@ def test_job_espera_a_analise_em_andamento_e_nao_repete(app_pg):
     assert not thread.is_alive()
     assert resultado["execucao"] is None  # viu a análise recém-gravada e não repetiu
     assert db.session.query(ExecucaoAnalise).count() == 1
+
+
+def test_trigger_impede_alterar_evento_de_pedido(app_pg):
+    """O histórico dos pedidos é somente inserção também direto no banco."""
+    from sqlalchemy import text
+    from sqlalchemy.exc import DBAPIError
+
+    from app.extensoes import db
+    from app.models import Despesa, EventoSolicitacao, SolicitacaoAprovacao, Usuario
+
+    usuario = Usuario(nome="A", email="a@t.com", perfil="auditor", senha_hash="x")
+    despesa = Despesa(
+        valor=Decimal("10.00"),
+        data=date(2026, 3, 2),
+        categoria="Viagens",
+        conta_contabil="3.1.01",
+        centro_custo="CC-ADM",
+        funcionario="F001",
+        situacao="pendente",
+    )
+    db.session.add_all([usuario, despesa])
+    db.session.flush()
+    pedido = SolicitacaoAprovacao(despesa_id=despesa.id, solicitada_por=usuario.id)
+    db.session.add(pedido)
+    db.session.flush()
+    db.session.add(
+        EventoSolicitacao(solicitacao_id=pedido.id, tipo="criada", usuario_id=usuario.id)
+    )
+    db.session.commit()
+
+    for comando in (
+        "UPDATE evento_solicitacao SET observacao = 'x'",
+        "DELETE FROM evento_solicitacao",
+    ):
+        with pytest.raises(DBAPIError, match="somente inserção"):
+            db.session.execute(text(comando))
+        db.session.rollback()

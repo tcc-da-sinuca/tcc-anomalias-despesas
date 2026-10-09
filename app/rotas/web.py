@@ -14,6 +14,7 @@ from app.repositorios.despesas import paginar_despesas, paginar_lotes, valores_d
 from app.rotas.autorizacao import perfil_requerido
 from app.servicos import parametros as servico_parametros
 from app.servicos import relatorio as servico_relatorio
+from app.servicos import solicitacoes as servico_solicitacoes
 from app.servicos import usuarios as servico_usuarios
 from app.servicos.analise import executar_analise
 from app.servicos.dashboard import resumo as resumo_dashboard
@@ -59,17 +60,31 @@ def nova_despesa():
     form = DespesaForm()
     if form.validate_on_submit():
         try:
-            cadastrar_despesa({campo: getattr(form, campo).data for campo in CAMPOS})
+            resultado = cadastrar_despesa(
+                {campo: getattr(form, campo).data for campo in CAMPOS}, current_user
+            )
         except DespesaInvalidaError as erro:
             db.session.rollback()
             for campo, mensagem in erro.erros:
                 getattr(form, campo).errors.append(mensagem)
         else:
             db.session.commit()
-            flash(
-                "Despesa cadastrada. As estatísticas de referência foram recalculadas.", "success"
-            )
-            return redirect(url_for("web.despesas"))
+            if resultado.solicitacao is None:
+                flash("Despesa cadastrada: dentro do padrão do histórico.", "success")
+                return redirect(url_for("web.despesas"))
+            if resultado.situacao == "rejeitada":
+                flash(
+                    "Despesa rejeitada automaticamente: um dos métodos indicou gravidade crítica. "
+                    "Se ela for legítima, encaminhe o pedido para aprovação.",
+                    "danger",
+                )
+            else:
+                flash(
+                    "Despesa fora do padrão do histórico: ela só será válida depois de aprovada "
+                    "por um administrador.",
+                    "warning",
+                )
+            return redirect(url_for("web.pedido", solicitacao_id=resultado.solicitacao.id))
     sugestoes = {campo: valores_distintos(campo) for campo in CAMPOS_TEXTO}
     status = 400 if request.method == "POST" else 200
     return render_template("web/despesa_form.html", form=form, sugestoes=sugestoes), status
@@ -373,3 +388,96 @@ def decidir_alerta(alerta_id: int):
         acao = "aprovado (despesa regular)" if status == "aprovado" else "rejeitado (irregular)"
         flash(f"Alerta #{alerta.id} {acao}.", "success")
     return redirect(voltar)
+
+
+# --- Pedidos de aprovação (aprovação prévia de despesas) ------------------------
+
+ABAS_PEDIDOS = {
+    "pendente": "Pendentes",
+    "rejeitada_automaticamente": "Rejeitados automaticamente",
+    "aprovada": "Aprovados",
+    "rejeitada": "Rejeitados",
+    "todos": "Todos",
+}
+
+
+@bp.app_context_processor
+def _contagem_de_pedidos():
+    """Pedidos pendentes, para o selo do menu e o aviso do dashboard."""
+    if not current_user.is_authenticated:
+        return {}
+    return {"pedidos_por_status": servico_solicitacoes.contar_por_status()}
+
+
+@bp.route("/pedidos")
+@perfil_requerido(PERFIL_AUDITOR)
+def pedidos():
+    aba = request.args.get("status") or "pendente"
+    if aba not in ABAS_PEDIDOS:
+        aba = "pendente"
+    pagina = servico_solicitacoes.paginar(
+        None if aba == "todos" else aba, request.args.get("pagina", 1, type=int)
+    )
+    return render_template("web/pedidos.html", pagina=pagina, aba=aba, abas=ABAS_PEDIDOS)
+
+
+@bp.route("/pedidos/<int:solicitacao_id>")
+@perfil_requerido(PERFIL_AUDITOR)
+def pedido(solicitacao_id: int):
+    solicitacao = servico_solicitacoes.obter(solicitacao_id)
+    if solicitacao is None:
+        abort(404)
+    return render_template(
+        "web/pedido.html",
+        solicitacao=solicitacao,
+        pode_decidir=servico_solicitacoes.pode_decidir(solicitacao, current_user),
+        pode_encaminhar=servico_solicitacoes.pode_encaminhar(solicitacao, current_user),
+    )
+
+
+def _acao_no_pedido(solicitacao_id: int, acao, mensagem: str, campo: str):
+    solicitacao = servico_solicitacoes.obter(solicitacao_id)
+    if solicitacao is None:
+        abort(404)
+    try:
+        acao(solicitacao, current_user, request.form.get(campo))
+    except servico_solicitacoes.SolicitacaoInvalidaError as erro:
+        db.session.rollback()
+        flash(str(erro), "danger")
+    else:
+        db.session.commit()
+        flash(mensagem.format(id=solicitacao.id), "success")
+    return redirect(url_for("web.pedido", solicitacao_id=solicitacao_id))
+
+
+@bp.route("/pedidos/<int:solicitacao_id>/aprovar", methods=["POST"])
+@perfil_requerido(PERFIL_ADMINISTRADOR)
+def aprovar_pedido(solicitacao_id: int):
+    return _acao_no_pedido(
+        solicitacao_id,
+        servico_solicitacoes.aprovar,
+        "Pedido #{id} aprovado: a despesa agora é válida.",
+        "observacao",
+    )
+
+
+@bp.route("/pedidos/<int:solicitacao_id>/rejeitar", methods=["POST"])
+@perfil_requerido(PERFIL_ADMINISTRADOR)
+def rejeitar_pedido(solicitacao_id: int):
+    return _acao_no_pedido(
+        solicitacao_id,
+        servico_solicitacoes.rejeitar,
+        "Pedido #{id} rejeitado: a despesa não é válida.",
+        "justificativa",
+    )
+
+
+@bp.route("/pedidos/<int:solicitacao_id>/encaminhar", methods=["POST"])
+@perfil_requerido(PERFIL_AUDITOR)
+def encaminhar_pedido(solicitacao_id: int):
+    return _acao_no_pedido(
+        solicitacao_id,
+        servico_solicitacoes.encaminhar,
+        "Pedido #{id} encaminhado para aprovação, com prioridade.",
+        "justificativa",
+    )

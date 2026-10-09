@@ -3,11 +3,22 @@
 from datetime import date, datetime
 from decimal import Decimal
 
-from sqlalchemy import JSON, Date, DateTime, ForeignKey, Integer, Numeric, String, Text
+from sqlalchemy import (
+    JSON,
+    CheckConstraint,
+    Date,
+    DateTime,
+    ForeignKey,
+    Integer,
+    Numeric,
+    String,
+    Text,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.extensoes import db
 from app.models.base import agora_utc
+from app.models.dominio import SITUACAO_VALIDA, SQL_SITUACOES_DESPESA
 
 
 class LoteImportacao(db.Model):
@@ -38,9 +49,16 @@ class Despesa(db.Model):
 
     Campos obrigatórios (US01): valor, data, categoria, conta contábil,
     centro de custo e funcionário. ``lote_id`` fica vazio no cadastro manual.
+
+    ``situacao``: ``valida`` (dentro do padrão ou aprovada), ``pendente`` (fora do padrão,
+    aguardando a decisão de um pedido de aprovação) ou ``rejeitada``. Só as válidas
+    contam como histórico, análise, dashboard e relatório.
     """
 
     __tablename__ = "despesa"
+    __table_args__ = (
+        CheckConstraint(f"situacao IN {SQL_SITUACOES_DESPESA}", name="situacao_valida"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     valor: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
@@ -53,9 +71,17 @@ class Despesa(db.Model):
     lote_id: Mapped[int | None] = mapped_column(
         ForeignKey("lote_importacao.id"), nullable=True, index=True
     )
+    situacao: Mapped[str] = mapped_column(
+        String(10),
+        nullable=False,
+        default=SITUACAO_VALIDA,
+        server_default=SITUACAO_VALIDA,
+        index=True,
+    )
 
     lote = relationship("LoteImportacao", back_populates="despesas")
     alertas = relationship("AlertaAnomalia", back_populates="despesa")
+    solicitacao = relationship("SolicitacaoAprovacao", back_populates="despesa", uselist=False)
 
     def __repr__(self) -> str:
         return f"<Despesa {self.id} {self.categoria} R$ {self.valor}>"

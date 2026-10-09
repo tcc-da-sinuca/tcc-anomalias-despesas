@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% from "_macros.html" import score_gravidade %}
+{% block titulo %}Pedido #{{ solicitacao.id }} · {{ super() }}{% endblock %}
+{% block conteudo %}
+{% set d = solicitacao.despesa %}
+<p class="small mb-2"><a href="{{ url_for('web.pedidos') }}"><i class="bi bi-arrow-left" aria-hidden="true"></i>Pedidos</a></p>
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+  <h1 class="h4 m-0">Pedido #{{ solicitacao.id }}</h1>
+  {% if solicitacao.prioritaria and solicitacao.status == 'pendente' %}<span class="badge text-bg-danger"><i class="bi bi-flag-fill" aria-hidden="true"></i>Prioritário</span>{% endif %}
+  <span class="badge pedido-{{ solicitacao.status }}">{{ solicitacao.status | nome_status_pedido }}</span>
+  {% if solicitacao.gravidade %}<span class="gravidade gravidade-{{ solicitacao.gravidade }}">{{ solicitacao.gravidade | nome_gravidade }}</span>{% endif %}
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="card mb-4"><div class="card-body">
+      <h2 class="titulo-secao mb-3">Despesa lançada</h2>
+      <dl class="row mb-0">
+        <dt class="col-sm-4 fw-normal text-muted">Valor</dt><dd class="col-sm-8 fw-semibold">{{ d.valor | moeda }}</dd>
+        <dt class="col-sm-4 fw-normal text-muted">Data</dt><dd class="col-sm-8">{{ d.data | data_br }}</dd>
+        <dt class="col-sm-4 fw-normal text-muted">Categoria</dt><dd class="col-sm-8">{{ d.categoria }}</dd>
+        <dt class="col-sm-4 fw-normal text-muted">Centro de custo</dt><dd class="col-sm-8">{{ d.centro_custo }}</dd>
+        <dt class="col-sm-4 fw-normal text-muted">Conta contábil</dt><dd class="col-sm-8">{{ d.conta_contabil }}</dd>
+        <dt class="col-sm-4 fw-normal text-muted">Funcionário</dt><dd class="col-sm-8">{{ d.funcionario }}</dd>
+        <dt class="col-sm-4 fw-normal text-muted">Descrição</dt><dd class="col-sm-8">{{ d.descricao or '—' }}</dd>
+        <dt class="col-sm-4 fw-normal text-muted">Situação</dt><dd class="col-sm-8"><span class="badge situacao-{{ d.situacao }}">{{ d.situacao | nome_situacao }}</span></dd>
+        <dt class="col-sm-4 fw-normal text-muted">Lançada por</dt>
+        <dd class="col-sm-8 mb-0">{{ solicitacao.solicitante.nome }} em {{ solicitacao.criada_em | data_hora_br }}
+          {% if d.lote_id %}(<a href="{{ url_for('web.lote', lote_id=d.lote_id) }}">lote {{ d.lote_id }}</a>){% endif %}</dd>
+      </dl>
+    </div></div>
+
+    <div class="card mb-4"><div class="card-body">
+      <h2 class="titulo-secao mb-3">Por que ficou fora do padrão</h2>
+      {% for alerta in d.alertas | sort(attribute='excesso', reverse=true) %}
+      <div class="d-flex gap-3 {{ 'border-top pt-3' if not loop.first }} {{ 'mb-3' if not loop.last }}">
+        <div class="text-end" style="min-width: 6.5rem">
+          <span class="metodo d-inline-block mb-1">{{ alerta.metodo | nome_metodo }}</span>
+          {{ score_gravidade(alerta) }}
+        </div>
+        <div class="small">{{ alerta.motivo }}</div>
+      </div>
+      {% endfor %}
+    </div></div>
+  </div>
+
+  <div class="col-lg-5">
+    {% if pode_decidir %}
+    <div class="card mb-4"><div class="card-body">
+      <h2 class="h6 mb-3">Decidir</h2>
+      <form method="post" action="{{ url_for('web.aprovar_pedido', solicitacao_id=solicitacao.id) }}" class="mb-3">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label class="form-label small" for="observacao">Observação (opcional)</label>
+        <textarea class="form-control mb-2" id="observacao" name="observacao" rows="2"></textarea>
+        <button type="submit" class="btn btn-success w-100"><i class="bi bi-check-lg" aria-hidden="true"></i>Aprovar: a despesa é válida</button>
+      </form>
+      <form method="post" action="{{ url_for('web.rejeitar_pedido', solicitacao_id=solicitacao.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label class="form-label small" for="justificativa">Justificativa (obrigatória para rejeitar)</label>
+        <textarea class="form-control mb-2" id="justificativa" name="justificativa" rows="2"></textarea>
+        <button type="submit" class="btn btn-outline-danger w-100"><i class="bi bi-x-lg" aria-hidden="true"></i>Rejeitar</button>
+      </form>
+    </div></div>
+    {% elif solicitacao.status == 'pendente' %}
+    <div class="alert alert-light border small">
+      <i class="bi bi-hourglass-split" aria-hidden="true"></i>Aguardando a decisão de um administrador
+      {%- if current_user.id == solicitacao.solicitada_por %} (quem lançou a despesa não decide o próprio pedido){% endif %}.
+    </div>
+    {% endif %}
+
+    {% if pode_encaminhar %}
+    <div class="card mb-4 border-danger"><div class="card-body">
+      <h2 class="h6 mb-2">Encaminhar para aprovação</h2>
+      <p class="small text-muted">
+        A despesa foi rejeitada automaticamente por um alerta de gravidade crítica. Se ela
+        for legítima, explique e encaminhe: o pedido volta à fila como prioritário.
+      </p>
+      <form method="post" action="{{ url_for('web.encaminhar_pedido', solicitacao_id=solicitacao.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label class="form-label small" for="justificativa-encaminhar">Por que reavaliar</label>
+        <textarea class="form-control mb-2" id="justificativa-encaminhar" name="justificativa" rows="2"></textarea>
+        <button type="submit" class="btn btn-danger w-100"><i class="bi bi-send" aria-hidden="true"></i>Encaminhar com prioridade</button>
+      </form>
+    </div></div>
+    {% endif %}
+
+    <div class="card"><div class="card-body">
+      <h2 class="titulo-secao mb-3">Histórico do pedido</h2>
+      <div class="linha-do-tempo small">
+        {% for evento in solicitacao.eventos %}
+        <div class="evento">
+          <strong>{{ evento.tipo | nome_evento }}</strong>
+          {% if evento.usuario %} por {{ evento.usuario.nome }}{% else %} pelo sistema{% endif %}
+          <div class="text-muted">{{ evento.criado_em | data_hora_br }}</div>
+          {% if evento.observacao %}<div class="mt-1">{{ evento.observacao }}</div>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

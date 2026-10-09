@@ -61,7 +61,10 @@ def carregar_base(
             return None
         _remover_lote(existente)
 
-    lote = importar_arquivo(caminho_csv.name, caminho_csv.read_bytes(), importado_por)
+    # Histórico de referência: entra direto como válido, sem verificação no lançamento.
+    lote = importar_arquivo(
+        caminho_csv.name, caminho_csv.read_bytes(), importado_por, verificar=False
+    )
     if lote.erros:
         primeiro = lote.erros[0]
         raise CargaBaseError(

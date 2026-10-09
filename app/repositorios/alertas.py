@@ -9,7 +9,7 @@ from sqlalchemy.orm import joinedload, selectinload
 
 from app.extensoes import db
 from app.models import AlertaAnomalia, Despesa, ExecucaoAnalise
-from app.models.dominio import METODOS, STATUS_PENDENTE, STATUS_REVISAO
+from app.models.dominio import METODOS, SITUACAO_VALIDA, STATUS_PENDENTE, STATUS_REVISAO
 
 POR_PAGINA_PADRAO = 50
 POR_PAGINA_MAXIMO = 200
@@ -146,9 +146,11 @@ def paginar_alertas(
     """
     filtros = filtros or FiltrosAlertas()
     por_pagina = max(1, min(por_pagina, POR_PAGINA_MAXIMO))
+    # Alertas de despesas pendentes ou rejeitadas são tratados nos pedidos de aprovação.
     consulta = (
         select(AlertaAnomalia)
         .join(AlertaAnomalia.despesa)
+        .where(Despesa.situacao == SITUACAO_VALIDA)
         .options(joinedload(AlertaAnomalia.despesa))
     )
     if filtros.status:

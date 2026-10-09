@@ -6,16 +6,20 @@ Importar este pacote registra todos os modelos no metadata do SQLAlchemy.
 from app.models.analise import AlertaAnomalia, EstatisticaReferencia, ExecucaoAnalise
 from app.models.despesa import Despesa, LoteImportacao
 from app.models.revisao import ParametroMetodo, Parecer, ParecerImutavelError
+from app.models.solicitacao import EventoImutavelError, EventoSolicitacao, SolicitacaoAprovacao
 from app.models.usuario import Usuario
 
 __all__ = [
     "AlertaAnomalia",
     "Despesa",
     "EstatisticaReferencia",
+    "EventoImutavelError",
+    "EventoSolicitacao",
     "ExecucaoAnalise",
     "LoteImportacao",
     "ParametroMetodo",
     "Parecer",
     "ParecerImutavelError",
+    "SolicitacaoAprovacao",
     "Usuario",
 ]

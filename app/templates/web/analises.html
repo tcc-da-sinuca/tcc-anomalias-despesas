@@ -31,7 +31,12 @@
     <tbody>
       {% for execucao in pagina.items %}
       <tr>
-        <td><a href="{{ url_for('web.analise', execucao_id=execucao.id) }}">#{{ execucao.id }}</a></td>
+        <td>
+          <a href="{{ url_for('web.analise', execucao_id=execucao.id) }}">#{{ execucao.id }}</a>
+          {% if (execucao.parametros or {}).get('tipo') == 'verificacao_lancamento' %}
+          <span class="badge text-bg-light border">verificação no lançamento</span>
+          {% endif %}
+        </td>
         <td class="text-nowrap">{{ execucao.iniciada_em | data_hora_br }}</td>
         <td class="text-end">{{ execucao.total_despesas }}</td>
         <td class="text-end">{{ execucao.total_alertas }}</td>

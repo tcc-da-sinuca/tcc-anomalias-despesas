@@ -30,6 +30,27 @@ enum Gravidade <<enumeration>> {
   critica
 }
 
+enum SituacaoDespesa <<enumeration>> {
+  valida
+  pendente
+  rejeitada
+}
+
+enum StatusSolicitacao <<enumeration>> {
+  pendente
+  aprovada
+  rejeitada
+  rejeitada_automaticamente
+}
+
+enum TipoEvento <<enumeration>> {
+  criada
+  rejeitada_automaticamente
+  encaminhada
+  aprovada
+  rejeitada
+}
+
 enum StatusRevisao <<enumeration>> {
   pendente
   aprovado
@@ -68,7 +89,39 @@ class Despesa {
   - centro_custo : String
   - funcionario : String
   - descricao : String [0..1]
+  - situacao : SituacaoDespesa = valida
 }
+
+class SolicitacaoAprovacao {
+  - id : Integer
+  - criada_em : DateTime
+  - status : StatusSolicitacao = pendente
+  - gravidade : Gravidade [0..1]
+  - prioritaria : Boolean = false
+  - decidida_em : DateTime [0..1]
+  - justificativa : String [0..1]
+}
+
+class EventoSolicitacao <<somente inserção>> {
+  - id : Integer
+  - tipo : TipoEvento
+  - observacao : String [0..1]
+  - criado_em : DateTime
+}
+note right of SolicitacaoAprovacao
+  Aberta no lançamento quando algum método
+  sinaliza a despesa (aprovação prévia).
+  Gravidade crítica (Z-score ou IQR):
+  rejeitada automaticamente; pode ser
+  encaminhada e volta como prioritária.
+  Só o administrador decide, e nunca
+  o pedido de uma despesa que ele lançou.
+end note
+note right of EventoSolicitacao
+  Histórico do pedido. Sem UPDATE/DELETE
+  (aplicação + trigger no PostgreSQL).
+  usuario vazio = evento do sistema.
+end note
 
 class EstatisticaReferencia {
   - id : Integer
@@ -144,11 +197,20 @@ Despesa "1" -- "0..*" AlertaAnomalia : sinalizada por <
 AlertaAnomalia "1" -- "0..*" Parecer : recebe >
 Usuario "1" -- "0..*" Parecer : emite >
 Usuario "0..1" -- "0..*" ParametroMetodo : altera >
+Despesa "1" -- "0..1" SolicitacaoAprovacao : aguarda aprovação em >
+Usuario "1" -- "0..*" SolicitacaoAprovacao : solicita >
+Usuario "0..1" -- "0..*" SolicitacaoAprovacao : decide >
+SolicitacaoAprovacao "1" *-- "1..*" EventoSolicitacao : histórico >
+Usuario "0..1" -- "0..*" EventoSolicitacao : registra >
 
 Usuario ..> Perfil
 AlertaAnomalia ..> MetodoDeteccao
 AlertaAnomalia ..> StatusRevisao
 AlertaAnomalia ..> Gravidade
 ParametroMetodo ..> MetodoDeteccao
+Despesa ..> SituacaoDespesa
+SolicitacaoAprovacao ..> StatusSolicitacao
+SolicitacaoAprovacao ..> Gravidade
+EventoSolicitacao ..> TipoEvento
 
 @enduml

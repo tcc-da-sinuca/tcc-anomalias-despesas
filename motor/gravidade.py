@@ -7,10 +7,17 @@ muito diferentes (o Isolation Forest passa do limite no máximo ~1,3 vez; o IQR 
 
 As faixas vêm dos quantis 50%, 80% e 95% do excesso das despesas sinalizadas na base
 sintética (seed 42), arredondados, **sem usar os rótulos de anomalia**: metade dos
-alertas de cada método é "leve", os 5% mais extremos são "crítica". A regra contextual
-não chega a "crítica": combinação incomum de conta e centro de custo costuma ser erro de
-classificação, não motivo para rejeitar a despesa sozinho; o máximo dela é "alta"
-(combinação que não aparece no histórico da categoria).
+alertas de cada método é "leve", os 5% mais extremos são "crítica".
+
+Só o Z-score e o IQR chegam a "crítica". A escala deles tem significado estável
+(desvios padrão e amplitudes interquartis) e, no experimento, todo alerta crítico era
+anomalia (seeds 42 e 7). Os outros dois vão no máximo até "alta":
+
+- regra contextual: combinação incomum de conta e centro de custo costuma ser erro de
+  classificação, não motivo para rejeitar a despesa sozinho;
+- Isolation Forest: o score depende do tamanho e da forma de cada base (num histórico
+  pequeno, qualquer desvio passa de 1,3x o limite), e os "críticos" dele acertaram só
+  ~50% no experimento, porque ele marca também a original de cada duplicata.
 
 Despesa com algum alerta "crítica" é rejeitada automaticamente no lançamento
 (``NIVEL_REJEICAO_AUTOMATICA``; decisão da equipe, item 33 de MUDANCAS_PARA_DOCUMENTACAO.md).
@@ -25,7 +32,7 @@ NIVEL_REJEICAO_AUTOMATICA = CRITICA
 FAIXAS = {
     "zscore": (1.5, 2.0, 3.5),
     "iqr": (1.75, 3.5, 9.0),
-    "isolation_forest": (1.19, 1.24, 1.26),
+    "isolation_forest": (1.19, 1.24, None),
     "contextual": (2.0, 4.0, None),
 }
 

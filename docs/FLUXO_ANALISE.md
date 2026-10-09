@@ -288,3 +288,31 @@ centenas de despesas, então isso só afeta importações reais pequenas.
   análise → repositórios, como na seção 6 do CLAUDE.md, sem camadas novas.
 - **Texto do RF05:** decisão D2.
 - **`ExecucaoAnalise.parametros`:** passa a ter formato definido (seção 3, passo 5).
+
+---
+
+## 8. Verificação no lançamento e pedidos de aprovação (08/10/2026)
+
+Item 34 de `MUDANCAS_PARA_DOCUMENTACAO.md`. Além da análise sob demanda e do job, os
+métodos rodam **no lançamento** (cadastro manual e importação, linha a linha):
+
+```
+Usuário ── cadastra/importa ──► servicos/lancamento.lancar_despesas(dados, usuario)
+              1. trava de análise (a mesma da seção 3)
+              2. histórico = despesas válidas + as novas (ids provisórios)
+              3. motor: executar_detectores → consolidar (com gravidade)
+              4. por despesa nova:
+                   sem alerta ............ Despesa(situacao=valida)
+                   alerta não crítico .... Despesa(pendente) + SolicitacaoAprovacao(pendente)
+                   alerta crítico ........ Despesa(rejeitada) + SolicitacaoAprovacao(rejeitada_automaticamente)
+              5. ExecucaoAnalise(tipo=verificacao_lancamento) + AlertaAnomalia + EventoSolicitacao
+                                     │
+Administrador ── aprova ──► Despesa(valida) + parecer "aprovado" nos alertas + evento
+              ── rejeita (justificativa) ──► Despesa(rejeitada) + parecer "irregular" + evento
+Quem lançou ── encaminha (justificativa) ──► pedido pendente e prioritário + evento
+```
+
+- Só o administrador decide, e nunca um pedido de despesa que ele mesmo lançou.
+- Só despesas **válidas** contam como histórico, estatísticas, análises, dashboard,
+  lista de alertas e relatório. Pendentes e rejeitadas ficam na tela **Pedidos**.
+- A carga do histórico (`flask seed-base`) entra sem verificação.

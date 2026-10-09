@@ -19,6 +19,16 @@
   </div>
 </div>
 
+{% if pedidos_por_status and pedidos_por_status.pendente %}
+<a class="alert {{ 'alert-danger' if pedidos_por_status.prioritarios else 'alert-warning' }} d-flex align-items-center gap-2 text-decoration-none"
+   href="{{ url_for('web.pedidos') }}" data-aviso="pedidos">
+  <i class="bi bi-inbox fs-5" aria-hidden="true"></i>
+  <span><strong>{{ pedidos_por_status.pendente }} pedido(s) de aprovação pendente(s)</strong>
+  {%- if pedidos_por_status.prioritarios %}, {{ pedidos_por_status.prioritarios }} prioritário(s){% endif %}.
+  Despesas fora do padrão só valem depois de aprovadas.</span>
+</a>
+{% endif %}
+
 <div class="row g-3 mb-4">
   <div class="col-sm-6 col-xl-3">
     <div class="card h-100 indicador"><div class="card-body d-flex gap-3">

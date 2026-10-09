@@ -27,11 +27,10 @@ from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from pathlib import PurePath
 
 from openpyxl import load_workbook
-from sqlalchemy import insert
 
 from app.extensoes import db
 from app.models import Despesa, LoteImportacao, Usuario
-from app.servicos.estatisticas import recalcular_estatisticas
+from app.servicos.lancamento import lancar_despesas
 
 CAMPOS_OBRIGATORIOS = (
     "valor",
@@ -266,11 +265,18 @@ def ler_arquivo(nome_arquivo: str, conteudo: bytes) -> tuple[dict[str, int], lis
 
 
 def importar_arquivo(
-    nome_arquivo: str, conteudo: bytes, usuario: Usuario, hoje: date | None = None
+    nome_arquivo: str,
+    conteudo: bytes,
+    usuario: Usuario,
+    hoje: date | None = None,
+    verificar: bool = True,
 ) -> LoteImportacao:
     """Importa as linhas válidas num novo lote e recalcula as estatísticas (US02).
 
-    Levanta ``ArquivoInvalidoError`` se o arquivo não puder ser lido.
+    Com ``verificar`` (padrão), cada despesa passa pela verificação no lançamento
+    (``servicos.lancamento``): as fora do padrão viram pedidos de aprovação. A carga do
+    histórico (base sintética) usa ``verificar=False``. Levanta ``ArquivoInvalidoError``
+    se o arquivo não puder ser lido.
     """
     hoje = hoje or date.today()
     mapa, linhas, formato_brasileiro = ler_arquivo(nome_arquivo, conteudo)
@@ -301,22 +307,17 @@ def importar_arquivo(
     )
     db.session.add(lote)
     db.session.flush()
-    if despesas:
-        db.session.execute(insert(Despesa), [{**d, "lote_id": lote.id} for d in despesas])
-        recalcular_estatisticas()
+    lancar_despesas(despesas, usuario, lote.id, verificar)
     return lote
 
 
-def cadastrar_despesa(bruto: dict, hoje: date | None = None) -> Despesa:
-    """Cadastra uma despesa sem lote e recalcula as estatísticas.
+def cadastrar_despesa(bruto: dict, usuario: Usuario, hoje: date | None = None):
+    """Cadastra uma despesa sem lote, com a verificação no lançamento.
 
-    Levanta ``DespesaInvalidaError`` com os erros por campo.
+    Devolve o ``ResultadoLancamento`` (válida, pendente com pedido aberto ou rejeitada
+    automaticamente). Levanta ``DespesaInvalidaError`` com os erros por campo.
     """
     dados, erros = validar_despesa(bruto, hoje)
     if erros:
         raise DespesaInvalidaError(erros)
-    despesa = Despesa(**dados)
-    db.session.add(despesa)
-    db.session.flush()
-    recalcular_estatisticas()
-    return despesa
+    return lancar_despesas([dados], usuario)[0]

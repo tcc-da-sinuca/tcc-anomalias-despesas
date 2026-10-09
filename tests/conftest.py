@@ -108,3 +108,54 @@ def alerta(sessao, auditor):
     sessao.add_all([lote, despesa, execucao, alerta])
     sessao.commit()
     return alerta
+
+
+@pytest.fixture
+def historico(sessao):
+    """120 despesas válidas de Viagens no CC-ADM, conta 3.1.01, entre R$ 95 e R$ 105.
+
+    Contra esse histórico, R$ 101 entra como válida, R$ 140 abre um pedido pendente
+    (gravidade alta) e R$ 2.500 é rejeitada automaticamente (gravidade crítica).
+    """
+    from app.models import Despesa
+
+    sessao.add_all(
+        Despesa(
+            valor=Decimal(f"{95 + i % 11}.00"),
+            data=date(2026, 3, 2 + i % 20),
+            categoria="Viagens",
+            conta_contabil="3.1.01",
+            centro_custo="CC-ADM",
+            funcionario=f"F{i % 30:03d}",
+        )
+        for i in range(120)
+    )
+    sessao.commit()
+
+
+@pytest.fixture
+def lancar(sessao):
+    """lancar(usuario, "140.00") → ResultadoLancamento de uma despesa nova de Viagens."""
+    from app.servicos.lancamento import lancar_despesas
+
+    def _lancar(usuario, valor, **campos):
+        dados = {
+            "valor": Decimal(valor),
+            "data": date(2026, 3, 10),
+            "categoria": "Viagens",
+            "conta_contabil": "3.1.01",
+            "centro_custo": "CC-ADM",
+            "funcionario": "F005",
+            "descricao": None,
+            **campos,
+        }
+        resultado = lancar_despesas([dados], usuario)[0]
+        sessao.commit()
+        return resultado
+
+    return _lancar
+
+
+@pytest.fixture
+def outro_administrador(sessao):
+    return _criar_usuario(sessao, "admin2@teste.com", "administrador")

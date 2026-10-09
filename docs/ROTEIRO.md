@@ -36,7 +36,7 @@ concluídos em 25/09 (seeds 42 e 7). **A S3 está concluída.**
 | Motor de detecção | ✅ Z-score, IQR, contextual, Isolation Forest e consolidador |
 | Telas de alertas, revisão e dashboard | ✅ Análises, lista de alertas com filtros combináveis, detalhe, parecer com histórico, dashboard |
 | Experimento | ✅ `metricas.csv` com os quatro métodos, seeds 42 e 7 |
-| Testes | 442 passando (SQLite + PostgreSQL) |
+| Testes | 475 passando (SQLite + PostgreSQL) |
 
 **Próximo passo:** recriar o banco limpo antes da apresentação e testar com Docker Desktop. O restante do Fechamento está pronto.
 
@@ -179,3 +179,4 @@ concluídos em 25/09 (seeds 42 e 7). **A S3 está concluída.**
 | 08/10/2026 | Ordenação da lista de alertas por data e valor, crescente e decrescente (item 31 de `MUDANCAS_PARA_DOCUMENTACAO.md`). 409 testes. |
 | 08/10/2026 | Início da aprovação prévia de despesas (pedido da equipe), etapa 1: referência dos métodos passa a ser centro de custo × conta, com recuo para a categoria; experimento refeito (item 32 de `MUDANCAS_PARA_DOCUMENTACAO.md`). 411 testes. |
 | 08/10/2026 | Aprovação prévia, etapa 2: gravidade do alerta (migration 0002), score colorido por nível, decisão rápida na lista de alertas e `metricas_por_gravidade.csv` (item 33). |
+| 08/10/2026 | Aprovação prévia, etapas 3 e 4: verificação no lançamento, pedidos de aprovação com rejeição automática e encaminhamento prioritário, tela Pedidos e API (item 34). Isolation Forest limitado a gravidade alta (item 33 atualizado). 475 testes. |

@@ -82,6 +82,17 @@ linha; as demais são importadas. Após cada importação, as estatísticas de r
 (tela **Estatísticas**, também no menu **Dados**) são recalculadas. A tela de importação
 tem um botão para baixar um CSV de exemplo.
 
+### Lançamento com aprovação prévia
+
+Ao cadastrar uma despesa ou importar um arquivo, os quatro métodos comparam cada despesa
+nova com o histórico do mesmo centro de custo e conta. Dentro do padrão, ela entra como
+válida. Fora do padrão, vira um **pedido de aprovação** (menu **Pedidos**) e só vale
+depois que um administrador aprovar; quem lançou não pode aprovar o próprio pedido. Se
+algum alerta tiver gravidade **crítica**, a despesa é rejeitada automaticamente, e quem
+lançou pode encaminhar o pedido, com justificativa, para reavaliação prioritária. O
+histórico de cada pedido (aberto, rejeitado, encaminhado, aprovado) fica registrado e não
+pode ser alterado. Detalhes em [`docs/FLUXO_ANALISE.md`](docs/FLUXO_ANALISE.md), seção 8.
+
 ### Dashboard
 
 A página inicial mostra o total de despesas, quantas foram sinalizadas (despesas

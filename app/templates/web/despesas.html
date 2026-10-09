@@ -31,6 +31,7 @@
         <th>Funcionário</th>
         <th>Descrição</th>
         <th>Origem</th>
+        <th>Situação</th>
       </tr>
     </thead>
     <tbody>
@@ -47,6 +48,11 @@
           {% if despesa.lote_id %}
           <a href="{{ url_for('web.lote', lote_id=despesa.lote_id) }}">lote {{ despesa.lote_id }}</a>
           {% else %}manual{% endif %}
+        </td>
+        <td>
+          {% if despesa.solicitacao %}<a href="{{ url_for('web.pedido', solicitacao_id=despesa.solicitacao.id) }}" class="text-decoration-none">{% endif %}
+          <span class="badge situacao-{{ despesa.situacao }}">{{ despesa.situacao | nome_situacao }}</span>
+          {% if despesa.solicitacao %}</a>{% endif %}
         </td>
       </tr>
       {% endfor %}

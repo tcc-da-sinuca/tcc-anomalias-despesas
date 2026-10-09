@@ -12,7 +12,7 @@ from sqlalchemy import delete, insert, select
 from app.extensoes import db
 from app.models import Despesa, EstatisticaReferencia
 from app.models.base import agora_utc
-from app.models.dominio import DIMENSOES
+from app.models.dominio import DIMENSOES, SITUACAO_VALIDA
 from motor.estatisticas import calcular_estatisticas
 
 _QUATRO_CASAS = Decimal("0.0001")
@@ -30,7 +30,9 @@ def recalcular_estatisticas() -> int:
     Não faz commit.
     """
     colunas = ["valor", *DIMENSOES]
-    linhas = db.session.execute(select(*(getattr(Despesa, c) for c in colunas))).all()
+    linhas = db.session.execute(
+        select(*(getattr(Despesa, c) for c in colunas)).where(Despesa.situacao == SITUACAO_VALIDA)
+    ).all()
     estatisticas = calcular_estatisticas(pd.DataFrame(linhas, columns=colunas), DIMENSOES)
 
     db.session.execute(delete(EstatisticaReferencia))

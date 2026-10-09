@@ -20,7 +20,7 @@ from tests.test_motor.auxiliares import grupo_com_extremo, montar_despesas
         ("iqr", 1.2, "leve"),
         ("iqr", 9.0, "critica"),
         ("isolation_forest", 1.1, "leve"),
-        ("isolation_forest", 1.3, "critica"),
+        ("isolation_forest", 1.3, "alta"),  # o Isolation Forest não chega a crítica
         ("contextual", 1.5, "leve"),
         ("contextual", 3.0, "moderada"),
         ("contextual", 100.0, "alta"),  # a regra contextual nunca chega a crítica

@@ -15,6 +15,7 @@ from app.repositorios.despesas import POR_PAGINA_PADRAO, paginar_despesas
 from app.rotas.autorizacao import perfil_requerido
 from app.servicos import parametros as servico_parametros
 from app.servicos import relatorio as servico_relatorio
+from app.servicos import solicitacoes as servico_solicitacoes
 from app.servicos.analise import MetodoDesconhecidoError, executar_analise
 from app.servicos.dashboard import resumo as resumo_dashboard
 from app.servicos.importacao import ArquivoInvalidoError, importar_arquivo
@@ -72,6 +73,11 @@ def _lote_json(lote) -> dict:
         "total_linhas": lote.total_linhas,
         "linhas_validas": lote.linhas_validas,
         "erros": lote.erros,
+        # Resultado da verificação no lançamento (aprovação prévia).
+        "situacoes": {
+            situacao: sum(1 for d in lote.despesas if d.situacao == situacao)
+            for situacao in ("valida", "pendente", "rejeitada")
+        },
     }
 
 
@@ -340,3 +346,90 @@ def relatorio_mensal():
             "ultima_analise": _execucao_json(ultima) if ultima else None,
         }
     )
+
+
+def _solicitacao_json(s, detalhado: bool = False) -> dict:
+    dados = {
+        "id": s.id,
+        "status": s.status,
+        "prioritaria": s.prioritaria,
+        "gravidade": s.gravidade,
+        "solicitada_por": s.solicitada_por,
+        "criada_em": s.criada_em.isoformat(),
+        "decidida_por": s.decidida_por,
+        "decidida_em": s.decidida_em.isoformat() if s.decidida_em else None,
+        "justificativa": s.justificativa,
+        "despesa": {**_despesa_json(s.despesa), "situacao": s.despesa.situacao},
+    }
+    if detalhado:
+        dados["alertas"] = [
+            {**_alerta_json(a), "excesso": a.excesso, "gravidade": a.gravidade}
+            for a in s.despesa.alertas
+        ]
+        dados["eventos"] = [
+            {
+                "tipo": e.tipo,
+                "usuario_id": e.usuario_id,
+                "observacao": e.observacao,
+                "criado_em": e.criado_em.isoformat(),
+            }
+            for e in s.eventos
+        ]
+    return dados
+
+
+@bp.route("/solicitacoes")
+@perfil_requerido(PERFIL_AUDITOR)
+def listar_solicitacoes():
+    """Pedidos de aprovação, do mais urgente para o menos: ``?status=pendente&pagina=1``."""
+    try:
+        pagina = servico_solicitacoes.paginar(
+            request.args.get("status") or None, request.args.get("pagina", 1, type=int)
+        )
+    except servico_solicitacoes.SolicitacaoInvalidaError as erro:
+        return jsonify(erro=str(erro), campo="status"), 400
+    return jsonify(_pagina_json(pagina, _solicitacao_json))
+
+
+@bp.route("/solicitacoes/<int:solicitacao_id>")
+@perfil_requerido(PERFIL_AUDITOR)
+def obter_solicitacao(solicitacao_id: int):
+    solicitacao = servico_solicitacoes.obter(solicitacao_id)
+    if solicitacao is None:
+        return jsonify(erro="Pedido não encontrado."), 404
+    return jsonify(_solicitacao_json(solicitacao, detalhado=True))
+
+
+def _acao_em_solicitacao(solicitacao_id: int, acao, campo: str):
+    solicitacao = servico_solicitacoes.obter(solicitacao_id)
+    if solicitacao is None:
+        return jsonify(erro="Pedido não encontrado."), 404
+    corpo = request.get_json(silent=True) or {}
+    try:
+        acao(solicitacao, current_user, corpo.get(campo))
+    except servico_solicitacoes.SolicitacaoInvalidaError as erro:
+        db.session.rollback()
+        return jsonify(erro=str(erro)), 400
+    db.session.commit()
+    return jsonify(_solicitacao_json(solicitacao, detalhado=True))
+
+
+@bp.route("/solicitacoes/<int:solicitacao_id>/aprovar", methods=["POST"])
+@perfil_requerido(PERFIL_ADMINISTRADOR)
+def aprovar_solicitacao(solicitacao_id: int):
+    """Corpo opcional: ``{"observacao": "..."}``."""
+    return _acao_em_solicitacao(solicitacao_id, servico_solicitacoes.aprovar, "observacao")
+
+
+@bp.route("/solicitacoes/<int:solicitacao_id>/rejeitar", methods=["POST"])
+@perfil_requerido(PERFIL_ADMINISTRADOR)
+def rejeitar_solicitacao(solicitacao_id: int):
+    """Corpo: ``{"justificativa": "..."}`` (obrigatória)."""
+    return _acao_em_solicitacao(solicitacao_id, servico_solicitacoes.rejeitar, "justificativa")
+
+
+@bp.route("/solicitacoes/<int:solicitacao_id>/encaminhar", methods=["POST"])
+@perfil_requerido(PERFIL_AUDITOR)
+def encaminhar_solicitacao(solicitacao_id: int):
+    """Corpo: ``{"justificativa": "..."}`` (obrigatória). Só pedidos rejeitados automaticamente."""
+    return _acao_em_solicitacao(solicitacao_id, servico_solicitacoes.encaminhar, "justificativa")

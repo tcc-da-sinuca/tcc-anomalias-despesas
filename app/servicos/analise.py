@@ -22,7 +22,7 @@ from sqlalchemy import insert, select, text
 from app.extensoes import db
 from app.models import AlertaAnomalia, Despesa, ExecucaoAnalise, Usuario
 from app.models.base import agora_utc
-from app.models.dominio import METODO_ISOLATION_FOREST, STATUS_PENDENTE
+from app.models.dominio import METODO_ISOLATION_FOREST, SITUACAO_VALIDA, STATUS_PENDENTE
 from app.servicos.parametros import obter_parametros
 from motor.consolidador import DETECTORES, MetodoDesconhecidoError, consolidar, executar_detectores
 from motor.contrato import COLUNAS_ENTRADA
@@ -35,9 +35,13 @@ CHAVE_TRAVA = 4_906_001
 
 
 def carregar_despesas() -> pd.DataFrame:
-    """Todas as despesas no formato de entrada do motor (``motor.contrato``)."""
+    """As despesas válidas no formato de entrada do motor (``motor.contrato``).
+
+    Pendentes e rejeitadas (aprovação prévia) não entram: não são histórico.
+    """
     colunas = [Despesa.id.label("despesa_id"), *(getattr(Despesa, c) for c in COLUNAS_ENTRADA[1:])]
-    linhas = db.session.execute(select(*colunas).order_by(Despesa.id)).all()
+    consulta = select(*colunas).where(Despesa.situacao == SITUACAO_VALIDA).order_by(Despesa.id)
+    linhas = db.session.execute(consulta).all()
     despesas = pd.DataFrame(linhas, columns=list(COLUNAS_ENTRADA))
     # float só para o cálculo; o valor persistido continua Numeric.
     despesas["valor"] = despesas["valor"].astype(float)
@@ -55,7 +59,7 @@ def executar_analise(
     método sem detector.
     """
     metodos = list(DETECTORES) if metodos is None else list(dict.fromkeys(metodos))
-    _travar_analise()
+    travar_analise()
     inicio = time.perf_counter()
     iniciada_em = agora_utc()
 
@@ -66,7 +70,7 @@ def executar_analise(
 
     execucao = ExecucaoAnalise(
         iniciada_em=iniciada_em,
-        parametros=_parametros_registrados(parametros, metodos),
+        parametros=parametros_registrados(parametros, metodos),
         seed=int(parametros[METODO_ISOLATION_FOREST]["random_state"]),
         total_despesas=len(despesas),
         total_alertas=len(alertas),
@@ -97,7 +101,7 @@ def executar_analise(
     return execucao
 
 
-def _travar_analise() -> None:
+def travar_analise() -> None:
     """Impede duas análises ao mesmo tempo (botão e job, por exemplo) no PostgreSQL.
 
     Sem isso, as duas poderiam ver os mesmos pares (despesa, método) como novos e
@@ -128,7 +132,7 @@ def _sem_alertas_existentes(alertas: pd.DataFrame) -> pd.DataFrame:
     return alertas[novos].reset_index(drop=True)
 
 
-def _parametros_registrados(parametros: dict, metodos: list[str]) -> dict:
+def parametros_registrados(parametros: dict, metodos: list[str]) -> dict:
     """O que fica em ``ExecucaoAnalise.parametros`` para reproduzir a execução (RNF06)."""
     return {
         "metodos": metodos,

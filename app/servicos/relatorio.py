@@ -28,14 +28,16 @@ from sqlalchemy import func, select
 
 from app.extensoes import db
 from app.filtros import data_br, data_hora_br, moeda, nome_metodo, nome_status
-from app.models import AlertaAnomalia, Despesa, ExecucaoAnalise
+from app.models import AlertaAnomalia, Despesa
 from app.models.base import agora_utc
 from app.models.dominio import (
     METODOS,
+    SITUACAO_VALIDA,
     STATUS_APROVADO,
     STATUS_IRREGULAR,
     STATUS_REVISAO,
 )
+from app.servicos.reprocessamento import ultima_analise_da_base
 
 ANO_MINIMO, ANO_MAXIMO = 2000, 2100
 NOMES_MESES = (
@@ -73,7 +75,8 @@ def relatorio_mensal(ano, mes) -> dict:
     ano, mes = validar_periodo(ano, mes)
     inicio = date(ano, mes, 1)
     fim = date(ano, mes, calendar.monthrange(ano, mes)[1])
-    no_mes = (Despesa.data >= inicio, Despesa.data <= fim)
+    # Só despesas válidas: pendentes e rejeitadas (aprovação prévia) não são analisadas.
+    no_mes = (Despesa.data >= inicio, Despesa.data <= fim, Despesa.situacao == SITUACAO_VALIDA)
 
     total_despesas, valor_despesas = db.session.execute(
         select(func.count(Despesa.id), func.coalesce(func.sum(Despesa.valor), 0)).where(*no_mes)
@@ -104,11 +107,7 @@ def relatorio_mensal(ano, mes) -> dict:
     concluidos = por_status[STATUS_APROVADO] + irregulares
     taxa = round(100 * irregulares / concluidos, 2) if concluidos else None
 
-    ultima = db.session.scalar(
-        select(ExecucaoAnalise).order_by(
-            ExecucaoAnalise.iniciada_em.desc(), ExecucaoAnalise.id.desc()
-        )
-    )
+    ultima = ultima_analise_da_base()  # não as verificações feitas no lançamento
     return {
         "ano": ano,
         "mes": mes,

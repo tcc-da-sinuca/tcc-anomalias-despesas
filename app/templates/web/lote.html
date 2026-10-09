@@ -21,6 +21,31 @@
 </div>
 
 {% if lote.linhas_validas %}
+{% set contagem = {} %}
+{% for situacao, despesas in lote.despesas | groupby('situacao') %}{% set _ = contagem.update({situacao: despesas | length}) %}{% endfor %}
+<div class="card mb-3"><div class="card-body">
+  <h2 class="titulo-secao mb-3">Verificação no lançamento</h2>
+  <div class="row text-center g-2">
+    <div class="col-4">
+      <div class="small text-muted">Dentro do padrão (válidas)</div>
+      <div class="fs-4 fw-semibold text-success" data-indicador="validas">{{ contagem.get('valida', 0) | inteiro }}</div>
+    </div>
+    <div class="col-4">
+      <div class="small text-muted">Aguardando aprovação</div>
+      <div class="fs-4 fw-semibold" style="color:#b07d00" data-indicador="pendentes">{{ contagem.get('pendente', 0) | inteiro }}</div>
+    </div>
+    <div class="col-4">
+      <div class="small text-muted">Rejeitadas automaticamente</div>
+      <div class="fs-4 fw-semibold text-danger" data-indicador="rejeitadas">{{ contagem.get('rejeitada', 0) | inteiro }}</div>
+    </div>
+  </div>
+  {% if contagem.get('pendente') or contagem.get('rejeitada') %}
+  <p class="small text-muted mt-3 mb-0">
+    As despesas fora do padrão viraram <a href="{{ url_for('web.pedidos') }}">pedidos de aprovação</a>.
+    As rejeitadas automaticamente podem ser encaminhadas para reavaliação.
+  </p>
+  {% endif %}
+</div></div>
 <p><a href="{{ url_for('web.despesas', lote_id=lote.id) }}">Ver as despesas importadas</a></p>
 {% endif %}
 

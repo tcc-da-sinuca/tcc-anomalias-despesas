@@ -81,6 +81,34 @@ def nome_gravidade(nivel: str | None) -> str:
     return NOMES_NIVEIS.get(nivel, "—") if nivel else "—"
 
 
+NOMES_STATUS_PEDIDO = {
+    "pendente": "Pendente",
+    "aprovada": "Aprovado",
+    "rejeitada": "Rejeitado",
+    "rejeitada_automaticamente": "Rejeitado automaticamente",
+}
+NOMES_EVENTOS = {
+    "criada": "Pedido aberto",
+    "rejeitada_automaticamente": "Rejeitado automaticamente",
+    "encaminhada": "Encaminhado para aprovação",
+    "aprovada": "Aprovado",
+    "rejeitada": "Rejeitado",
+}
+NOMES_SITUACOES = {"valida": "Válida", "pendente": "Aguardando aprovação", "rejeitada": "Rejeitada"}
+
+
+def nome_status_pedido(status: str) -> str:
+    return NOMES_STATUS_PEDIDO.get(status, status)
+
+
+def nome_evento(tipo: str) -> str:
+    return NOMES_EVENTOS.get(tipo, tipo)
+
+
+def nome_situacao(situacao: str) -> str:
+    return NOMES_SITUACOES.get(situacao, situacao)
+
+
 def registrar_filtros(app: Flask) -> None:
     app.add_template_filter(moeda)
     app.add_template_filter(data_br)
@@ -92,3 +120,6 @@ def registrar_filtros(app: Flask) -> None:
     app.add_template_filter(inteiro)
     app.add_template_filter(numero_campo)
     app.add_template_filter(nome_gravidade)
+    app.add_template_filter(nome_status_pedido)
+    app.add_template_filter(nome_evento)
+    app.add_template_filter(nome_situacao)

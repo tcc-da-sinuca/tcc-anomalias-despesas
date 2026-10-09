@@ -39,6 +39,39 @@ STATUS_REVISAO = (STATUS_PENDENTE,) + STATUS_PARECER
 # Status que exigem observação no parecer (RF08 / US08).
 STATUS_EXIGEM_OBSERVACAO = (STATUS_IRREGULAR, STATUS_NECESSITA_JUSTIFICATIVA)
 
+# --- Aprovação prévia de despesas (item 34 de MUDANCAS_PARA_DOCUMENTACAO.md) ---
+# Situação da despesa: só as válidas contam como histórico, análise, dashboard e relatório.
+SITUACAO_VALIDA = "valida"
+SITUACAO_PENDENTE = "pendente"  # fora do padrão, aguardando decisão
+SITUACAO_REJEITADA = "rejeitada"
+SITUACOES_DESPESA = (SITUACAO_VALIDA, SITUACAO_PENDENTE, SITUACAO_REJEITADA)
+
+# Status do pedido de aprovação ("ticket").
+SOLICITACAO_PENDENTE = "pendente"
+SOLICITACAO_APROVADA = "aprovada"
+SOLICITACAO_REJEITADA = "rejeitada"
+SOLICITACAO_REJEITADA_AUTOMATICAMENTE = "rejeitada_automaticamente"
+STATUS_SOLICITACAO = (
+    SOLICITACAO_PENDENTE,
+    SOLICITACAO_APROVADA,
+    SOLICITACAO_REJEITADA,
+    SOLICITACAO_REJEITADA_AUTOMATICAMENTE,
+)
+
+# Eventos do histórico de um pedido (somente inserção).
+EVENTO_CRIADA = "criada"
+EVENTO_REJEITADA_AUTOMATICAMENTE = "rejeitada_automaticamente"
+EVENTO_ENCAMINHADA = "encaminhada"
+EVENTO_APROVADA = "aprovada"
+EVENTO_REJEITADA = "rejeitada"
+TIPOS_EVENTO = (
+    EVENTO_CRIADA,
+    EVENTO_REJEITADA_AUTOMATICAMENTE,
+    EVENTO_ENCAMINHADA,
+    EVENTO_APROVADA,
+    EVENTO_REJEITADA,
+)
+
 # --- Dimensões das estatísticas de referência (RF02) ---
 DIMENSAO_CATEGORIA = "categoria"
 DIMENSAO_CONTA = "conta_contabil"
@@ -63,5 +96,8 @@ SQL_PERFIS = _sql_in(PERFIS)
 SQL_METODOS = _sql_in(METODOS)
 SQL_STATUS_REVISAO = _sql_in(STATUS_REVISAO)
 SQL_GRAVIDADES = _sql_in(GRAVIDADES)
+SQL_SITUACOES_DESPESA = _sql_in(SITUACOES_DESPESA)
+SQL_STATUS_SOLICITACAO = _sql_in(STATUS_SOLICITACAO)
+SQL_TIPOS_EVENTO = _sql_in(TIPOS_EVENTO)
 SQL_STATUS_PARECER = _sql_in(STATUS_PARECER)
 SQL_STATUS_EXIGEM_OBSERVACAO = _sql_in(STATUS_EXIGEM_OBSERVACAO)

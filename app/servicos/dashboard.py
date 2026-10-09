@@ -12,44 +12,47 @@ from decimal import Decimal
 from sqlalchemy import func, select
 
 from app.extensoes import db
-from app.models import AlertaAnomalia, Despesa, ExecucaoAnalise
-from app.models.dominio import METODOS, STATUS_REVISAO
+from app.models import AlertaAnomalia, Despesa
+from app.models.dominio import METODOS, SITUACAO_VALIDA, STATUS_REVISAO
+from app.servicos.reprocessamento import ultima_analise_da_base
+
+# Só despesas válidas entram nos indicadores; pendentes e rejeitadas ficam nos pedidos.
+VALIDA = Despesa.situacao == SITUACAO_VALIDA
 
 
 def resumo() -> dict:
     """Indicadores atuais. Valores monetários em ``Decimal``; percentual entre 0 e 100."""
     total_despesas, valor_despesas = db.session.execute(
-        select(func.count(Despesa.id), func.coalesce(func.sum(Despesa.valor), 0))
+        select(func.count(Despesa.id), func.coalesce(func.sum(Despesa.valor), 0)).where(VALIDA)
     ).one()
 
     sinalizadas = select(AlertaAnomalia.despesa_id).distinct().subquery()
     despesas_sinalizadas, valor_sinalizado = db.session.execute(
         select(func.count(Despesa.id), func.coalesce(func.sum(Despesa.valor), 0)).where(
-            Despesa.id.in_(select(sinalizadas.c.despesa_id))
+            VALIDA, Despesa.id.in_(select(sinalizadas.c.despesa_id))
         )
     ).one()
 
     por_status = dict.fromkeys(STATUS_REVISAO, 0)
     por_status.update(
         db.session.execute(
-            select(AlertaAnomalia.status_revisao, func.count(AlertaAnomalia.id)).group_by(
-                AlertaAnomalia.status_revisao
-            )
+            select(AlertaAnomalia.status_revisao, func.count(AlertaAnomalia.id))
+            .join(AlertaAnomalia.despesa)
+            .where(VALIDA)
+            .group_by(AlertaAnomalia.status_revisao)
         ).all()
     )
     por_metodo = dict.fromkeys(METODOS, 0)
     por_metodo.update(
         db.session.execute(
-            select(AlertaAnomalia.metodo, func.count(AlertaAnomalia.id)).group_by(
-                AlertaAnomalia.metodo
-            )
+            select(AlertaAnomalia.metodo, func.count(AlertaAnomalia.id))
+            .join(AlertaAnomalia.despesa)
+            .where(VALIDA)
+            .group_by(AlertaAnomalia.metodo)
         ).all()
     )
-    ultima_analise = db.session.scalar(
-        select(ExecucaoAnalise).order_by(
-            ExecucaoAnalise.iniciada_em.desc(), ExecucaoAnalise.id.desc()
-        )
-    )
+    # Última análise da base (não as verificações feitas no lançamento).
+    ultima_analise = ultima_analise_da_base()
 
     return {
         "total_despesas": total_despesas,

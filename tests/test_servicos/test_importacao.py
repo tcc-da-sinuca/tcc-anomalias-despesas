@@ -257,8 +257,8 @@ def test_importa_a_base_sintetica(sessao, auditor, tmp_path):
 # --- Cadastro manual ----------------------------------------------------------
 
 
-def test_cadastro_manual(sessao):
-    despesa = cadastrar_despesa(
+def test_cadastro_manual(sessao, auditor):
+    resultado = cadastrar_despesa(
         {
             "valor": "1.234,50",
             "data": "2026-09-10",
@@ -268,9 +268,13 @@ def test_cadastro_manual(sessao):
             "funcionario": "F010",
             "descricao": "",
         },
+        auditor,
         hoje=HOJE,
     )
+    despesa = resultado.despesa
 
+    assert resultado.solicitacao is None  # sem histórico, nada fica fora do padrão
+    assert despesa.situacao == "valida"
     assert despesa.id is not None
     assert despesa.lote_id is None
     assert despesa.valor == Decimal("1234.50")
@@ -278,8 +282,8 @@ def test_cadastro_manual(sessao):
     assert despesa.descricao is None
 
 
-def test_cadastro_manual_invalido(sessao):
+def test_cadastro_manual_invalido(sessao, auditor):
     with pytest.raises(DespesaInvalidaError) as erro:
-        cadastrar_despesa({"valor": "0", "data": "2026-09-10"}, hoje=HOJE)
+        cadastrar_despesa({"valor": "0", "data": "2026-09-10"}, auditor, hoje=HOJE)
     assert ("valor", "o valor deve ser maior que zero") in erro.value.erros
     assert _despesas(sessao) == []
