@@ -40,6 +40,50 @@ deve incorporar cada item na próxima versão e marcar a coluna "Incorporado".
 | 32 | 08/10/2026 | **Referência dos métodos passa a ser o centro de custo × conta contábil** (decisão da equipe; substitui a decisão D1 de `FLUXO_ANALISE.md`, que usava a categoria). Z-score, IQR e o atributo de desvio de valor do Isolation Forest comparam a despesa com o histórico do mesmo centro de custo e conta; grupo com menos de 10 despesas usa a categoria como recuo. Os motivos citam o grupo usado (ex.: "média do centro de custo CC-TI na conta contábil 3.1.05.002"). **Resultados do experimento refeitos** (seeds 42 e 7): Isolation Forest F1 0,760 → 0,811; contextual + Isolation Forest 0,832 → 0,860; Z-score 0,369 → 0,296 (continua pegando 28 dos 30 valores extremos, mas deixa de pegar por acaso os fracionamentos, 26 → 8, e sinaliza mais despesas normais, 23 → 32, porque os grupos são menores); IQR 0,312 → 0,330. **Todas as tabelas anteriores de `metricas.csv` ficam substituídas.** | Artigo: metodologia (referência dos métodos) e resultados — **refazer as tabelas**. `FLUXO_ANALISE.md` (D1) e `ISOLATION_FOREST.md` atualizados. | ☐ |
 | 33 | 08/10/2026 | **Gravidade do alerta e decisão rápida.** ⚠️ **Muda o diagrama de classes:** `AlertaAnomalia` ganha `excesso` (quantas vezes o score passou do limite do método) e `gravidade` (`leve`, `moderada`, `alta`, `critica`; enum novo `Gravidade`), opcionais (migration `0002`). O contrato dos detectores ganha a coluna `excesso`. As faixas de cada método vêm dos quantis 50/80/95% dos alertas da base seed 42, **sem usar rótulos** (`motor/gravidade.py`). **Só o Z-score e o IQR chegam a "crítica"**; a regra contextual e o Isolation Forest vão no máximo até "alta" (o score do Isolation Forest depende do tamanho de cada base, e os "críticos" dele acertavam só ~50%, porque ele marca também a original de cada duplicata). O score aparece colorido pela gravidade, com "N x o limite". **Resultado (`metricas_por_gravidade.csv`):** no Z-score e no IQR a precisão cresce com o nível, e crítica = 100% nas seeds 42 e 7. Rejeição automática por alerta crítico: **13 de 13 e 8 de 8 corretas** (seeds 42 e 7). Na lista de alertas, cada linha tem um botão de **decisão rápida** (aprovar, ou rejeitar com observação obrigatória — registra um parecer) e um botão **"i"** para o detalhe. | Diagrama de classes (atributos e enum novos); artigo (gravidade como evidência para a rejeição automática); manual (tela de alertas). | ☐ |
 | 34 | 08/10/2026 | **Aprovação prévia de despesas** (requisito novo, pedido da equipe; **não está nos RFs entregues**). Ao cadastrar ou importar, os quatro métodos rodam na hora contra o histórico de despesas válidas (referência centro de custo × conta, item 32). Sem alerta: a despesa entra como **válida**. Com alerta: entra como **pendente** e abre um **pedido de aprovação**. Com alerta de gravidade **crítica** (Z-score ou IQR): é **rejeitada automaticamente**, e quem lançou (ou um administrador) pode **encaminhar** o pedido com justificativa; ele volta como pendente **prioritário**, em destaque e no topo da fila. Só o **administrador** decide, e **nunca o pedido de uma despesa que ele mesmo lançou** (segregação de funções). Aprovar torna a despesa válida e registra parecer "aprovado" nos alertas; rejeitar exige justificativa, deixa a despesa rejeitada e registra parecer "irregular". **Só despesas válidas** contam como histórico, estatísticas, análises, dashboard, alertas e relatório. A carga do histórico (base sintética) entra sem verificação. ⚠️ **Diverge do princípio "o alerta é um indício e sempre exige revisão humana"**: a rejeição automática é uma decisão do sistema; a equipe optou por ela, com o encaminhamento como garantia de revisão humana. ⚠️ **Muda o diagrama de classes** (`Despesa.situacao`; entidades `SolicitacaoAprovacao` e `EventoSolicitacao`, este somente inserção; enums `SituacaoDespesa`, `StatusSolicitacao`, `TipoEvento`; migration `0003`), o **diagrama de sequência** (verificação no lançamento e decisão do pedido) e os **casos de uso** (lançar despesa, decidir pedido, encaminhar pedido). Endpoints novos: `GET /api/solicitacoes`, `GET /api/solicitacoes/{id}`, `POST /api/solicitacoes/{id}/aprovar`, `/rejeitar`, `/encaminhar`; a importação informa `situacoes` (válidas, pendentes, rejeitadas). Tela nova **Pedidos** (abas por status, selo de pendentes no menu, aviso no dashboard). | Requisitos (RF novo), princípios do projeto (exceção registrada), diagramas de classes, sequência e casos de uso, lista de endpoints, manual do usuário. | ☐ |
+| 35 | 09/10/2026 | **Tabela de resultados do artigo refeita** (consequência dos itens 32 a 34). Os números do experimento mudaram com a nova referência dos métodos (centro de custo × conta) e com a gravidade. **Todas as tabelas de resultados anteriores ficam substituídas** pelas da seção "Resultados do experimento (09/10/2026)", logo abaixo, tiradas de `experimentos/resultados/metricas.csv` e `metricas_por_gravidade.csv` (seeds 42 e 7). | Artigo: seção de resultados (tabela principal e tabela por gravidade) e discussão. | ☐ |
+
+## Resultados do experimento (09/10/2026)
+
+Gerados por `python -m experimentos.avaliar_metodos` (seed 42) e
+`python -m experimentos.avaliar_metodos --seed 7 --saida experimentos/resultados/seed_7`,
+com os parâmetros padrão. Métricas calculadas a partir das contagens (VP, FP, FN, VN) e
+arredondadas uma única vez para três casas. Base: 5.000 despesas, 216 anômalas (seed 42).
+
+**Tabela 1 — Desempenho por método e combinação (seed 42), com o F1 da seed 7 e o F1 anterior à mudança de referência**
+
+| Avaliação | Precisão | Recall | F1 | Taxa de FP | F1 (seed 7) | F1 antes (referência categoria) |
+|---|---|---|---|---|---|---|
+| Z-score | 0,573 | 0,199 | 0,296 | 0,007 | 0,358 | 0,369 |
+| IQR | 0,311 | 0,352 | 0,330 | 0,035 | 0,383 | 0,312 |
+| Contextual | 1,000 | 0,139 | 0,244 | 0,000 | 0,248 | 0,244 |
+| Isolation Forest | 0,756 | 0,875 | 0,811 | 0,013 | 0,790 | 0,760 |
+| Contextual + Isolation Forest | 0,774 | 0,968 | 0,860 | 0,013 | 0,847 | 0,832 |
+| Z-score + contextual + Isolation Forest | 0,715 | 0,977 | 0,826 | 0,018 | 0,829 | 0,820 |
+| União dos quatro métodos | 0,494 | 0,986 | 0,658 | 0,046 | 0,658 | 0,644 |
+| Votação (pelo menos 2 métodos) | 0,696 | 0,361 | 0,476 | 0,007 | 0,550 | 0,449 |
+
+**Tabela 2 — Precisão por nível de gravidade (Z-score e IQR) e da rejeição automática**
+
+| Método | Gravidade | Seed 42: anômalas / sinalizadas | Seed 7: anômalas / sinalizadas |
+|---|---|---|---|
+| Z-score | leve | 15 / 40 (38%) | 25 / 46 (54%) |
+| Z-score | moderada | 9 / 15 (60%) | 5 / 6 (83%) |
+| Z-score | alta | 16 / 17 (94%) | 17 / 17 (100%) |
+| Z-score | crítica | 3 / 3 (100%) | 4 / 4 (100%) |
+| IQR | leve | 1 / 122 (1%) | 14 / 129 (11%) |
+| IQR | moderada | 34 / 76 (45%) | 38 / 79 (48%) |
+| IQR | alta | 28 / 33 (85%) | 28 / 31 (90%) |
+| IQR | crítica | 13 / 13 (100%) | 8 / 8 (100%) |
+| Rejeição automática (alguma crítica) | crítica | 13 / 13 (100%) | 8 / 8 (100%) |
+
+Leitura para o artigo:
+- O Isolation Forest é o melhor método isolado (F1 0,811), e a combinação **contextual + Isolation
+  Forest** é a melhor no geral (F1 0,860), com resultado parecido na seed 7 (0,847).
+- Com a referência centro de custo × conta, o Z-score deixou de pegar fracionamentos "por acaso"
+  (26 → 8) e passou a sinalizar mais despesas normais (23 → 32); continua pegando 28 dos 30
+  valores extremos.
+- No Z-score e no IQR, a precisão cresce com a gravidade, e todo alerta "crítico" foi anomalia nas
+  duas seeds. É essa evidência que sustenta a rejeição automática (item 34).
 
 ## Como renderizar o diagrama de classes
 

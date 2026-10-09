@@ -180,3 +180,4 @@ concluídos em 25/09 (seeds 42 e 7). **A S3 está concluída.**
 | 08/10/2026 | Início da aprovação prévia de despesas (pedido da equipe), etapa 1: referência dos métodos passa a ser centro de custo × conta, com recuo para a categoria; experimento refeito (item 32 de `MUDANCAS_PARA_DOCUMENTACAO.md`). 411 testes. |
 | 08/10/2026 | Aprovação prévia, etapa 2: gravidade do alerta (migration 0002), score colorido por nível, decisão rápida na lista de alertas e `metricas_por_gravidade.csv` (item 33). |
 | 08/10/2026 | Aprovação prévia, etapas 3 e 4: verificação no lançamento, pedidos de aprovação com rejeição automática e encaminhamento prioritário, tela Pedidos e API (item 34). Isolation Forest limitado a gravidade alta (item 33 atualizado). 475 testes. |
+| 09/10/2026 | Tabela de resultados do artigo refeita e registrada no item 35 de `MUDANCAS_PARA_DOCUMENTACAO.md` (seção "Resultados do experimento"). |
