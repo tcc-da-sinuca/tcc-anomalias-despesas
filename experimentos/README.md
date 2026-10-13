@@ -48,3 +48,25 @@ saem idênticos.
 Os arquivos em `resultados/` são versionados, para que a equipe do artigo use
 exatamente os números gerados. Para refazer a seed 7:
 `python -m experimentos.avaliar_metodos --seed 7 --saida experimentos/resultados/seed_7`.
+
+## Experimento ampliado (`avaliar_robustez.py`)
+
+Responde à verificação do orientador de 08/10/2026 (robustez e ameaças à validade). Não
+substitui o resultado principal (`avaliar_metodos.py`, sementes 42 e 7).
+
+```bash
+python -m experimentos.avaliar_robustez                  # 20 sementes (1 a 20), ~6 min
+python -m experimentos.avaliar_robustez --sementes 5     # rápido, para testar
+```
+
+| Arquivo em `resultados/robustez/` | Conteúdo |
+|---|---|
+| `por_semente.csv` | Uma linha por semente e avaliação: VP, FP, FN, VN, precisão, recall, F1, taxa de FP, AP (área sob a curva precisão-revocação) e recall por tipo de anomalia |
+| `resumo_sementes.csv` | Média e desvio padrão em 20 sementes: métodos, combinações, linhas de base (aleatório 5%, 5% maiores valores da categoria, Isolation Forest sobre atributos brutos), variantes (Z-score e IQR sobre log, z-score robusto com mediana e MAD) e ablação dos atributos do Isolation Forest |
+| `random_state_if.csv` | Isolation Forest com 20 valores de `random_state` na base de semente 42 |
+| `sensibilidade_limiar.csv` | `contamination` de 0,01 a 0,15; limiar do Z-score de 2 a 4; fator do IQR de 1,5 a 3 (média de 20 sementes) |
+| `cenarios_estresse.csv` | Bases geradas com hipóteses diferentes das dos detectores (extremo sutil, duplicata tardia, fracionamento abaixo de 85%, fim de semana legítimo e todos juntos), 10 sementes |
+| `execucao.json` | Sementes, parâmetros, cenários, duração e versões das bibliotecas |
+
+As variantes e linhas de base existem só no script, para comparação; nenhum parâmetro da
+aplicação muda.
