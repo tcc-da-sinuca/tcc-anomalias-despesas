@@ -1,5 +1,5 @@
 {
-  "executado_em": "2026-11-06T20:20:00+00:00",
+  "executado_em": "2026-11-08T01:12:22+00:00",
   "sementes_base": [
     1,
     2,
@@ -49,12 +49,12 @@
   "alfa": 0.05,
   "correcao_multiplas_comparacoes": "Holm, sobre todas as linhas de comparacoes_pareadas.csv",
   "entrada": "experimentos/resultados/robustez/por_semente.csv",
-  "duracao_s": 96.0,
+  "duracao_s": 144.7,
   "versoes": {
-    "python": "3.13.18",
-    "pandas": "3.0.5",
-    "numpy": "2.5.3",
-    "scikit-learn": "1.9.1",
-    "scipy": "1.18.1"
+    "python": "3.11.18",
+    "pandas": "2.3.3",
+    "numpy": "2.4.6",
+    "scikit-learn": "1.7.2",
+    "scipy": "1.17.1"
   }
 }
