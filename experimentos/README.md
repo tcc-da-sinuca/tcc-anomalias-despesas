@@ -70,3 +70,45 @@ python -m experimentos.avaliar_robustez --sementes 5     # rápido, para testar
 
 As variantes e linhas de base existem só no script, para comparação; nenhum parâmetro da
 aplicação muda.
+
+## Testes estatísticos (`testes_estatisticos.py`)
+
+Responde à verificação do orientador de 06/11/2026 (itens 2 e 3). Lê
+`resultados/robustez/por_semente.csv` e roda o motor direto.
+
+```bash
+python -m experimentos.testes_estatisticos              # ~2 min
+```
+
+| Arquivo em `resultados/testes_estatisticos/` | Conteúdo |
+|---|---|
+| `if_bases_x_random_state.csv` | Isolation Forest em 20 bases (sementes 1 a 20) × 20 `random_state` (0 a 19): VP, FP, FN, precisão, recall, F1 e AP |
+| `decomposicao_variancia_if.csv` | Desvio padrão do F1 e da AP que vem do modelo (com a base fixa) e da base (ANOVA de um fator), e a fração da variância de cada um |
+| `comparacoes_pareadas.csv` | Pares de métodos comparados no artigo: diferença média por semente, IC 95% (t e bootstrap com 10.000 reamostras), sementes em que cada um vence, Wilcoxon pareado, efeito (correlação bisserial de postos) e p ajustado por Holm |
+| `execucao.json` | Sementes, reamostras, correção, duração e versões |
+
+## Verificação em dados reais (`validar_ceap.py`)
+
+Responde ao item 1 da verificação de 06/11/2026: aplica o motor às despesas da Cota para o
+Exercício da Atividade Parlamentar (CEAP) e gera duas planilhas iguais com os alertas de
+maior excesso de cada método, para duas pessoas classificarem sem conversar entre si. Os
+dados não têm rótulo, então o resultado é a quantidade sinalizada e a concordância entre
+as pessoas (kappa de Cohen), não precisão ou recall. O mapeamento das colunas está no
+docstring do script.
+
+```bash
+python -m experimentos.validar_ceap analisar --ano 2025          # baixa da Câmara (~1 min)
+python -m experimentos.validar_ceap analisar --arquivo Ano-2025.csv.zip
+# depois de preencher as duas planilhas:
+python -m experimentos.validar_ceap concordancia \
+    experimentos/resultados/validacao_ceap/revisor_1.xlsx \
+    experimentos/resultados/validacao_ceap/revisor_2.xlsx
+```
+
+| Arquivo em `resultados/validacao_ceap/` | Conteúdo |
+|---|---|
+| `resumo.json` | Linhas lidas, filtros, despesas analisadas, sinalizadas por método e no total, valores, parâmetros e versões |
+| `sinalizadas_por_metodo.csv` | Sinalizadas por método e por gravidade |
+| `alertas.csv` | Todos os alertas, com os dados da despesa |
+| `amostra.csv`, `revisor_1.xlsx`, `revisor_2.xlsx` | Os 7 alertas de maior excesso de cada método (28), em ordem embaralhada, com o link do documento e as colunas `classificacao` e `justificativa` |
+| `concordancia.json`, `matriz_concordancia.csv` | Concordância percentual, kappa de Cohen (3 classes e procedente × não procedente), distribuição por revisor e por método |

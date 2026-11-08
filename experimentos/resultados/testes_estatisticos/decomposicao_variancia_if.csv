@@ -1,0 +1,3 @@
+metrica,n_bases,n_random_states,media,dp_modelo_dentro_da_base,dp_base_componente,dp_entre_bases_por_random_state_media,dp_total,fracao_variancia_base,fracao_variancia_modelo
+f1,20,20,0.7921,0.0080,0.0182,0.0197,0.0195,0.8395,0.1605
+ap,20,20,0.7324,0.0410,0.0200,0.0362,0.0454,0.1917,0.8083

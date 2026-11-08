@@ -1,0 +1,15 @@
+a,b,metrica,motivo,n_sementes,media_a,media_b,diferenca_media,dp_diferenca,ic95_t_inf,ic95_t_sup,ic95_bootstrap_inf,ic95_bootstrap_sup,sementes_a_maior,sementes_empate,sementes_b_maior,wilcoxon_estatistica,wilcoxon_p,wilcoxon_metodo,efeito_bisserial_postos,wilcoxon_p_holm,significativo_holm_5pct
+isolation_forest,iqr,f1,IF é o melhor método isolado,20,0.79016,0.315015,0.475145,0.0385451,0.457105,0.493185,0.459234,0.49185,20,0,0,0,1.90735e-06,exato,1,2.67029e-05,True
+isolation_forest,zscore,f1,IF é o melhor método isolado,20,0.79016,0.34322,0.44694,0.0398382,0.428295,0.465585,0.42962,0.46379,20,0,0,0,1.90735e-06,exato,1,2.67029e-05,True
+contextual+isolation_forest,isolation_forest,f1,a união supera o IF sozinho,20,0.845705,0.79016,0.055545,0.0044182,0.0534772,0.0576128,0.053685,0.057455,20,0,0,0,8.84492e-05,aproximação normal (há empates),1,0.000707593,True
+zscore,iqr,f1,ordem entre os univariados,20,0.34322,0.315015,0.028205,0.0450809,0.00710648,0.0493035,0.00858413,0.0464701,14,0,6,43,0.0192337,exato,0.590476,0.0769348,False
+zscore_robusto,zscore,f1,z-score robusto x clássico,20,0.350585,0.34322,0.007365,0.0480411,-0.0151189,0.0298489,-0.0123962,0.02865,10,0,10,98,0.812355,exato,0.0666667,0.812355,False
+zscore_log,zscore,f1,Z-score sobre log x valor bruto,20,0.228815,0.34322,-0.114405,0.0457562,-0.13582,-0.0929904,-0.134005,-0.0951349,0,0,20,0,1.90735e-06,exato,-1,2.67029e-05,True
+zscore_robusto_log,zscore,f1,z-score robusto sobre log x clássico,20,0.22322,0.34322,-0.12,0.0439482,-0.140568,-0.0994316,-0.138455,-0.101184,0,0,20,0,8.84492e-05,aproximação normal (há empates),-1,0.000707593,True
+iqr_log,iqr,f1,IQR sobre log x valor bruto,20,0.33788,0.315015,0.022865,0.0652949,-0.00769396,0.053424,-0.00604038,0.0495652,13,0,7,57,0.0758514,exato,0.457143,0.227554,False
+zscore,maiores_5pct_categoria,f1,univariado x regra trivial,20,0.34322,0.30523,0.03799,0.0430864,0.0178249,0.0581551,0.019085,0.0557251,15,0,5,23,0.00220197,aproximação normal (há empates),0.780952,0.0110099,True
+iqr,maiores_5pct_categoria,f1,univariado x regra trivial,20,0.315015,0.30523,0.009785,0.0327211,-0.00552893,0.0250989,-0.004345,0.0238651,11,0,9,71,0.216167,exato,0.32381,0.432335,False
+isolation_forest,isolation_forest_bruto,f1,ganho dos atributos derivados,20,0.79016,0.117335,0.672825,0.0382555,0.654921,0.690729,0.6563,0.688961,20,0,0,0,8.84492e-05,aproximação normal (há empates),1,0.000707593,True
+isolation_forest,iqr,ap,AP confirma a ordem sem limiar,20,0.68992,0.382805,0.307115,0.0526151,0.28249,0.33174,0.28453,0.328937,20,0,0,0,1.90735e-06,exato,1,2.67029e-05,True
+isolation_forest,zscore,ap,AP confirma a ordem sem limiar,20,0.68992,0.3509,0.33902,0.0432915,0.318759,0.359281,0.3205,0.357581,20,0,0,0,1.90735e-06,exato,1,2.67029e-05,True
+zscore_robusto,zscore,ap,z-score robusto x clássico,20,0.40223,0.3509,0.05133,0.0220283,0.0410205,0.0616395,0.0417541,0.0608351,20,0,0,0,1.90735e-06,exato,1,2.67029e-05,True
