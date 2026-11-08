@@ -10,7 +10,7 @@ entregue continuam indo para [`MUDANCAS_PARA_DOCUMENTACAO.md`](MUDANCAS_PARA_DOC
 
 ---
 
-## Situação atual (atualizado em 27/09/2026)
+## Situação atual (atualizado em 08/11/2026)
 
 **Sprint 1 (14/09–27/09): concluída.** Importação (US01), estatísticas de referência
 (US02), base do sistema e base sintética prontas. A subida completa com `docker compose up`
@@ -35,10 +35,10 @@ concluídos em 25/09 (seeds 42 e 7). **A S3 está concluída.**
 | Importação e estatísticas (US01, US02) | ✅ CSV/XLSX com erros por linha, cadastro manual, API, telas e estatísticas recalculadas a cada importação |
 | Motor de detecção | ✅ Z-score, IQR, contextual, Isolation Forest e consolidador |
 | Telas de alertas, revisão e dashboard | ✅ Análises, lista de alertas com filtros combináveis, detalhe, parecer com histórico, dashboard |
-| Experimento | ✅ `metricas.csv` com os quatro métodos, seeds 42 e 7 |
-| Testes | 475 passando (SQLite + PostgreSQL) |
+| Experimento | ✅ `metricas.csv` (seeds 42 e 7), experimento ampliado em 20 sementes, testes estatísticos e motor aplicado à CEAP 2025; falta a classificação dos alertas da CEAP por dois revisores |
+| Testes | 477 passando (SQLite + PostgreSQL) |
 
-**Próximo passo:** recriar o banco limpo antes da apresentação e testar com Docker Desktop. O restante do Fechamento está pronto.
+**Próximo passo:** definir a amostra dos alertas da CEAP para os dois revisores, fazer a classificação e calcular o kappa (item 38 de `MUDANCAS_PARA_DOCUMENTACAO.md`).
 
 ---
 
@@ -182,3 +182,4 @@ concluídos em 25/09 (seeds 42 e 7). **A S3 está concluída.**
 | 08/10/2026 | Aprovação prévia, etapas 3 e 4: verificação no lançamento, pedidos de aprovação com rejeição automática e encaminhamento prioritário, tela Pedidos e API (item 34). Isolation Forest limitado a gravidade alta (item 33 atualizado). 475 testes. |
 | 09/10/2026 | Tabela de resultados do artigo refeita e registrada no item 35 de `MUDANCAS_PARA_DOCUMENTACAO.md` (seção "Resultados do experimento"). |
 | 07/11/2026 | Verificação do orientador de 06/11 (itens 1 a 3): `experimentos/testes_estatisticos.py` (Isolation Forest em 20 bases × 20 `random_state`; comparações pareadas com Wilcoxon, IC 95% e Holm) e `experimentos/validar_ceap.py` (motor nos dados abertos da CEAP, planilhas para dois revisores e kappa de Cohen). A execução na CEAP e a classificação pelos dois revisores ficam pendentes. |
+| 08/11/2026 | PR #1 mesclado com o `scipy` declarado e a execução registrada no ambiente do projeto. `validar_ceap.py` corrigido (coluna `numEspecificacaoSubCota`) e rodado na CEAP 2025: 192.220 despesas, 12,02% com algum alerta. Testes estatísticos e CEAP registrados nos itens 37 e 38 de `MUDANCAS_PARA_DOCUMENTACAO.md`. A classificação pelos revisores continua pendente. |

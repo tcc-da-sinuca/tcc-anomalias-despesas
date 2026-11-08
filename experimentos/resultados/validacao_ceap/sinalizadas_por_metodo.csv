@@ -1,0 +1,6 @@
+metodo,sinalizadas,percentual,nao_avaliadas,gravidade_leve,gravidade_moderada,gravidade_alta,gravidade_critica
+zscore,2830,1.47,0.0,1539.0,607.0,531.0,153.0
+iqr,10393,5.41,0.0,4035.0,3007.0,1755.0,1596.0
+contextual,5495,2.86,0.0,4559.0,367.0,569.0,0.0
+isolation_forest,9589,4.99,0.0,8484.0,531.0,574.0,0.0
+qualquer_metodo,23101,12.02,,,,,

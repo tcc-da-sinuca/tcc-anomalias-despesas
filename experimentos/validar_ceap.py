@@ -18,7 +18,7 @@ Coluna do motor     Coluna da CEAP
 ``valor``           ``vlrLiquido`` (valor efetivamente debitado da cota)
 ``data``            ``datEmissao`` (data de emissão do documento)
 ``categoria``       ``txtDescricao`` (tipo de despesa, ex.: "COMBUSTÍVEIS E LUBRIFICANTES.")
-``conta_contabil``  ``numSubCota`` + ``numEspecificacaoSubcota`` (tipo e subtipo da despesa)
+``conta_contabil``  ``numSubCota`` + ``numEspecificacaoSubCota`` (tipo e subtipo da despesa)
 ``centro_custo``    ``sgUF`` (UF do parlamentar; o valor da cota varia por UF)
 ``funcionario``     ``ideCadastro`` (identificador do parlamentar)
 ==================  =====================================================================
@@ -75,6 +75,12 @@ DESCRICAO_CLASSES = {
                  "lançado duas vezes, despesa fora das regras da CEAP). É um indício confirmado, não uma "
                  "conclusão sobre a pessoa.",
 }
+# Colunas da CEAP lidas pelo script, com a grafia do arquivo publicado pela Câmara.
+COLUNAS_CEAP = {nome.lower(): nome for nome in (
+    "txNomeParlamentar", "ideCadastro", "sgUF", "sgPartido", "numSubCota", "txtDescricao",
+    "numEspecificacaoSubCota", "txtDescricaoEspecificacao", "txtFornecedor", "txtCNPJCPF",
+    "datEmissao", "vlrDocumento", "vlrLiquido", "numAno", "txtTrecho", "urlDocumento",
+)}
 COLUNAS_PLANILHA = {
     "id_amostra": "id_amostra", "metodo": "metodo", "gravidade": "gravidade", "motivo": "motivo",
     "txNomeParlamentar": "parlamentar", "sgUF": "uf", "sgPartido": "partido",
@@ -112,7 +118,10 @@ def ler_ceap(caminho: Path) -> pd.DataFrame:
         except UnicodeDecodeError:
             continue
     separador = ";" if texto[:2000].count(";") >= texto[:2000].count(",") else ","
-    return pd.read_csv(io.StringIO(texto), sep=separador, dtype=str, keep_default_na=False)
+    ceap = pd.read_csv(io.StringIO(texto), sep=separador, dtype=str, keep_default_na=False)
+    # A Câmara já variou a caixa de alguns nomes (ex.: numEspecificacaoSubCota/Subcota).
+    return ceap.rename(columns={c: COLUNAS_CEAP[c.lower()] for c in ceap.columns
+                                if c.lower() in COLUNAS_CEAP})
 
 
 def _numero(serie: pd.Series) -> pd.Series:
@@ -136,7 +145,7 @@ def preparar(ceap: pd.DataFrame, ano: int | None) -> tuple[pd.DataFrame, dict]:
     df = df.reset_index(drop=True)
     df["despesa_id"] = np.arange(1, len(df) + 1)
     df["categoria"] = df["txtDescricao"].str.strip()
-    df["conta_contabil"] = df["numSubCota"].str.strip() + "." + df["numEspecificacaoSubcota"].str.strip()
+    df["conta_contabil"] = df["numSubCota"].str.strip() + "." + df["numEspecificacaoSubCota"].str.strip()
     df["centro_custo"] = df["sgUF"].str.strip()
     df["funcionario"] = df["ideCadastro"].str.strip()
     return df, contagem

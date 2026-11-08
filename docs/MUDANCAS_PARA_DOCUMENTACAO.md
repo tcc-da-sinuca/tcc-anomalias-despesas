@@ -42,6 +42,8 @@ deve incorporar cada item na próxima versão e marcar a coluna "Incorporado".
 | 34 | 08/10/2026 | **Aprovação prévia de despesas** (requisito novo, pedido da equipe; **não está nos RFs entregues**). Ao cadastrar ou importar, os quatro métodos rodam na hora contra o histórico de despesas válidas (referência centro de custo × conta, item 32). Sem alerta: a despesa entra como **válida**. Com alerta: entra como **pendente** e abre um **pedido de aprovação**. Com alerta de gravidade **crítica** (Z-score ou IQR): é **rejeitada automaticamente**, e quem lançou (ou um administrador) pode **encaminhar** o pedido com justificativa; ele volta como pendente **prioritário**, em destaque e no topo da fila. Só o **administrador** decide, e **nunca o pedido de uma despesa que ele mesmo lançou** (segregação de funções). Aprovar torna a despesa válida e registra parecer "aprovado" nos alertas; rejeitar exige justificativa, deixa a despesa rejeitada e registra parecer "irregular". **Só despesas válidas** contam como histórico, estatísticas, análises, dashboard, alertas e relatório. A carga do histórico (base sintética) entra sem verificação. ⚠️ **Diverge do princípio "o alerta é um indício e sempre exige revisão humana"**: a rejeição automática é uma decisão do sistema; a equipe optou por ela, com o encaminhamento como garantia de revisão humana. ⚠️ **Muda o diagrama de classes** (`Despesa.situacao`; entidades `SolicitacaoAprovacao` e `EventoSolicitacao`, este somente inserção; enums `SituacaoDespesa`, `StatusSolicitacao`, `TipoEvento`; migration `0003`), o **diagrama de sequência** (verificação no lançamento e decisão do pedido) e os **casos de uso** (lançar despesa, decidir pedido, encaminhar pedido). Endpoints novos: `GET /api/solicitacoes`, `GET /api/solicitacoes/{id}`, `POST /api/solicitacoes/{id}/aprovar`, `/rejeitar`, `/encaminhar`; a importação informa `situacoes` (válidas, pendentes, rejeitadas). Tela nova **Pedidos** (abas por status, selo de pendentes no menu, aviso no dashboard). | Requisitos (RF novo), princípios do projeto (exceção registrada), diagramas de classes, sequência e casos de uso, lista de endpoints, manual do usuário. | ☐ |
 | 35 | 09/10/2026 | **Tabela de resultados do artigo refeita** (consequência dos itens 32 a 34). Os números do experimento mudaram com a nova referência dos métodos (centro de custo × conta) e com a gravidade. **Todas as tabelas de resultados anteriores ficam substituídas** pelas da seção "Resultados do experimento (09/10/2026)", logo abaixo, tiradas de `experimentos/resultados/metricas.csv` e `metricas_por_gravidade.csv` (seeds 42 e 7). | Artigo: seção de resultados (tabela principal e tabela por gravidade) e discussão. | ☐ |
 | 36 | 13/10/2026 | **Experimento ampliado** (`experimentos/avaliar_robustez.py`, resultados em `experimentos/resultados/robustez/`), em resposta à verificação do orientador de 08/10: 20 sementes com média e desvio, AP (área sob a curva precisão-revocação), sensibilidade a `contamination` e aos limiares, linhas de base, ablação dos atributos do Isolation Forest, variantes com log e z-score robusto (MAD) e cenários de estresse que medem a circularidade entre o gerador e os detectores. Resultado principal: IF F1 0,790 ± 0,018 e contextual + IF 0,846 ± 0,016 em 20 sementes; IF sobre atributos brutos 0,117; com todas as perturbações do gerador, IF cai para 0,157. Nenhum parâmetro da aplicação mudou. | Documentação, Seção 3.4 (já incorporado na versão de 13/10); artigo: metodologia, resultados e ameaças à validade. | ☑ |
+| 37 | 08/11/2026 | **Testes estatísticos** (`experimentos/testes_estatisticos.py`, resultados em `experimentos/resultados/testes_estatisticos/`), itens 2 e 3 da verificação do orientador de 06/11: Isolation Forest num desenho cruzado de 20 bases × 20 `random_state`, com a parte da variância que vem da base e a que vem do modelo, e comparações pareadas entre métodos nas 20 sementes (diferença média, IC 95% t e bootstrap, Wilcoxon, correção de Holm). Números na seção "Testes estatísticos (08/11/2026)". Nenhum parâmetro da aplicação mudou. | Artigo: metodologia e resultados (significância das diferenças entre métodos e variabilidade do Isolation Forest). | ☐ |
+| 38 | 08/11/2026 | **Motor aplicado à CEAP 2025** (`experimentos/validar_ceap.py`, item 1 da verificação de 06/11), com os parâmetros padrão e sem rótulos: 192.220 despesas de 554 parlamentares, 23.101 (12,02%) com algum alerta (Z-score 1,47%, IQR 5,41%, contextual 2,86%, Isolation Forest 4,99%). O script foi corrigido para o nome real da coluna `numEspecificacaoSubCota`. **Pendente:** a classificação dos alertas por dois revisores e o kappa de Cohen. | Artigo: verificação em dados reais e ameaças à validade. | ☐ |
 
 ## Resultados do experimento (09/10/2026)
 
@@ -85,6 +87,52 @@ Leitura para o artigo:
   valores extremos.
 - No Z-score e no IQR, a precisão cresce com a gravidade, e todo alerta "crítico" foi anomalia nas
   duas seeds. É essa evidência que sustenta a rejeição automática (item 34).
+
+## Testes estatísticos (08/11/2026)
+
+Gerados por `python -m experimentos.testes_estatisticos` no container do app (Python 3.11,
+pandas 2.3.3, scikit-learn 1.7.2); os CSVs são idênticos byte a byte aos da execução original
+de 06/11. Bases sintéticas de sementes 1 a 20, parâmetros padrão.
+
+**Tabela 3 — Variabilidade do Isolation Forest: 20 bases × 20 `random_state`**
+
+| Métrica | Média | DP do modelo (mesma base) | DP da base | DP total | Variância da base | Variância do modelo |
+|---|---|---|---|---|---|---|
+| F1 | 0,792 | 0,008 | 0,018 | 0,019 | 84% | 16% |
+| AP | 0,732 | 0,041 | 0,020 | 0,045 | 19% | 81% |
+
+**Tabela 4 — Comparações pareadas nas 20 sementes** (diferença = A − B; IC 95% pela t de Student;
+sementes A maior / empate / B maior; p do Wilcoxon corrigido por Holm)
+
+| A × B | Métrica | Média A × B | Diferença [IC 95%] | A/=/B | p (Holm) | Significativa a 5% |
+|---|---|---|---|---|---|---|
+| Isolation Forest × IQR | F1 | 0,790 × 0,315 | 0,475 [0,457; 0,493] | 20/0/0 | < 0,001 | sim |
+| Isolation Forest × Z-score | F1 | 0,790 × 0,343 | 0,447 [0,428; 0,466] | 20/0/0 | < 0,001 | sim |
+| Contextual + IF × Isolation Forest | F1 | 0,846 × 0,790 | 0,056 [0,053; 0,058] | 20/0/0 | < 0,001 | sim |
+| Z-score × IQR | F1 | 0,343 × 0,315 | 0,028 [0,007; 0,049] | 14/0/6 | 0,077 | não |
+| Z-score robusto (MAD) × Z-score | F1 | 0,351 × 0,343 | 0,007 [-0,015; 0,030] | 10/0/10 | 0,812 | não |
+| Z-score sobre log × Z-score | F1 | 0,229 × 0,343 | -0,114 [-0,136; -0,093] | 0/0/20 | < 0,001 | sim |
+| Z-score robusto sobre log × Z-score | F1 | 0,223 × 0,343 | -0,120 [-0,141; -0,099] | 0/0/20 | < 0,001 | sim |
+| IQR sobre log × IQR | F1 | 0,338 × 0,315 | 0,023 [-0,008; 0,053] | 13/0/7 | 0,228 | não |
+| Z-score × 5% maiores da categoria | F1 | 0,343 × 0,305 | 0,038 [0,018; 0,058] | 15/0/5 | 0,011 | sim |
+| IQR × 5% maiores da categoria | F1 | 0,315 × 0,305 | 0,010 [-0,006; 0,025] | 11/0/9 | 0,432 | não |
+| Isolation Forest × IF sobre atributos brutos | F1 | 0,790 × 0,117 | 0,673 [0,655; 0,691] | 20/0/0 | < 0,001 | sim |
+| Isolation Forest × IQR | AP | 0,690 × 0,383 | 0,307 [0,282; 0,332] | 20/0/0 | < 0,001 | sim |
+| Isolation Forest × Z-score | AP | 0,690 × 0,351 | 0,339 [0,319; 0,359] | 20/0/0 | < 0,001 | sim |
+| Z-score robusto (MAD) × Z-score | AP | 0,402 × 0,351 | 0,051 [0,041; 0,062] | 20/0/0 | < 0,001 | sim |
+
+Leitura para o artigo:
+- No F1, a maior parte da variação vem da base, não da semente do modelo; na AP, que depende
+  da ordem completa dos scores, é o contrário.
+- O Isolation Forest supera o IQR e o Z-score em todas as 20 sementes, e a união contextual + IF
+  supera o IF sozinho em todas as 20; as três diferenças continuam significativas depois da
+  correção de Holm.
+- Não há diferença significativa no F1 entre Z-score e IQR, entre Z-score robusto e clássico nem
+  entre IQR sobre log e IQR sobre o valor bruto; o IQR também não se distingue da regra trivial
+  "5% maiores da categoria", enquanto o Z-score se distingue (p = 0,011). Aplicar log piora o
+  Z-score.
+- O Z-score robusto não melhora o F1, mas melhora a AP em todas as 20 sementes: ordena melhor
+  as despesas, embora o limiar fixo de 3 não aproveite esse ganho.
 
 ## Como renderizar o diagrama de classes
 

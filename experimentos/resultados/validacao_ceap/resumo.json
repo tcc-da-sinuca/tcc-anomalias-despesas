@@ -1,0 +1,57 @@
+{
+  "executado_em": "2026-11-08T01:19:33+00:00",
+  "fonte": "/ceap/Ano-2025.csv.zip",
+  "ano_competencia": 2025,
+  "linhas_lidas": 209081,
+  "no_ano": 209081,
+  "de_parlamentares": 208144,
+  "analisadas": 192220,
+  "removidas_valor_nao_positivo_ou_sem_data": 15924,
+  "periodo_emissao": [
+    "2024-02-18",
+    "2026-03-31"
+  ],
+  "parlamentares": 554,
+  "tipos_de_despesa": 19,
+  "valor_total_analisado": 248297658.42,
+  "despesas_com_algum_alerta": 23101,
+  "percentual_com_algum_alerta": 12.02,
+  "valor_total_com_alerta": 70331132.01,
+  "alertas_por_metodo": {
+    "zscore": 2830,
+    "iqr": 10393,
+    "contextual": 5495,
+    "isolation_forest": 9589,
+    "qualquer_metodo": 23101
+  },
+  "amostra": {
+    "por_metodo": 7,
+    "total": 28,
+    "criterio": "maior excesso de cada método, sem repetir despesa",
+    "seed_ordem": 42
+  },
+  "parametros": {
+    "zscore": {
+      "limiar": 3.0
+    },
+    "iqr": {
+      "fator": 1.5
+    },
+    "contextual": {
+      "frequencia_minima": 0.01
+    },
+    "isolation_forest": {
+      "contamination": 0.05,
+      "random_state": 42,
+      "limite_aprovacao": 1000.0
+    }
+  },
+  "duracao_motor_s": 8.7,
+  "duracao_total_s": 11.9,
+  "versoes": {
+    "python": "3.11.18",
+    "pandas": "2.3.3",
+    "numpy": "2.4.6",
+    "scikit-learn": "1.7.2"
+  }
+}
