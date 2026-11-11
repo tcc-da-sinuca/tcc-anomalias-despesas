@@ -277,5 +277,5 @@ e datas em [`docs/ROTEIRO.md`](docs/ROTEIRO.md)).
 
 ## Licença
 
-Distribuído sob a licença MIT. Veja [`LICENSE`](LICENSE). A versão avaliada no artigo é a tag
-`v1.0-artigo`; os metadados para citação estão em [`CITATION.cff`](CITATION.cff).
+Distribuído sob a licença MIT. Veja [`LICENSE`](LICENSE). A versão avaliada no artigo é o release
+`v1.0.0-artigo`, depositado no Zenodo ([DOI 10.5281/zenodo.24144712](https://doi.org/10.5281/zenodo.24144712)); os metadados para citação estão em [`CITATION.cff`](CITATION.cff).
