@@ -274,3 +274,7 @@ e datas em [`docs/ROTEIRO.md`](docs/ROTEIRO.md)).
 | S2 | 28/09–11/10 | Z-score, IQR (US03), regras contextuais (US05), lista de alertas (US06) | ✅ Concluída em 23/09 |
 | S3 | 12/10–25/10 | Isolation Forest (US04), experimento comparativo, revisão e parecer (US07, US08) | ✅ Concluída em 25/09 |
 | S4 | 26/10–02/11 | Dashboard (US09), filtros (US10), relatório CSV/PDF (US11), parâmetros (US12), usuários, job | ✅ Concluída em 27/09 |
+
+## Licença
+
+Distribuído sob a licença MIT. Veja [`LICENSE`](LICENSE).
