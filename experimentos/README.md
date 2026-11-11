@@ -73,7 +73,7 @@ aplicação muda.
 
 ## Testes estatísticos (`testes_estatisticos.py`)
 
-Responde à verificação do orientador de 06/11/2026 (itens 2 e 3). Lê
+Responde às verificações do orientador de 06/11/2026 (itens 2 e 3) e de 11/11/2026 (itens 2 a 4). Lê
 `resultados/robustez/por_semente.csv` e roda o motor direto.
 
 ```bash
@@ -85,7 +85,14 @@ python -m experimentos.testes_estatisticos              # ~2 min
 | `if_bases_x_random_state.csv` | Isolation Forest em 20 bases (sementes 1 a 20) × 20 `random_state` (0 a 19): VP, FP, FN, precisão, recall, F1 e AP |
 | `decomposicao_variancia_if.csv` | Desvio padrão do F1 e da AP que vem do modelo (com a base fixa) e da base (ANOVA de um fator), e a fração da variância de cada um |
 | `comparacoes_pareadas.csv` | Pares de métodos comparados no artigo: diferença média por semente, IC 95% (t e bootstrap com 10.000 reamostras), sementes em que cada um vence, Wilcoxon pareado, efeito (correlação bisserial de postos) e p ajustado por Holm |
+| `combinacoes_por_semente.csv` | As 16 alternativas (4 métodos, 11 uniões e votação de 2) em cada uma das 20 sementes: precisão, recall, F1 e sinalizadas |
+| `escolha_da_combinacao.csv` | F1 médio de cada alternativa nas sementes 1 a 10 (escolha) e 11 a 20 (confirmação), com a posição em cada metade |
+| `zscore_iqr_proporcao_fixa.csv` | Z-score e IQR sinalizando os mesmos 5% de maior score, por semente |
 | `execucao.json` | Sementes, reamostras, correção, duração e versões |
+
+A combinação escolhida nas sementes 1 a 10 é comparada com o Isolation Forest só nas sementes
+11 a 20, e essa comparação entra na correção de Holm junto com as outras (17 no total). Nas
+comparações de AP, o Isolation Forest usa a média dos 20 `random_state` de cada base.
 
 ## Verificação em dados reais (`validar_ceap.py`)
 

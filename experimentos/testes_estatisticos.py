@@ -12,6 +12,18 @@ Complementa ``avaliar_robustez.py`` com dois pontos:
    diferença, intervalo de confiança de 95% (t de Student e bootstrap percentil), teste
    de postos sinalizados de Wilcoxon e correção de Holm para comparações múltiplas.
 
+Complementos da verificação de 11/11/2026:
+
+3. **Todas as combinações e escolha fora da amostra** (item 2). Avalia as 11 uniões de dois
+   ou mais métodos e a votação nas 20 bases, escolhe a de maior F1 médio nas sementes 1 a 10
+   e confirma a escolha nas sementes 11 a 20, contra o Isolation Forest sozinho; essa
+   comparação entra na correção de Holm.
+4. **AP do Isolation Forest sem depender de um único random_state** (item 3): nas
+   comparações de AP, o Isolation Forest entra com a média dos 20 valores de random_state
+   de cada base.
+5. **Z-score x IQR sem depender do limiar** (item 4): os dois são comparados pela AP e com
+   a mesma proporção de despesas sinalizadas (os 5% de maior score de cada um).
+
 Lê ``resultados/robustez/por_semente.csv`` (gerado por ``avaliar_robustez.py``) e roda o
 motor direto, sem banco nem Flask. Nenhum parâmetro da aplicação muda.
 
@@ -37,7 +49,9 @@ import sklearn
 from scipy import stats
 
 from experimentos.avaliar_robustez import _do_motor, gerar, linha
-from motor import isolation_forest
+from itertools import combinations
+
+from motor import contextual, iqr, isolation_forest, zscore
 
 PASTA = Path(__file__).resolve().parent / "resultados"
 ENTRADA_POR_SEMENTE = PASTA / "robustez" / "por_semente.csv"
@@ -48,7 +62,14 @@ N_BOOTSTRAP = 10_000
 SEED_BOOTSTRAP = 42
 ALFA = 0.05
 
-# Pares comparados no texto do artigo: (avaliação A, avaliação B, métrica, motivo).
+METODOS = ("zscore", "iqr", "contextual", "isolation_forest")
+PROPORCAO_FIXA = 0.05
+SEMENTES_ESCOLHA = range(1, 11)
+SEMENTES_CONFIRMACAO = range(11, 21)
+IF_MEDIA_RS = "isolation_forest_media_rs"  # IF com a média dos 20 random_state de cada base
+ESCOLHIDA = "melhor_combinacao_sementes_1a10"
+
+# Pares comparados no texto do artigo: (avaliação A, avaliação B, métrica, motivo[, sementes]).
 PARES = [
     ("isolation_forest", "iqr", "f1", "IF é o melhor método isolado"),
     ("isolation_forest", "zscore", "f1", "IF é o melhor método isolado"),
@@ -61,9 +82,13 @@ PARES = [
     ("zscore", "maiores_5pct_categoria", "f1", "univariado x regra trivial"),
     ("iqr", "maiores_5pct_categoria", "f1", "univariado x regra trivial"),
     ("isolation_forest", "isolation_forest_bruto", "f1", "ganho dos atributos derivados"),
-    ("isolation_forest", "iqr", "ap", "AP confirma a ordem sem limiar"),
-    ("isolation_forest", "zscore", "ap", "AP confirma a ordem sem limiar"),
+    (IF_MEDIA_RS, "iqr", "ap", "AP confirma a ordem sem limiar (IF: média de 20 random_state)"),
+    (IF_MEDIA_RS, "zscore", "ap", "AP confirma a ordem sem limiar (IF: média de 20 random_state)"),
     ("zscore_robusto", "zscore", "ap", "z-score robusto x clássico"),
+    ("zscore", "iqr", "ap", "univariados sem depender do limiar"),
+    ("zscore_top5pct", "iqr_top5pct", "f1", "univariados com a mesma proporção sinalizada (5%)"),
+    (ESCOLHIDA, "isolation_forest", "f1", "combinação escolhida nas sementes 1 a 10, confirmada nas 11 a 20",
+     SEMENTES_CONFIRMACAO),
 ]
 
 
@@ -104,6 +129,52 @@ def decompor(cruzado: pd.DataFrame, metrica: str) -> dict:
     }
 
 
+# --- 1b. Todas as combinações e proporção fixa ----------------------------------------
+
+
+def todas_as_combinacoes() -> tuple[pd.DataFrame, pd.DataFrame]:
+    """F1 por semente dos 4 métodos, das 11 uniões e da votação; e Z-score/IQR com 5% sinalizado."""
+    linhas, fixa = [], []
+    for seed in SEMENTES_BASE:
+        base = gerar(seed)
+        motor = {"zscore": _do_motor(zscore.detectar(base), base),
+                 "iqr": _do_motor(iqr.detectar(base), base),
+                 "contextual": _do_motor(contextual.detectar(base), base),
+                 "isolation_forest": _do_motor(isolation_forest.detectar(base), base)}
+        candidatos = {m: motor[m][1] for m in METODOS}
+        for k in range(2, len(METODOS) + 1):
+            for grupo in combinations(METODOS, k):
+                candidatos["+".join(grupo)] = pd.concat([motor[m][1] for m in grupo], axis=1).any(axis=1)
+        votos = pd.concat([motor[m][1] for m in METODOS], axis=1).sum(axis=1)
+        candidatos["votacao_2"] = votos >= 2
+        for nome, sinal in candidatos.items():
+            l = linha(base, nome, "combinacao", None, sinal)
+            linhas.append({"seed_base": seed, "avaliacao": nome, "n_metodos": nome.count("+") + 1
+                           if nome != "votacao_2" else 4,
+                           **{c: l[c] for c in ("precisao", "recall", "f1", "sinalizadas")}})
+        k_fixo = int(round(PROPORCAO_FIXA * len(base)))
+        for m in ("zscore", "iqr"):
+            score = motor[m][0]
+            sinal = pd.Series(False, index=base.index)
+            sinal.loc[score.sort_values(ascending=False, kind="stable").index[:k_fixo]] = True
+            l = linha(base, f"{m}_top5pct", "proporcao_fixa", score, sinal)
+            fixa.append({"seed_base": seed, "avaliacao": f"{m}_top5pct",
+                         **{c: l[c] for c in ("precisao", "recall", "f1", "sinalizadas", "ap")}})
+    return pd.DataFrame(linhas), pd.DataFrame(fixa)
+
+
+def escolher_combinacao(comb: pd.DataFrame) -> pd.DataFrame:
+    """Ranking pelo F1 médio nas sementes de escolha e nas de confirmação."""
+    escolha = comb[comb.seed_base.isin(SEMENTES_ESCOLHA)].groupby("avaliacao")["f1"].mean()
+    confirma = comb[comb.seed_base.isin(SEMENTES_CONFIRMACAO)].groupby("avaliacao")["f1"].mean()
+    todas = comb.groupby("avaliacao")["f1"].agg(["mean", "std"])
+    tabela = pd.DataFrame({"f1_sementes_1a10": escolha, "f1_sementes_11a20": confirma,
+                           "f1_media_20": todas["mean"], "f1_dp_20": todas["std"]})
+    tabela["posicao_1a10"] = tabela["f1_sementes_1a10"].rank(ascending=False, method="min").astype(int)
+    tabela["posicao_11a20"] = tabela["f1_sementes_11a20"].rank(ascending=False, method="min").astype(int)
+    return tabela.sort_values("posicao_1a10").reset_index()
+
+
 # --- 2. Comparação pareada -----------------------------------------------------------
 
 
@@ -115,10 +186,14 @@ def _ic_bootstrap(dif: np.ndarray, rng: np.random.Generator) -> tuple[float, flo
 def comparar(por_semente: pd.DataFrame) -> pd.DataFrame:
     rng = np.random.default_rng(SEED_BOOTSTRAP)
     linhas = []
-    for a, b, metrica, motivo in PARES:
+    for par in PARES:
+        a, b, metrica, motivo = par[:4]
+        sementes = par[4] if len(par) > 4 else None
         va = por_semente[por_semente.avaliacao == a].set_index("seed_base")[metrica]
         vb = por_semente[por_semente.avaliacao == b].set_index("seed_base")[metrica]
         comum = va.index.intersection(vb.index)
+        if sementes is not None:
+            comum = comum.intersection(pd.Index(list(sementes)))
         dif = (va.loc[comum] - vb.loc[comum]).to_numpy()
         n = dif.size
         media, dp = dif.mean(), dif.std(ddof=1)
@@ -139,6 +214,7 @@ def comparar(por_semente: pd.DataFrame) -> pd.DataFrame:
         efeito = (postos[nz > 0].sum() - postos[nz < 0].sum()) / postos.sum() if nz.size else 0.0
         linhas.append({
             "a": a, "b": b, "metrica": metrica, "motivo": motivo, "n_sementes": n,
+            "sementes": f"{min(comum)} a {max(comum)}",
             "media_a": va.loc[comum].mean(), "media_b": vb.loc[comum].mean(),
             "diferenca_media": media, "dp_diferenca": dp,
             "ic95_t_inf": media - t_crit * dp / np.sqrt(n), "ic95_t_sup": media + t_crit * dp / np.sqrt(n),
@@ -178,9 +254,22 @@ def main(argv: list[str] | None = None) -> dict[str, Path]:
     caminhos["decomposicao"] = args.saida / "decomposicao_variancia_if.csv"
     decomposicao.to_csv(caminhos["decomposicao"], index=False, float_format="%.4f")
 
+    comb, fixa = todas_as_combinacoes()
+    caminhos["combinacoes"] = args.saida / "combinacoes_por_semente.csv"
+    comb.to_csv(caminhos["combinacoes"], index=False, float_format="%.4f")
+    caminhos["proporcao_fixa"] = args.saida / "zscore_iqr_proporcao_fixa.csv"
+    fixa.to_csv(caminhos["proporcao_fixa"], index=False, float_format="%.4f")
+    ranking = escolher_combinacao(comb)
+    caminhos["escolha"] = args.saida / "escolha_da_combinacao.csv"
+    ranking.to_csv(caminhos["escolha"], index=False, float_format="%.4f")
+    escolhida = ranking.loc[ranking["posicao_1a10"] == 1, "avaliacao"].iloc[0]
+
     por_semente = pd.read_csv(args.entrada)
+    media_rs = cruzado.groupby("seed_base")[["f1", "ap"]].mean().reset_index().assign(avaliacao=IF_MEDIA_RS)
+    melhor = comb[comb.avaliacao == escolhida][["seed_base", "f1"]].assign(avaliacao=ESCOLHIDA)
+    valores = pd.concat([por_semente, media_rs, fixa, melhor], ignore_index=True)
     caminhos["pareados"] = args.saida / "comparacoes_pareadas.csv"
-    comparar(por_semente).to_csv(caminhos["pareados"], index=False, float_format="%.6g")
+    comparar(valores).to_csv(caminhos["pareados"], index=False, float_format="%.6g")
 
     caminhos["execucao"] = args.saida / "execucao.json"
     caminhos["execucao"].write_text(json.dumps({
@@ -189,6 +278,8 @@ def main(argv: list[str] | None = None) -> dict[str, Path]:
         "random_states_isolation_forest": list(RANDOM_STATES),
         "n_bootstrap": N_BOOTSTRAP, "seed_bootstrap": SEED_BOOTSTRAP, "alfa": ALFA,
         "correcao_multiplas_comparacoes": "Holm, sobre todas as linhas de comparacoes_pareadas.csv",
+        "combinacao_escolhida_sementes_1a10": escolhida,
+        "proporcao_fixa_zscore_iqr": PROPORCAO_FIXA,
         "entrada": str(args.entrada.relative_to(Path.cwd()) if args.entrada.is_relative_to(Path.cwd()) else args.entrada),
         "duracao_s": round(time.perf_counter() - inicio, 1),
         "versoes": {"python": platform.python_version(), "pandas": pd.__version__,

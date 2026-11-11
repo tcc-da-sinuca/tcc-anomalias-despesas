@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "Se usar este software, cite-o com os metadados abaixo."
+title: "Detecção automática de anomalias em despesas corporativas"
+type: software
+license: MIT
+version: v1.0-artigo
+repository-code: "https://github.com/tcc-da-sinuca/tcc-anomalias-despesas"
+keywords:
+  - detecção de anomalias
+  - despesas corporativas
+  - auditoria
+  - Isolation Forest
+authors:
+  - given-names: Caio Ramos
+    family-names: Castilho
+  - given-names: Guilherme Rocha
+    family-names: Barreto
+  - given-names: Levi Silva
+    family-names: Cardozo
+  - given-names: Melcksedeck Teyllor Rocha
+    family-names: de Sousa
+  - given-names: Omar Darbas
+    family-names: Mustafa Filho
+  - given-names: Vinicius Girotto
+    family-names: Pereira
