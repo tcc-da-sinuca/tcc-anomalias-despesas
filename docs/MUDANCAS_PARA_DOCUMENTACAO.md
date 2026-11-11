@@ -44,6 +44,7 @@ deve incorporar cada item na próxima versão e marcar a coluna "Incorporado".
 | 36 | 13/10/2026 | **Experimento ampliado** (`experimentos/avaliar_robustez.py`, resultados em `experimentos/resultados/robustez/`), em resposta à verificação do orientador de 08/10: 20 sementes com média e desvio, AP (área sob a curva precisão-revocação), sensibilidade a `contamination` e aos limiares, linhas de base, ablação dos atributos do Isolation Forest, variantes com log e z-score robusto (MAD) e cenários de estresse que medem a circularidade entre o gerador e os detectores. Resultado principal: IF F1 0,790 ± 0,018 e contextual + IF 0,846 ± 0,016 em 20 sementes; IF sobre atributos brutos 0,117; com todas as perturbações do gerador, IF cai para 0,157. Nenhum parâmetro da aplicação mudou. | Documentação, Seção 3.4 (já incorporado na versão de 13/10); artigo: metodologia, resultados e ameaças à validade. | ☑ |
 | 37 | 08/11/2026 | **Testes estatísticos** (`experimentos/testes_estatisticos.py`, resultados em `experimentos/resultados/testes_estatisticos/`), itens 2 e 3 da verificação do orientador de 06/11: Isolation Forest num desenho cruzado de 20 bases × 20 `random_state`, com a parte da variância que vem da base e a que vem do modelo, e comparações pareadas entre métodos nas 20 sementes (diferença média, IC 95% t e bootstrap, Wilcoxon, correção de Holm). Números na seção "Testes estatísticos (08/11/2026)". Nenhum parâmetro da aplicação mudou. | Artigo: metodologia e resultados (significância das diferenças entre métodos e variabilidade do Isolation Forest). | ☐ |
 | 38 | 08/11/2026 | **Motor aplicado à CEAP 2025** (`experimentos/validar_ceap.py`, item 1 da verificação de 06/11), com os parâmetros padrão e sem rótulos: 192.220 despesas de 554 parlamentares, 23.101 (12,02%) com algum alerta (Z-score 1,47%, IQR 5,41%, contextual 2,86%, Isolation Forest 4,99%). O script foi corrigido para o nome real da coluna `numEspecificacaoSubCota`. **Pendente:** a classificação dos alertas por dois revisores e o kappa de Cohen. | Artigo: verificação em dados reais e ameaças à validade. | ☐ |
+| 39 | 11/11/2026 | **Verificação do orientador de 11/11** (`experimentos/testes_estatisticos.py` ampliado; busca bibliográfica em `docs/busca_bibliografica.md`). (a) **Escolha da combinação:** as 16 alternativas (4 métodos, 11 uniões e votação) avaliadas por semente em `combinacoes_por_semente.csv`; a classificação em `escolha_da_combinacao.csv`. A melhor combinação foi escolhida só com as sementes 1 a 10 (contextual + IF) e confirmada nas 11 a 20 contra o IF sozinho. (b) **AP do Isolation Forest** nas comparações passa a ser a média dos 20 `random_state` de cada base (0,732 ± 0,022), e não a de `random_state = 42` (0,690). (c) **Z-score × IQR** também pela AP e com a mesma proporção sinalizada (5% de maior score de cada um, `zscore_iqr_proporcao_fixa.csv`). A correção de Holm passa a cobrir **17 comparações**. (d) Na CEAP, os alertas críticos atingem 1.598 despesas distintas (0,83%), e não 1.749. Nenhum parâmetro da aplicação mudou. Números na seção "Verificação de 11/11/2026". | Artigo: Seções 2.5, 3.4, 4.1 (Tabelas 2 e 4), 4.5 e 4.6. As linhas de AP do IF da seção "Testes estatísticos (08/11/2026)" ficam substituídas. | ☐ |
 
 ## Resultados do experimento (09/10/2026)
 
@@ -133,6 +134,36 @@ Leitura para o artigo:
   Z-score.
 - O Z-score robusto não melhora o F1, mas melhora a AP em todas as 20 sementes: ordena melhor
   as despesas, embora o limiar fixo de 3 não aproveite esse ganho.
+
+## Verificação de 11/11/2026
+
+Saída de `python -m experimentos.testes_estatisticos` (17 comparações, Holm sobre todas). Substitui
+as linhas de AP do Isolation Forest da seção anterior; as demais diferenças não mudaram, e os p
+corrigidos mudam pouco porque agora são 17 comparações (ex.: Z-score × 5% maiores, 0,011 → 0,012).
+
+| A × B | Métrica | Médias | Diferença [IC 95% t] | A/=/B | p (Holm) |
+|---|---|---|---|---|---|
+| Isolation Forest (média de 20 `random_state`) × IQR | AP | 0,732 × 0,383 | 0,350 [0,328; 0,371] | 20/0/0 | < 0,001 |
+| Isolation Forest (média de 20 `random_state`) × Z-score | AP | 0,732 × 0,351 | 0,382 [0,365; 0,398] | 20/0/0 | < 0,001 |
+| Z-score × IQR | AP | 0,351 × 0,383 | -0,032 [-0,043; -0,021] | 1/0/19 | < 0,001 |
+| Z-score × IQR, 5% de maior score em cada | F1 | 0,357 × 0,313 | 0,044 [0,031; 0,057] | 20/0/0 | < 0,001 |
+| Contextual + IF (escolhida nas sementes 1 a 10) × IF, sementes 11 a 20 | F1 | 0,844 × 0,789 | 0,055 [0,052; 0,059] | 10/0/0 | 0,012 |
+
+Escolha da combinação (F1 médio; posição entre as 16 alternativas):
+
+| Alternativa | Sementes 1 a 10 | Sementes 11 a 20 |
+|---|---|---|
+| contextual + IF | 0,847 (1º) | 0,844 (1º) |
+| Z-score + contextual + IF | 0,823 (2º) | 0,814 (2º) |
+| Isolation Forest | 0,792 (3º) | 0,789 (3º) |
+
+As uniões com o IQR têm o mesmo resultado com ou sem o Z-score, porque toda despesa sinalizada
+pelo Z-score também é sinalizada pelo IQR nessas bases.
+
+Leitura para o artigo: o Z-score e o IQR **não devem ser ordenados** — no F1 com os limiares
+padrão a diferença não é significativa (p = 0,077); pela AP o IQR é melhor; com a mesma proporção
+sinalizada o Z-score é melhor. Os IC 95% são de cada comparação, sem correção para múltiplas
+comparações.
 
 ## Como renderizar o diagrama de classes
 

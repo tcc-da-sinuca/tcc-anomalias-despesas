@@ -114,3 +114,16 @@ def test_kappa_confere_com_o_scikit_learn():
     b = pd.Series(["aprovado", "irregular", "necessita_justificativa", "necessita_justificativa", "irregular", "irregular"])
     assert vc.kappa_cohen(a, b) == pytest.approx(cohen_kappa_score(a, b))
     assert vc.kappa_cohen(a, a) == pytest.approx(1.0)
+
+
+def test_escolha_da_combinacao_usa_so_as_sementes_de_escolha():
+    from experimentos.testes_estatisticos import escolher_combinacao
+
+    linhas = []
+    for seed in range(1, 21):
+        # "a" vence nas sementes 1 a 10; "b" vence nas 11 a 20
+        linhas.append({"seed_base": seed, "avaliacao": "a", "f1": 0.9 if seed <= 10 else 0.1})
+        linhas.append({"seed_base": seed, "avaliacao": "b", "f1": 0.5})
+    ranking = escolher_combinacao(pd.DataFrame(linhas))
+    assert ranking.loc[ranking.posicao_1a10 == 1, "avaliacao"].item() == "a"
+    assert ranking.loc[ranking.posicao_11a20 == 1, "avaliacao"].item() == "b"
